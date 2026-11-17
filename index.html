@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="sw" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WFC Digital Office — Wachagga Family Community</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/wfc-portal.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#top" class="brand">
+        <div class="brand-emblem" aria-hidden="true">WFC</div>
+        <div class="brand-text">
+          <span class="brand-title">WFC DIGITAL OFFICE</span>
+          <span class="brand-subtitle">MWANACHAMA WA WFC &bull; STAND UP, IT'S NOT OVER</span>
+        </div>
+      </a>
+
+      <nav class="header-actions" aria-label="Vidhibiti vya Juu">
+        <div class="lang-select-wrap">
+          <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18"></path>
+          </svg>
+          <select id="lang-select" aria-label="Teua Lugha">
+            <option value="sw" selected>Kiswahili</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+
+        <button type="button" id="theme-toggle" class="icon-btn" title="Badili Mwanga / Giza" aria-label="Badili Mandhari">
+          <!-- Moon Icon (Shown in Light Mode) -->
+          <svg class="icon-outline icon-moon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <!-- Sun Icon (Shown in Dark Mode) -->
+          <svg class="icon-outline icon-sun" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+          </svg>
+        </button>
+
+        <button type="button" class="icon-btn has-notif" title="Taarifa Mpya" aria-label="Taarifa (1 mpya)">
+          <svg class="icon-outline" viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notif-badge">1</span>
+        </button>
+
+        <a href="#top" class="nav-link-top">Mwanzo</a>
+        <a href="#logout" class="btn-logout">Toka</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main-wrapper" id="top">
+
+    <!-- Member Identity Header Card -->
+    <section class="member-card" aria-labelledby="member-name">
+      <div class="member-details">
+        <div class="member-title-row">
+          <h1 id="member-name">HUGO MUSHI</h1>
+          <span class="status-badge status-pending">Inasubiri Uthibitisho</span>
+        </div>
+        <dl class="member-meta">
+          <div class="meta-item">
+            <dt>WFC ID:</dt>
+            <dd class="gold-code">WFC-0007</dd>
+          </div>
+          <span class="meta-sep" aria-hidden="true">&bull;</span>
+          <div class="meta-item">
+            <dt>Kanda:</dt>
+            <dd>Dar es Salaam - Machame</dd>
+          </div>
+          <span class="meta-sep" aria-hidden="true">&bull;</span>
+          <div class="meta-item">
+            <dt>Asili:</dt>
+            <dd>Machame</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="member-action">
+        <button type="button" class="btn btn-gold" data-open-pay="Mchango wa Jumla">
+          <span>Lipa Mchango Sasa</span>
+          <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6"></path>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Primary Feature Navigation Tabs -->
+    <nav class="module-grid" aria-label="Sehemu za Mfumo">
+      <button type="button" class="module-card active" data-tab="taarifa">
+        <div class="module-icon">
+          <svg class="icon-outline" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+            <path d="M7 8h10M7 12h6M7 16h4"></path>
+          </svg>
+        </div>
+        <div class="module-copy">
+          <span class="module-title">Taarifa &amp; Madeni</span>
+          <span class="module-desc">Michango, deni &amp; marejesho</span>
+        </div>
+      </button>
+
+      <button type="button" class="module-card" data-tab="lipa">
+        <div class="module-icon">
+          <svg class="icon-outline" viewBox="0 0 24 24">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <path d="M2 10h20M6 15h4"></path>
+          </svg>
+        </div>
+        <div class="module-copy">
+          <span class="module-title">Lipa &amp; Tuma Risiti</span>
+          <span class="module-desc">Ada, dharura, msiba, harusi</span>
+        </div>
+      </button>
+
+      <button type="button" class="module-card" data-tab="risiti">
+        <div class="module-icon">
+          <svg class="icon-outline" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <path d="M14 2v6h6M8 13h8M8 17h5"></path>
+          </svg>
+        </div>
+        <div class="module-copy">
+          <span class="module-title">Risiti &amp; Tiketi</span>
+          <span class="module-desc">Pakua au tuma WhatsApp</span>
+        </div>
+      </button>
+
+      <button type="button" class="module-card" data-tab="matangazo">
+        <div class="module-icon">
+          <svg class="icon-outline" viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <div class="module-copy">
+          <span class="module-title">Matangazo &amp; Maoni</span>
+          <span class="module-desc">Vikao, nyaraka &amp; majadiliano</span>
+        </div>
+      </button>
+    </nav>
+
+    <!-- Financial KPI Summary -->
+    <section class="kpi-grid" aria-label="Muhtasari wa Fedha">
+      <article class="kpi-card">
+        <span class="kpi-label">JUMLA NILIYOLIPA</span>
+        <div class="kpi-value">TSh 0</div>
+        <p class="kpi-note">Malipo yaliyothibitishwa</p>
+      </article>
+
+      <article class="kpi-card kpi-alert">
+        <span class="kpi-label">DENI LANGU LA JUMLA</span>
+        <div class="kpi-value">TSh 120,000</div>
+        <p class="kpi-note">Ada: 10,000 &bull; Kiingilio: 50,000 &bull; Dharura: 60,000</p>
+      </article>
+
+      <article class="kpi-card">
+        <span class="kpi-label">MFUKO WA DHARURA</span>
+        <div class="kpi-value">TSh 0 <span class="kpi-sub">/ 60,000</span></div>
+        <p class="kpi-note">Salio lako la dharura</p>
+      </article>
+
+      <article class="kpi-card">
+        <span class="kpi-label">INAYOSUBIRI UTHIBITISHO</span>
+        <div class="kpi-value">0</div>
+        <p class="kpi-note">Risiti zinakaguliwa na Mhasibu</p>
+      </article>
+    </section>
+
+    <!-- Quick Action Contributions -->
+    <section class="panel-section" aria-labelledby="quick-actions-heading">
+      <div class="panel-header">
+        <h2 id="quick-actions-heading">Hatua za Haraka (Michango Unayotakiwa Kutoa)</h2>
+      </div>
+
+      <div class="obligations-grid">
+        <article class="obligation-card">
+          <div class="obligation-body">
+            <h3>Kamilisha Kiingilio cha Uanachama</h3>
+            <p>Unadaiwa salio la Kiingilio TSh 50,000 ili akaunti yako iwe Hai.</p>
+          </div>
+          <button type="button" class="btn btn-gold-outline" data-open-pay="Kiingilio cha Uanachama" data-amount="50000">
+            <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            <span>Lipa TSh 50,000 Sasa</span>
+          </button>
+        </article>
+
+        <article class="obligation-card">
+          <div class="obligation-body">
+            <h3>Lipa Malimbikizo ya Ada ya Mwezi</h3>
+            <p>Una deni la ada ya miezi iliyopita jumla TSh 10,000.</p>
+          </div>
+          <button type="button" class="btn btn-gold-outline" data-open-pay="Ada ya Mwezi" data-amount="10000">
+            <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            <span>Lipa TSh 10,000 Sasa</span>
+          </button>
+        </article>
+
+        <article class="obligation-card">
+          <div class="obligation-body">
+            <h3>Jazia Mfuko wa Dharura</h3>
+            <p>Salio lako ni TSh 0 kati ya TSh 60,000.</p>
+          </div>
+          <button type="button" class="btn btn-gold-outline" data-open-pay="Mfuko wa Dharura" data-amount="60000">
+            <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            <span>Lipa TSh 60,000 Sasa</span>
+          </button>
+        </article>
+
+        <article class="obligation-card obligation-featured">
+          <div class="obligation-body">
+            <span class="tag-urgent">Mchango Maalum</span>
+            <h3>Mchango wa Msiba - Familia ya Mzee Shirima (Rombo)</h3>
+            <p>Jumuiya inatoa pole kwa familia ya mwanachama mwenzetu aliyefiwa. Kila mwanachama anaombwa kuchangia angalau TSh 10,000. (Kiwango: TSh 10,000)</p>
+          </div>
+          <button type="button" class="btn btn-gold" data-open-pay="Mchango wa Msiba - Familia ya Mzee Shirima" data-amount="10000">
+            <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            <span>Lipa TSh 10,000 Sasa</span>
+          </button>
+        </article>
+      </div>
+    </section>
+
+    <!-- Benefits & Refunds History -->
+    <section class="panel-section" aria-labelledby="refunds-heading">
+      <div class="panel-header">
+        <h2 id="refunds-heading">Marejesho na Misaada Niliyopokea Kutoka WFC</h2>
+      </div>
+      <div class="empty-state">
+        <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 8v4M12 16h.01"></path>
+        </svg>
+        <p>Bado hujapokea marejesho au msaada wowote wa kifedha kutoka WFC.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 Wachagga Family Community (WFC) &mdash; <em>Stand up, It's not over.</em> Haki zote zimehifadhiwa.</p>
+    </div>
+  </footer>
+
+  <!-- Payment Modal -->
+  <dialog id="payment-modal" class="wfc-modal">
+    <form method="dialog" class="modal-box" id="payment-form">
+      <div class="modal-head">
+        <h3>Wasilisha Malipo / Risiti</h3>
+        <button type="button" class="icon-btn" id="close-modal" aria-label="Funga">
+          <svg class="icon-outline" viewBox="0 0 24 24">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <label class="field-group">
+          <span>Aina ya Mchango</span>
+          <input type="text" id="pay-category" name="category" readonly>
+        </label>
+
+        <label class="field-group">
+          <span>Kiasi (TSh)</span>
+          <input type="number" id="pay-amount" name="amount" min="1000" step="500" required>
+        </label>
+
+        <label class="field-group">
+          <span>Namba ya Muamala (M-Pesa / Tigo Pesa / Benki)</span>
+          <input type="text" id="pay-ref" name="reference" placeholder="Mfano: QK84H729LP" required>
+        </label>
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="cancel-modal">Ghairi</button>
+        <button type="submit" class="btn btn-gold">Tuma Kwa Uthibitisho</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="assets/js/wfc-portal.js"></script>
+</body>
+</html>
