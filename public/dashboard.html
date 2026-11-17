@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="sw" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashibodi ya WFC — Wachagga Family Community</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/wfc-dashboard.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Left Sidebar -->
+    <aside class="sidebar" id="sidebar" aria-label="Menyu ya Dashibodi">
+      <div class="sidebar-top">
+        <a href="index.html" class="sidebar-brand">
+          <div class="crest-mini" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none">
+              <defs>
+                <linearGradient id="dashGold" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#F7DC81"/>
+                  <stop offset="50%" stop-color="#D4AF37"/>
+                  <stop offset="100%" stop-color="#9B7316"/>
+                </linearGradient>
+              </defs>
+              <path d="M24 3L41 10.5V23.5C41 34.2 33.7 42.3 24 45C14.3 42.3 7 34.2 7 23.5V10.5L24 3Z" stroke="url(#dashGold)" stroke-width="2.2" fill="rgba(212,175,55,0.1)"/>
+              <path d="M12 28L19.5 18L24.5 24L29.5 16.5L36 28H12Z" stroke="url(#dashGold)" stroke-width="1.8" stroke-linejoin="round"/>
+              <text x="24" y="37" text-anchor="middle" fill="url(#dashGold)" font-family="Cinzel, serif" font-weight="800" font-size="8.5">WFC</text>
+            </svg>
+          </div>
+          <div>
+            <span class="sb-title">WFC PORTAL</span>
+            <span class="sb-sub">THE PRIDE OF CHAGGA</span>
+          </div>
+        </a>
+        <button type="button" class="icon-btn mobile-close-sb" id="close-sidebar" aria-label="Funga Menyu">
+          <svg class="icon-outline" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- Member Identity Card -->
+      <div class="member-card">
+        <div class="member-card-top">
+          <span class="wfc-id-pill" id="user-wfc-id">WFC-2026-0475</span>
+          <span class="role-pill" id="user-role-label">Mwanachama</span>
+        </div>
+        <h2 id="user-fullname">Mwanachama Hai WFC</h2>
+        <p id="user-meta">Ukoo: Shirima &bull; Kilimanjaro</p>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-item active" data-tab="overview">
+          <svg class="icon-outline" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
+          <span>Muhtasari (Overview)</span>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="finance">
+          <svg class="icon-outline" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+          <span>Fedha &amp; Michango</span>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="welfare">
+          <svg class="icon-outline" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          <span>Misiba, Harusi &amp; Ugonjwa</span>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="members">
+          <svg class="icon-outline" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Wanachama &amp; Uongozi</span>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="announcements">
+          <svg class="icon-outline" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span>Matangazo &amp; Vikao</span>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="projects">
+          <svg class="icon-outline" viewBox="0 0 24 24"><path d="M3 3v18h18"></path><path d="M18 9l-5 5-3-3-4 4"></path></svg>
+          <span>Miradi &amp; Uwekezaji</span>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="tickets">
+          <svg class="icon-outline" viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"></path><path d="M13 7v10"></path></svg>
+          <span>Tiketi za Matukio</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <a href="index.html" class="btn btn-ghost btn-sm btn-block">
+          <svg class="icon-outline" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+          <span>Ukurasa wa Mbele</span>
+        </a>
+        <button type="button" id="logout-btn" class="btn btn-gold-outline btn-sm btn-block">
+          <svg class="icon-outline" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
+          <span>Toka Kwenye Akaunti</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <div class="main-workspace">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="icon-btn" id="open-sidebar" aria-label="Fungua Menyu">
+            <svg class="icon-outline" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+          </button>
+          <div>
+            <h1 id="page-title">Muhtasari wa Ofisi ya WFC</h1>
+            <span class="topbar-sub">Stand up, It's not over &bull; Mfumo wa Kidijitali wa Jumuiya</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div id="google_translate_element" class="gtranslate-box"></div>
+          <button type="button" id="theme-toggle" class="icon-btn" title="Badili Mandhari" aria-label="Badili Mandhari">
+            <svg class="icon-outline icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <svg class="icon-outline icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+          </button>
+          <button type="button" class="btn btn-gold btn-sm" id="quick-pay-btn">
+            <svg class="icon-outline" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+            <span>Wasilisha Mchango</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace-content">
+        <!-- TAB 1: OVERVIEW -->
+        <section class="tab-panel active" id="tab-overview">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <span class="kpi-label">SALIO LA MFUKO WA WFC</span>
+              <strong class="kpi-value" id="kpi-total-fund">TSh 18,840,000</strong>
+              <span class="kpi-trend positive">Uwazi 100% &bull; Imekaguliwa</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">MICHANGO YANGU</span>
+              <strong class="kpi-value" id="kpi-my-contrib">TSh 140,000</strong>
+              <span class="kpi-trend">Mwanachama Hai</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">MIAMALA INAYOSUBIRI</span>
+              <strong class="kpi-value" id="kpi-pending">3</strong>
+              <span class="kpi-trend">Mhasibu &rarr; Katibu &rarr; Mwenyekiti</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">WANACHAMA HAI</span>
+              <strong class="kpi-value" id="kpi-members">476+</strong>
+              <span class="kpi-trend positive">Tanzania &amp; Diaspora</span>
+            </div>
+          </div>
+
+          <div class="overview-grid">
+            <div class="card-box">
+              <div class="card-head">
+                <h3>Miamala ya Hivi Karibuni &amp; Hatua za Uidhinishaji</h3>
+                <button type="button" class="btn btn-ghost btn-sm" data-jump-tab="finance">Ona Yote</button>
+              </div>
+              <div id="overview-transactions" class="stack-list"></div>
+            </div>
+
+            <div class="card-box">
+              <div class="card-head">
+                <h3>Matukio ya Kijamii (Misiba &amp; Harusi)</h3>
+                <button type="button" class="btn btn-ghost btn-sm" data-jump-tab="welfare">Shiriki</button>
+              </div>
+              <div id="overview-welfare" class="stack-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: FINANCE & MULTI-TIER APPROVAL -->
+        <section class="tab-panel" id="tab-finance">
+          <div class="card-box">
+            <div class="card-head">
+              <div>
+                <h3>Fedha, Risiti &amp; Mfumo wa Uidhinishaji (3-Tier Approval)</h3>
+                <p class="muted-text">Mtiririko rasmi: <strong>1. Mhasibu (Treasurer)</strong> &rarr; <strong>2. Katibu Mkuu (Secretary)</strong> &rarr; <strong>3. Mwenyekiti (Chairperson)</strong></p>
+              </div>
+              <button type="button" class="btn btn-gold btn-sm" id="open-contrib-modal">+ Wasilisha Risiti ya Malipo</button>
+            </div>
+
+            <div class="table-wrap">
+              <table class="wfc-table">
+                <thead>
+                  <tr>
+                    <th>Risiti No.</th>
+                    <th>Mwanachama</th>
+                    <th>Aina ya Mchango</th>
+                    <th>Kiasi (TSh)</th>
+                    <th>Njia &amp; Muamala</th>
+                    <th>Hatua ya Uidhinishaji</th>
+                    <th>Hatua / Risiti</th>
+                  </tr>
+                </thead>
+                <tbody id="finance-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: WELFARE (MISIBA, HARUSI, UGONJWA) -->
+        <section class="tab-panel" id="tab-welfare">
+          <div class="card-box">
+            <div class="card-head">
+              <div>
+                <h3>Mshikamano wa Familia: Misiba, Harusi &amp; Ugonjwa</h3>
+                <p class="muted-text">Kusaidiana katika shida na raha kwa uwazi na upendo wa Wachagga.</p>
+              </div>
+              <button type="button" class="btn btn-gold btn-sm" id="open-welfare-modal">+ Ripoti Tukio Jipya</button>
+            </div>
+            <div id="welfare-cards-grid" class="cards-grid-2"></div>
+          </div>
+        </section>
+
+        <!-- TAB 4: MEMBERS DIRECTORY -->
+        <section class="tab-panel" id="tab-members">
+          <div class="card-box">
+            <div class="card-head">
+              <div>
+                <h3>Orodha ya Wanachama &amp; Safu ya Uongozi</h3>
+                <p class="muted-text">Tafuta mwanachama kwa jina, WFC ID, ukoo au kanda.</p>
+              </div>
+              <input type="search" id="member-search-input" class="compact-input" placeholder="Tafuta mwanachama...">
+            </div>
+            <div class="table-wrap">
+              <table class="wfc-table">
+                <thead>
+                  <tr>
+                    <th>WFC ID</th>
+                    <th>Jina Kamili</th>
+                    <th>Ukoo</th>
+                    <th>Kanda</th>
+                    <th>Simu</th>
+                    <th>Cheo / Nafasi</th>
+                  </tr>
+                </thead>
+                <tbody id="members-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 5: ANNOUNCEMENTS -->
+        <section class="tab-panel" id="tab-announcements">
+          <div class="card-box">
+            <div class="card-head">
+              <div>
+                <h3>Matangazo Rasmi &amp; Vikao vya Jumuiya</h3>
+                <p class="muted-text">Taarifa za mikutano ya Google Meet na maendeleo ya WFC.</p>
+              </div>
+              <button type="button" class="btn btn-gold btn-sm leader-only-btn" id="open-announce-modal">+ Tuma Tangazo Jipya</button>
+            </div>
+            <div id="dashboard-announcements-list" class="stack-list"></div>
+          </div>
+        </section>
+
+        <!-- TAB 6: PROJECTS -->
+        <section class="tab-panel" id="tab-projects">
+          <div class="card-box">
+            <div class="card-head">
+              <div>
+                <h3>Miradi ya Maendeleo &amp; Uwekezaji wa WFC</h3>
+                <p class="muted-text">WCSC, WFC SACCOS, UTT AMIS, Community Tours &amp; WFC Queens.</p>
+              </div>
+            </div>
+            <div id="dashboard-projects-grid" class="cards-grid-2"></div>
+          </div>
+        </section>
+
+        <!-- TAB 7: TICKETS -->
+        <section class="tab-panel" id="tab-tickets">
+          <div class="card-box">
+            <div class="card-head">
+              <div>
+                <h3>Tiketi za Matukio ya WFC</h3>
+                <p class="muted-text">Tiketi zako zilizothibitishwa kwa ajili ya WFC Festival 2026.</p>
+              </div>
+              <a href="index.html#matukio" class="btn btn-gold btn-sm">+ Kata Tiketi Mpya</a>
+            </div>
+            <div id="dashboard-tickets-list" class="cards-grid-2"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal: Submit Contribution -->
+  <dialog id="contrib-modal" class="wfc-modal">
+    <form method="dialog" class="modal-box" id="contrib-form">
+      <div class="modal-head">
+        <h3>Wasilisha Mchango &amp; Risiti</h3>
+        <button type="button" class="icon-btn" data-close-modal="contrib-modal"><svg class="icon-outline" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="payment-mini-guide">
+          <strong>Namba Rasmi:</strong> M-Pesa <code>0755 000 888</code> &bull; Tigo Lipa <code>889900</code> &bull; Airtel <code>0785 000 888</code> &bull; CRDB <code>0150888442200</code>
+        </div>
+        <label class="field-group">
+          <span>Aina ya Mchango</span>
+          <select name="category" required>
+            <option value="Ada ya Mwezi">Ada ya Mwezi</option>
+            <option value="Mfuko wa Maafa / Msiba">Mfuko wa Maafa / Msiba</option>
+            <option value="Harusi & Sherehe">Harusi &amp; Sherehe</option>
+            <option value="Uwekezaji WCSC / SACCOS">Uwekezaji WCSC / SACCOS</option>
+            <option value="Tamasha la WFC">Tamasha la WFC</option>
+          </select>
+        </label>
+        <div class="field-row-2">
+          <label class="field-group">
+            <span>Kiasi (TSh)</span>
+            <input type="number" name="amount" min="1000" placeholder="50000" required>
+          </label>
+          <label class="field-group">
+            <span>Njia ya Malipo</span>
+            <select name="channel" required>
+              <option value="M-Pesa">M-Pesa</option>
+              <option value="Tigo Pesa">Tigo Pesa (Lipa 889900)</option>
+              <option value="Airtel Money">Airtel Money</option>
+              <option value="CRDB Bank">Benki CRDB</option>
+            </select>
+          </label>
+        </div>
+        <label class="field-group">
+          <span>Namba ya Muamala (Transaction ID)</span>
+          <input type="text" name="reference_code" placeholder="Mfano: MP261117X82" required>
+        </label>
+        <label class="field-group">
+          <span>Pakia Picha ya Risiti (Hiari)</span>
+          <input type="file" name="receipt_image" accept="image/*,.pdf">
+        </label>
+        <label class="field-group">
+          <span>Maelezo ya Ziada</span>
+          <input type="text" name="notes" placeholder="Mfano: Ada ya mwezi huu">
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close-modal="contrib-modal">Ghairi</button>
+        <button type="submit" class="btn btn-gold">Tuma Kwa Mhasibu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Modal: New Welfare Case -->
+  <dialog id="welfare-modal" class="wfc-modal">
+    <form method="dialog" class="modal-box" id="welfare-form">
+      <div class="modal-head">
+        <h3>Ripoti Tukio la Kijamii (Msiba / Harusi / Ugonjwa)</h3>
+        <button type="button" class="icon-btn" data-close-modal="welfare-modal"><svg class="icon-outline" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="field-row-2">
+          <label class="field-group">
+            <span>Aina ya Tukio</span>
+            <select name="type" required>
+              <option value="Msiba">Msiba (Rambirambi)</option>
+              <option value="Harusi">Harusi (Pongezi)</option>
+              <option value="Ugonjwa">Ugonjwa (Matibabu)</option>
+            </select>
+          </label>
+          <label class="field-group">
+            <span>Kanda / Eneo</span>
+            <input type="text" name="region" placeholder="Mfano: Moshi / Dar es Salaam" required>
+          </label>
+        </div>
+        <label class="field-group">
+          <span>Jina la Mwanachama / Familia Husika</span>
+          <input type="text" name="member_name" placeholder="Mfano: Familia ya Mzee Mushi" required>
+        </label>
+        <label class="field-group">
+          <span>Kichwa cha Taarifa</span>
+          <input type="text" name="title" placeholder="Mfano: Taarifa ya Msiba wa..." required>
+        </label>
+        <label class="field-group">
+          <span>Lengo la Mchango (TSh)</span>
+          <input type="number" name="target_amount" value="1500000" min="50000" required>
+        </label>
+        <label class="field-group">
+          <span>Maelezo Kamili</span>
+          <textarea name="description" rows="3" placeholder="Eleza taarifa muhimu kwa wana-WFC..." required></textarea>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close-modal="welfare-modal">Ghairi</button>
+        <button type="submit" class="btn btn-gold">Chapisha Taarifa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Modal: Post Announcement -->
+  <dialog id="announce-modal" class="wfc-modal">
+    <form method="dialog" class="modal-box" id="announce-form">
+      <div class="modal-head">
+        <h3>Tuma Tangazo Rasmi la WFC</h3>
+        <button type="button" class="icon-btn" data-close-modal="announce-modal"><svg class="icon-outline" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <div class="modal-body">
+        <label class="field-group">
+          <span>Kundi la Tangazo</span>
+          <select name="category">
+            <option value="KIKAO">KIKAO</option>
+            <option value="TAARIFA">TAARIFA</option>
+            <option value="MAENDELEO">MAENDELEO</option>
+            <option value="DHARURA">DHARURA</option>
+          </select>
+        </label>
+        <label class="field-group">
+          <span>Kichwa cha Tangazo</span>
+          <input type="text" name="title" placeholder="Mfano: Kikao cha Maandalizi ya Festival" required>
+        </label>
+        <label class="field-group">
+          <span>Kiungo cha Google Meet (Hiari)</span>
+          <input type="url" name="meet_link" placeholder="https://meet.google.com/...">
+        </label>
+        <label class="field-group">
+          <span>Ujumbe Kamili</span>
+          <textarea name="body" rows="4" placeholder="Andika ujumbe kwa wanachama..." required></textarea>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close-modal="announce-modal">Ghairi</button>
+        <button type="submit" class="btn btn-gold">Chapisha Tangazo</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Modal: Official Digital Receipt -->
+  <dialog id="receipt-modal" class="wfc-modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Risiti Rasmi ya Kidijitali &mdash; WFC</h3>
+        <button type="button" class="icon-btn" data-close-modal="receipt-modal"><svg class="icon-outline" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+      </div>
+      <div class="modal-body" id="receipt-print-area"></div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close-modal="receipt-modal">Funga</button>
+        <button type="button" class="btn btn-gold" onclick="window.print()">Chapisha / Hifadhi PDF</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="wfc-toast" class="wfc-toast" role="status" aria-live="polite"></div>
+
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      if (window.google && google.translate) {
+        new google.translate.TranslateElement({
+          pageLanguage: 'sw',
+          includedLanguages: 'sw,en,fr,ar',
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+        }, 'google_translate_element');
+      }
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
+  <script src="assets/js/wfc-dashboard.js"></script>
+</body>
+</html>

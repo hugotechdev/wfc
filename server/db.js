@@ -7,8 +7,8 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
-const DB_PATH = path.join(DATA_DIR, 'wfc.sqlite');
 
+const DB_PATH = path.join(DATA_DIR, 'wfc.sqlite');
 let db = null;
 
 function saveDb() {
@@ -18,23 +18,7 @@ function saveDb() {
   fs.writeFileSync(DB_PATH, buffer);
 }
 
-function run(sql, params = []) {
-  db.run(sql, params);
-  saveDb();
-}
-
-function get(sql, params = []) {
-  const stmt = db.prepare(sql);
-  stmt.bind(params);
-  let row = null;
-  if (stmt.step()) {
-    row = stmt.getAsObject();
-  }
-  stmt.free();
-  return row;
-}
-
-function all(sql, params = []) {
+function queryAll(sql, params = []) {
   const stmt = db.prepare(sql);
   stmt.bind(params);
   const rows = [];
@@ -43,6 +27,18 @@ function all(sql, params = []) {
   }
   stmt.free();
   return rows;
+}
+
+function queryOne(sql, params = []) {
+  const rows = queryAll(sql, params);
+  return rows.length > 0 ? rows[0] : null;
+}
+
+function runSql(sql, params = []) {
+  db.run(sql, params);
+  const lastIdRow = queryOne('SELECT last_insert_rowid() AS id');
+  saveDb();
+  return lastIdRow ? lastIdRow.id : null;
 }
 
 async function initDb() {
@@ -55,265 +51,174 @@ async function initDb() {
   }
 
   db.run(`
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT
-    );
-
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      wfc_id TEXT UNIQUE,
-      full_name TEXT NOT NULL,
+      wfc_id TEXT UNIQUE NOT NULL,
+      fullname TEXT NOT NULL,
       phone TEXT UNIQUE NOT NULL,
-      email TEXT,
-      password_hash TEXT NOT NULL,
-      role TEXT DEFAULT 'member', -- superadmin, chairperson, secretary, treasurer, regional_leader, committee, member
-      status TEXT DEFAULT 'pending', -- active, pending, suspended, exited
+      clan TEXT DEFAULT 'Mushi',
       region TEXT DEFAULT 'Dar es Salaam',
-      district TEXT DEFAULT '',
-      branch TEXT DEFAULT '',
-      home_origin TEXT DEFAULT '', -- Kijiji/Wilaya ya asili Kilimanjaro (Moshi, Hai, Rombo, Siha, Mwanga, Same)
-      avatar TEXT DEFAULT '',
-      joined_date TEXT,
-      months_owed INTEGER DEFAULT 0,
-      emergency_paid REAL DEFAULT 0,
-      entry_fee_paid REAL DEFAULT 0,
+      role TEXT NOT NULL DEFAULT 'member',
+      password_hash TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
       created_at TEXT DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS campaigns (
+    CREATE TABLE IF NOT EXISTS transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      category TEXT NOT NULL, -- msiba, harusi, ugonjwa, mradi, festival, dharura
-      description TEXT,
-      target_per_member REAL DEFAULT 0,
-      target_total REAL DEFAULT 0,
-      beneficiary_user_id INTEGER,
-      beneficiary_name TEXT,
-      status TEXT DEFAULT 'pending_secretary', -- pending_secretary, pending_chairperson, active, completed, rejected
-      created_by INTEGER,
-      verified_by INTEGER,
-      approved_by INTEGER,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS payments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      receipt_no TEXT UNIQUE,
+      receipt_no TEXT UNIQUE NOT NULL,
       user_id INTEGER NOT NULL,
-      fund_account TEXT NOT NULL, -- kiingilio, ada, dharura, msiba, harusi, ugonjwa, miradi, festival
-      campaign_id INTEGER,
+      member_name TEXT NOT NULL,
+      wfc_id TEXT NOT NULL,
+      category TEXT NOT NULL,
       amount REAL NOT NULL,
-      payment_method TEXT DEFAULT 'M-Pesa',
-      transaction_ref TEXT UNIQUE,
-      sms_text TEXT,
-      proof_image TEXT,
-      for_month TEXT,
-      status TEXT DEFAULT 'pending', -- pending, approved, rejected
-      rejection_reason TEXT,
-      reviewed_by INTEGER,
-      reviewed_at TEXT,
+      channel TEXT NOT NULL,
+      reference_code TEXT NOT NULL,
+      receipt_image TEXT DEFAULT '',
+      notes TEXT DEFAULT '',
+      stage TEXT NOT NULL DEFAULT 'pending_treasurer',
+      approved_by TEXT DEFAULT '',
       created_at TEXT DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS expenses (
+    CREATE TABLE IF NOT EXISTS welfare_cases (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      voucher_no TEXT UNIQUE,
-      fund_account TEXT NOT NULL,
-      expense_type TEXT DEFAULT 'matumizi', -- matumizi, msaada, marejesho
-      recipient_user_id INTEGER,
-      recipient_name TEXT,
-      amount REAL NOT NULL,
-      reason TEXT NOT NULL,
-      attachment TEXT,
-      status TEXT DEFAULT 'pending_secretary', -- pending_secretary, pending_chairperson, approved, rejected
-      rejection_reason TEXT,
-      created_by INTEGER,
-      secretary_by INTEGER,
-      secretary_at TEXT,
-      chairperson_by INTEGER,
-      chairperson_at TEXT,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS posts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_code TEXT UNIQUE NOT NULL,
+      type TEXT NOT NULL,
+      member_name TEXT NOT NULL,
+      wfc_id TEXT DEFAULT '',
+      region TEXT DEFAULT 'Kilimanjaro',
       title TEXT NOT NULL,
-      content TEXT NOT NULL,
-      category TEXT DEFAULT 'Tangazo', -- Tangazo, Kikao, Mradi, Taarifa
-      meet_link TEXT,
-      event_date TEXT,
-      image_path TEXT,
-      doc_path TEXT,
-      doc_name TEXT,
-      status TEXT DEFAULT 'published', -- draft, published
-      author_id INTEGER,
-      likes_count INTEGER DEFAULT 0,
+      description TEXT NOT NULL,
+      target_amount REAL NOT NULL DEFAULT 1500000,
+      collected_amount REAL NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'active',
       created_at TEXT DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS post_likes (
-      post_id INTEGER,
-      user_id INTEGER,
-      PRIMARY KEY (post_id, user_id)
-    );
-
-    CREATE TABLE IF NOT EXISTS comments (
+    CREATE TABLE IF NOT EXISTS announcements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      post_id INTEGER NOT NULL,
-      user_id INTEGER NOT NULL,
-      comment_text TEXT NOT NULL,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category TEXT NOT NULL DEFAULT 'TAARIFA',
       title TEXT NOT NULL,
-      description TEXT,
-      venue TEXT NOT NULL,
-      event_date TEXT NOT NULL,
-      banner_image TEXT,
-      regular_price REAL DEFAULT 20000,
-      vip_price REAL DEFAULT 50000,
-      family_price REAL DEFAULT 100000,
-      total_capacity INTEGER DEFAULT 500,
-      status TEXT DEFAULT 'open', -- open, closed
-      created_by INTEGER,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS tickets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      ticket_code TEXT UNIQUE NOT NULL,
-      event_id INTEGER NOT NULL,
-      user_id INTEGER,
-      buyer_name TEXT NOT NULL,
-      buyer_phone TEXT NOT NULL,
-      tier TEXT DEFAULT 'Regular', -- Regular, VIP, Family
-      quantity INTEGER DEFAULT 1,
-      total_amount REAL NOT NULL,
-      payment_method TEXT DEFAULT 'M-Pesa',
-      transaction_ref TEXT UNIQUE,
-      sms_text TEXT,
-      proof_image TEXT,
-      status TEXT DEFAULT 'pending', -- pending, approved, rejected
-      checked_in INTEGER DEFAULT 0,
-      checked_in_at TEXT,
-      reviewed_by INTEGER,
+      body TEXT NOT NULL,
+      meet_link TEXT DEFAULT '',
+      author_name TEXT NOT NULL,
+      author_role TEXT NOT NULL,
+      likes_count INTEGER NOT NULL DEFAULT 12,
       created_at TEXT DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS projects (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      code TEXT,
-      description TEXT,
-      target_capital REAL DEFAULT 0,
-      raised_capital REAL DEFAULT 0,
-      status TEXT DEFAULT 'Inaendelea',
-      lead_person TEXT,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS notifications (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL, -- 0 means broadcast to all
+      tag TEXT NOT NULL,
       title TEXT NOT NULL,
-      message TEXT NOT NULL,
-      link TEXT DEFAULT '/portal.html',
-      is_read INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now'))
+      description TEXT NOT NULL,
+      target_amount REAL NOT NULL DEFAULT 50000000,
+      raised_amount REAL NOT NULL DEFAULT 0,
+      progress_percent INTEGER NOT NULL DEFAULT 50,
+      status TEXT NOT NULL DEFAULT 'active'
     );
 
-    CREATE TABLE IF NOT EXISTS audit_logs (
+    CREATE TABLE IF NOT EXISTS tickets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      actor_id INTEGER,
-      actor_name TEXT,
-      actor_role TEXT,
-      action TEXT NOT NULL,
-      details TEXT,
+      ticket_code TEXT UNIQUE NOT NULL,
+      event_title TEXT NOT NULL,
+      fullname TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      tier TEXT NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 1,
+      unit_price REAL NOT NULL,
+      total_amount REAL NOT NULL,
+      channel TEXT NOT NULL DEFAULT 'M-Pesa',
+      reference_code TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'confirmed',
       created_at TEXT DEFAULT (datetime('now'))
     );
   `);
 
-  // Seed default settings
-  const defaultSettings = [
-    ['entry_fee', '50000'],
-    ['monthly_fee', '10000'],
-    ['emergency_fee', '60000'],
-    ['mpesa_number', '0755 000 888 (Jina: WACHAGGA FAMILY COMMUNITY)'],
-    ['tigopesa_number', '0715 000 888 (Lipa Namba: 889900 - WFC)'],
-    ['airtel_number', '0785 000 888 (Jina: WACHAGGA FAMILY COMMUNITY)'],
-    ['bank_details', 'CRDB Bank - A/C: 0150889944200 (WACHAGGA FAMILY COMMUNITY)'],
-    ['community_about', 'Wachagga Family Community (WFC) ni jumuiya rasmi inayowaunganisha Wachagga wote ndani na nje ya Tanzania kwa lengo la mshikamano, kusaidiana katika shida na raha, na kukuza maendeleo ya kiuchumi. Stand up, It\'s not over!'],
-    ['contact_phone', '+255 755 000 888'],
-    ['contact_email', 'info@wachaggacommunity.or.tz'],
-    ['contact_address', 'Moshi, Kilimanjaro & Dar es Salaam, Tanzania']
-  ];
-
-  for (const [k, v] of defaultSettings) {
-    const exists = get('SELECT key FROM settings WHERE key = ?', [k]);
-    if (!exists) {
-      run('INSERT INTO settings (key, value) VALUES (?, ?)', [k, v]);
-    }
-  }
-
-  // Seed default users if empty
-  const userCount = get('SELECT COUNT(*) as c FROM users');
-  if (!userCount || userCount.c === 0) {
-    const hash = bcrypt.hashSync('123456', 10);
+  const userCount = queryOne('SELECT COUNT(*) AS count FROM users');
+  if (!userCount || userCount.count === 0) {
+    const defaultHash = bcrypt.hashSync('123456', 10);
     const seedUsers = [
-      ['WFC-0001', 'Msimamizi Mkuu (Founder)', '0700000001', 'admin@wfc.or.tz', hash, 'superadmin', 'active', 'Dar es Salaam', 'Kinondoni', 'Mbezi Beach', 'Marangu, Moshi', '2025-01-01', 0, 60000, 50000],
-      ['WFC-0002', 'Mwenyekiti wa Taifa WFC', '0700000002', 'chair@wfc.or.tz', hash, 'chairperson', 'active', 'Dar es Salaam', 'Ilala', 'Upanga', 'Machame, Hai', '2025-01-01', 0, 60000, 50000],
-      ['WFC-0003', 'Katibu Mkuu WFC', '0700000003', 'secretary@wfc.or.tz', hash, 'secretary', 'active', 'Kilimanjaro', 'Moshi Mjini', 'Shanty Town', 'Kibosho, Moshi', '2025-01-01', 0, 60000, 50000],
-      ['WFC-0004', 'Mweka Hazina (Mhasibu)', '0700000004', 'treasurer@wfc.or.tz', hash, 'treasurer', 'active', 'Dar es Salaam', 'Temeke', 'Kigamboni', 'Mkuu, Rombo', '2025-01-01', 0, 60000, 50000],
-      ['WFC-0005', 'Kiongozi Kanda ya Dar', '0700000005', 'dar@wfc.or.tz', hash, 'regional_leader', 'active', 'Dar es Salaam', 'Ubungo', 'Mlimani', 'Uru, Moshi', '2025-02-01', 0, 60000, 50000],
-      ['WFC-0006', 'Amani Massawe (Mwanachama)', '0711111111', 'amani@wfc.or.tz', hash, 'member', 'active', 'Dar es Salaam', 'Kinondoni', 'Mikocheni', 'Old Moshi', '2026-06-01', 2, 30000, 50000]
+      ['WFC-2026-0001', 'Mwanzilishi WFC (Super Admin)', '0700000001', 'Mushi', 'Dar es Salaam', 'super_admin', defaultHash],
+      ['WFC-2026-0002', 'Mwenyekiti Taifa WFC', '0700000002', 'Massawe', 'Kilimanjaro', 'chairperson', defaultHash],
+      ['WFC-2026-0003', 'Katibu Mkuu WFC', '0700000003', 'Kimaro', 'Dar es Salaam', 'secretary', defaultHash],
+      ['WFC-2026-0004', 'Mhasibu Mkuu WFC', '0700000004', 'Lyimo', 'Arusha', 'treasurer', defaultHash],
+      ['WFC-2026-0005', 'Kiongozi wa Kanda - Dar', '0700000005', 'Swai', 'Dar es Salaam', 'regional_leader', defaultHash],
+      ['WFC-2026-0475', 'Mwanachama Hai WFC', '0711111111', 'Shirima', 'Kilimanjaro', 'member', defaultHash]
     ];
-
     for (const u of seedUsers) {
-      run(`INSERT INTO users (wfc_id, full_name, phone, email, password_hash, role, status, region, district, branch, home_origin, joined_date, months_owed, emergency_paid, entry_fee_paid)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, u);
+      db.run(
+        'INSERT INTO users (wfc_id, fullname, phone, clan, region, role, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        u
+      );
     }
 
-    // Seed sample approved payment for member WFC-0006
-    run(`INSERT INTO payments (receipt_no, user_id, fund_account, amount, payment_method, transaction_ref, for_month, status, reviewed_by, reviewed_at)
-         VALUES ('WFC-REC-1001', 6, 'kiingilio', 50000, 'M-Pesa', 'MPESA8821001', '2026-06', 'approved', 4, datetime('now'))`);
-    run(`INSERT INTO payments (receipt_no, user_id, fund_account, amount, payment_method, transaction_ref, for_month, status, reviewed_by, reviewed_at)
-         VALUES ('WFC-REC-1002', 6, 'dharura', 30000, 'Tigo Pesa', 'TIGO8821002', '2026-07', 'approved', 4, datetime('now'))`);
+    const seedTransactions = [
+      ['WFC-RCT-2026-101', 6, 'Mwanachama Hai WFC', 'WFC-2026-0475', 'Ada ya Mwezi', 50000, 'M-Pesa', 'MP261110A91', '', 'Ada ya mwezi Novemba 2026', 'approved_chairperson', 'Mwenyekiti Taifa WFC'],
+      ['WFC-RCT-2026-102', 5, 'Kiongozi wa Kanda - Dar', 'WFC-2026-0005', 'Uwekezaji WCSC / SACCOS', 250000, 'CRDB Bank', 'CRDB889012', '', 'Hisa za WCSC robo ya nne', 'approved_secretary', 'Katibu Mkuu WFC'],
+      ['WFC-RCT-2026-103', 6, 'Mwanachama Hai WFC', 'WFC-2026-0475', 'Mfuko wa Maafa / Msiba', 30000, 'Tigo Pesa', 'TG88990044', '', 'Mchango wa rambirambi familia ya Mzee Tarimo', 'verified_treasurer', 'Mhasibu Mkuu WFC'],
+      ['WFC-RCT-2026-104', 6, 'Mwanachama Hai WFC', 'WFC-2026-0475', 'Tamasha la WFC', 60000, 'Airtel Money', 'AM77231099', '', 'Malipo ya maandalizi ya WFC Festival', 'pending_treasurer', '']
+    ];
+    for (const t of seedTransactions) {
+      db.run(
+        'INSERT INTO transactions (receipt_no, user_id, member_name, wfc_id, category, amount, channel, reference_code, receipt_image, notes, stage, approved_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        t
+      );
+    }
 
-    // Seed active campaign (Mchango unaotakiwa)
-    run(`INSERT INTO campaigns (title, category, description, target_per_member, target_total, beneficiary_name, status, created_by, verified_by, approved_by)
-         VALUES ('Mchango wa Msiba - Familia ya Mzee Shirima (Rombo)', 'msiba', 'Jumuiya inatoa pole kwa familia ya mwanachama mwenzetu aliyefiwa. Kila mwanachama anaombwa kuchangia angalau TSh 10,000.', 10000, 4500000, 'Familia ya Mzee Shirima', 'active', 3, 3, 2)`);
+    const seedWelfare = [
+      ['WFC-WLF-01', 'Msiba', 'Familia ya Mzee E. Tarimo', 'WFC-2026-0118', 'Marangu, Kilimanjaro', 'Rambirambi ya Msiba wa Mzee E. Tarimo', 'Jumuiya inashirikiana kufariji familia ya mwanachama mwenzetu aliyefiwa na baba mzazi huko Marangu.', 2000000, 1650000, 'active'],
+      ['WFC-WLF-02', 'Harusi', 'Bwana & Bibi K. Urassa', 'WFC-2026-0214', 'Dar es Salaam', 'Sherehe ya Harusi ya Mwanachama K. Urassa', 'Mchango wa zawadi na heshima ya WFC kwa harusi itakayofanyika Mikocheni, Dar es Salaam.', 1500000, 1280000, 'active'],
+      ['WFC-WLF-03', 'Ugonjwa', 'Bi. Grace Mrema', 'WFC-2026-0309', 'Arusha', 'Msaada wa Matibabu (KCMC Moshi)', 'Tuungane kumsaidia dada yetu Grace Mrema anayeendelea na matibabu katika hospitali ya rufaa KCMC.', 1200000, 940000, 'active']
+    ];
+    for (const w of seedWelfare) {
+      db.run(
+        'INSERT INTO welfare_cases (case_code, type, member_name, wfc_id, region, title, description, target_amount, collected_amount, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        w
+      );
+    }
 
-    // Seed sample post
-    run(`INSERT INTO posts (title, content, category, meet_link, event_date, status, author_id, likes_count)
-         VALUES ('Kikao Kikuu cha Robo Mwaka cha WFC Mtandaoni', 'Habari wana-WFC! Tunawakaribisha kwenye kikao chetu kikuu kupitia Google Meet kujadili maendeleo ya WCSC, SACCOS na maandalizi ya Wachagga Family Community Festival. Stand up, It\'s not over!', 'Kikao', 'https://meet.google.com/wfc-general-meeting', '2026-11-28 19:00', 'published', 3, 24)`);
+    const seedAnnouncements = [
+      ['KIKAO', 'Kikao Kikuu cha Robo Mwaka cha WFC Mtandaoni', 'Habari wana-WFC. Tunawakaribisha kwenye kikao chetu kikuu kupitia Google Meet kujadili maendeleo ya WCSC, SACCOS na maandalizi ya Wachagga Family Community Festival. Stand up, it\'s not over!', 'https://meet.google.com', 'Katibu Mkuu WFC', 'Katibu Mkuu', 48],
+      ['MAENDELEO', 'Gawio la Uwekezaji wa WFC SACCOS & UTT AMIS 2026', 'Kamati ya Uchumi na Uwekezaji inapenda kuwataarifu wanachama wote kuwa mifuko yetu ya WCSC na UTT AMIS imeongezeka kwa asilimia 18.4 katika robo hii.', '', 'Mhasibu Mkuu WFC', 'Mhasibu / Mweka Hazina', 63]
+    ];
+    for (const a of seedAnnouncements) {
+      db.run(
+        'INSERT INTO announcements (category, title, body, meet_link, author_name, author_role, likes_count) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        a
+      );
+    }
 
-    // Seed sample event
-    run(`INSERT INTO events (title, description, venue, event_date, regular_price, vip_price, family_price, total_capacity, status, created_by)
-         VALUES ('Wachagga Family Community Festival 2026', 'Tamasha kubwa la utamaduni, mbege, nyama choma, mtandao wa biashara na burudani ya asili kwa familia zote za WFC na marafiki!', 'Mlimani City Conference Hall, Dar es Salaam', '2026-12-20 14:00', 25000, 60000, 120000, 600, 'open', 2)`);
-
-    // Seed sample projects
     const seedProjects = [
-      ['WCSC (Wachagga Community Savings & Credit)', 'WCSC', 'Mfuko wa uwekezaji wa pamoja na mikopo nafuu kwa wanachama wa WFC.', 50000000, 32500000, 'Inaendelea', 'Kamati ya Uchumi'],
-      ['WFC SACCOS & UTT AMIS', 'SACCOS', 'Uwekezaji wa pamoja katika mifuko ya UTT AMIS (Umoja & Wekeza Maisha) kwa niaba ya jumuiya.', 100000000, 64000000, 'Inaendelea', 'Mweka Hazina'],
-      ['Community Tours (Kilimanjaro & Ngorongoro)', 'TOURS', 'Utalii wa ndani na utamaduni wa Wachagga kuimarisha umoja na mapato.', 15000000, 11200000, 'Inaendelea', 'Kamati ya Matukio'],
-      ['WFC Queens Empowerment', 'QUEENS', 'Programu maalum ya wanawake wa WFC katika ujasiriamali na uongozi.', 20000000, 14800000, 'Inaendelea', 'Mwenyekiti Queens'],
-      ['Wachagga Family Community Festival', 'FESTIVAL', 'Tamasha la kila mwaka linalokutanisha wanachama wote wa WFC.', 35000000, 21000000, 'Maandalizi', 'Kamati ya Festival']
+      ['UWEKEZAJI', 'WCSC (Wachagga Community Savings & Credit)', 'Mfuko wa uwekezaji wa pamoja na mikopo nafuu kwa wanachama wa WFC.', 80000000, 62400000, 78, 'active'],
+      ['MAENDELEO', 'WFC SACCOS & UTT AMIS', 'Uwekezaji wa pamoja katika mifuko ya UTT AMIS (Umoja & Wekeza Maisha) kwa niaba ya jumuiya.', 60000000, 45000000, 75, 'active'],
+      ['UTAMADUNI', 'Community Tours (Kilimanjaro & Ngorongoro)', 'Utalii wa ndani na utamaduni wa Wachagga kuimarisha umoja na vipato.', 25000000, 17500000, 70, 'active'],
+      ['UWEZESHAJI', 'WFC Queens Empowerment', 'Programu maalum ya wanawake wa WFC katika ujasiriamali na uongozi.', 30000000, 24600000, 82, 'active'],
+      ['MAANDALIZI', 'Wachagga Family Community Festival', 'Tamasha la kila mwaka linalokutanisha wanachama wote wa WFC.', 40000000, 34000000, 85, 'active']
     ];
     for (const p of seedProjects) {
-      run(`INSERT INTO projects (name, code, description, target_capital, raised_capital, status, lead_person)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`, p);
+      db.run(
+        'INSERT INTO projects (tag, title, description, target_amount, raised_amount, progress_percent, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        p
+      );
     }
 
-    // Seed notification for member 6
-    run(`INSERT INTO notifications (user_id, title, message, link)
-         VALUES (6, 'Karibu WFC Online Portal!', 'Malipo yako ya Kiingilio (TSh 50,000) yamethibitishwa. Una deni la ada ya miezi 2 (TSh 20,000) na salio la Dharura (TSh 30,000).', '/portal.html')`);
+    db.run(
+      'INSERT INTO tickets (ticket_code, event_title, fullname, phone, tier, quantity, unit_price, total_amount, channel, reference_code, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      ['WFC-TKT-202601', 'Wachagga Family Community Festival 2026', 'Mwanachama Hai WFC', '0711111111', 'VIP', 1, 60000, 60000, 'M-Pesa', 'MP99887766', 'confirmed']
+    );
+
+    saveDb();
   }
 
-  saveDb();
-  console.log('WFC Database initialized successfully at:', DB_PATH);
+  return db;
 }
 
-module.exports = { initDb, run, get, all, saveDb };
+module.exports = {
+  initDb,
+  queryAll,
+  queryOne,
+  runSql,
+  saveDb
+};
