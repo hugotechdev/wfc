@@ -1,0 +1,21 @@
+{
+  "name": "Wachagga Family Community (WFC)",
+  "short_name": "WFC Portal",
+  "description": "Stand up, It's not over - The Pride of Chagga Digital Office",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0b0b0d",
+  "theme_color": "#ff6b00",
+  "icons": [
+    {
+      "src": "/img/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

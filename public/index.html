@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wachagga Family Community (WFC) | The Pride of Chagga</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/img/logo.png" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="/index.html" class="brand">
+        <img src="/img/logo.png" alt="WFC Logo" />
+        <div class="brand-text">
+          <h1>WACHAGGA FAMILY COMMUNITY</h1>
+          <span>STAND UP, IT'S NOT OVER • THE PRIDE OF CHAGGA</span>
+        </div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#about">Kuhusu WFC</a>
+        <a href="#announcements">Matangazo</a>
+        <a href="#events">Matukio & Tiketi</a>
+        <a href="#contact">Mawasiliano</a>
+        <div id="google_translate_element"></div>
+        <button class="btn-outline" onclick="openModal('loginModal')">🔑 Ingia (Login)</button>
+        <button class="btn-primary" onclick="openModal('registerModal')">➕ Jisajili</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <img src="/img/logo.png" alt="WFC Emblem" class="hero-logo" />
+    <div class="motto">⛰️ STAND UP, IT'S NOT OVER • THE PRIDE OF CHAGGA</div>
+    <h2>OFISI YA KIDIJITALI YA WACHAGGA FAMILY COMMUNITY</h2>
+    <p>
+      Umoja wa Wachagga, Nguvu ya Familia. Fuatilia taarifa zako, michango, misaada, miradi ya maendeleo, na kata tiketi za matukio mtandaoni saa 24.
+    </p>
+    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+      <button class="btn-primary" style="font-size:1.08rem; padding:14px 26px;" onclick="openModal('loginModal')">
+        🚪 INGIA KWENYE AKAUNTI YAKO
+      </button>
+      <button class="btn-outline" style="font-size:1.05rem; padding:14px 24px;" onclick="openModal('registerModal')">
+        📝 JISAJILI MWANACHAMA MPYA
+      </button>
+      <a href="#events" class="btn-outline" style="font-size:1.05rem; padding:14px 24px; border-color:#16a34a;">
+        🎟️ KATA TIKETI YA TUKIO
+      </a>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-box">
+        <div class="num" id="statMembers">475+</div>
+        <div class="lbl">Wanachama Hai</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" style="color:#4ade80;">ACTIVE</div>
+        <div class="lbl">Hali ya Mfumo</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">24/7</div>
+        <div class="lbl">Ofisi Mtandaoni</div>
+      </div>
+    </div>
+  </section>
+
+  <main class="container">
+
+    <!-- About Section -->
+    <section id="about" class="card card-orange">
+      <h3 style="color:var(--orange); font-size:1.35rem; margin-bottom:10px;">🏛️ Kuhusu Wachagga Family Community (WFC)</h3>
+      <p id="aboutText" style="color:#e4e4e7; font-size:1.02rem; margin-bottom:16px;">
+        Inapakia taarifa za jumuiya...
+      </p>
+      <div class="grid-3">
+        <div style="background:var(--bg-elevated); padding:14px; border-radius:12px;">
+          <strong style="color:var(--gold);">🤝 Mshikamano & Misaada</strong>
+          <p style="font-size:0.9rem; color:#d4d4d8; margin-top:4px;">Kusaidiana katika misiba, ugonjwa, na sherehe za harusi kwa uwazi na heshima.</p>
+        </div>
+        <div style="background:var(--bg-elevated); padding:14px; border-radius:12px;">
+          <strong style="color:var(--gold);">📈 Uchumi & Uwekezaji</strong>
+          <p style="font-size:0.9rem; color:#d4d4d8; margin-top:4px;">Miradi ya pamoja kama WCSC, SACCOS, UTT AMIS, Community Tours na WFC Queens.</p>
+        </div>
+        <div style="background:var(--bg-elevated); padding:14px; border-radius:12px;">
+          <strong style="color:var(--gold);">🛡️ Uwazi wa Fedha 100%</strong>
+          <p style="font-size:0.9rem; color:#d4d4d8; margin-top:4px;">Kila mchango una risiti ya kidijitali na matumizi yanapitia ngazi za uidhinishaji wa uongozi.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Events & Public Ticket Booking -->
+    <section id="events" style="margin-top:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+        <h3 style="color:var(--orange); font-size:1.4rem;">🎟️ Matukio Yajayo & Tiketi za Mtandaoni</h3>
+        <button class="btn-outline" onclick="openModal('checkTicketModal')">🔍 Hakiki / Pakua Tiketi Yangu</button>
+      </div>
+      <div id="eventsList" class="grid-2">
+        <div class="card">Inapakia matukio...</div>
+      </div>
+    </section>
+
+    <!-- Public Announcements -->
+    <section id="announcements" style="margin-top:28px;">
+      <h3 style="color:var(--orange); font-size:1.4rem; margin-bottom:14px;">📢 Matangazo Rasmi ya WFC</h3>
+      <div id="publicPosts" class="grid-2">
+        <div class="card">Inapakia matangazo...</div>
+      </div>
+    </section>
+
+    <!-- Projects Showcase -->
+    <section style="margin-top:28px;">
+      <h3 style="color:var(--orange); font-size:1.4rem; margin-bottom:14px;">🚀 Miradi na Uwekezaji wa WFC</h3>
+      <div id="publicProjects" class="grid-3"></div>
+    </section>
+
+    <!-- Contact & Payment Info -->
+    <section id="contact" class="card" style="margin-top:28px;">
+      <h3 style="color:var(--orange); font-size:1.35rem; margin-bottom:12px;">📞 Mawasiliano & Akaunti Rasmi za Malipo</h3>
+      <div class="grid-2">
+        <div>
+          <p style="margin-bottom:8px;"><strong>📍 Ofisi:</strong> <span id="contactAddress">Moshi, Kilimanjaro & Dar es Salaam</span></p>
+          <p style="margin-bottom:8px;"><strong>📱 Simu / WhatsApp:</strong> <span id="contactPhone">+255 755 000 888</span></p>
+          <p style="margin-bottom:8px;"><strong>✉️ Barua Pepe:</strong> <span id="contactEmail">info@wachaggacommunity.or.tz</span></p>
+        </div>
+        <div style="background:var(--bg-elevated); padding:14px; border-radius:12px; border:1px solid var(--border);">
+          <strong style="color:var(--gold); display:block; margin-bottom:8px;">💳 Namba Rasmi za Malipo WFC:</strong>
+          <p style="font-size:0.9rem; margin-bottom:4px;">🟢 <strong>M-Pesa:</strong> <span id="payMpesa"></span></p>
+          <p style="font-size:0.9rem; margin-bottom:4px;">🔵 <strong>Tigo Pesa:</strong> <span id="payTigo"></span></p>
+          <p style="font-size:0.9rem; margin-bottom:4px;">🔴 <strong>Airtel Money:</strong> <span id="payAirtel"></span></p>
+          <p style="font-size:0.9rem;">🏦 <strong>Benki:</strong> <span id="payBank"></span></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer style="text-align:center; padding:24px; border-top:1px solid var(--border); color:var(--text-muted); font-size:0.9rem;">
+    © 2026 Wachagga Family Community (WFC) — <em>Stand up, It's not over</em>. Haki zote zimehifadhiwa.
+  </footer>
+
+  <!-- SIMPLE LOGIN MODAL -->
+  <div id="loginModal" class="modal-backdrop">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+      <div style="text-align:center; margin-bottom:16px;">
+        <img src="/img/logo.png" style="width:68px; height:68px; border-radius:50%; border:2px solid var(--orange);" />
+        <h3 style="margin-top:8px; color:var(--orange);">Ingia Kwenye Akaunti (Login)</h3>
+        <p style="font-size:0.88rem; color:var(--text-muted);">Tumia namba yako ya simu au WFC ID na nenosiri lako</p>
+      </div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>📱 Namba ya Simu au WFC ID (Mfano: 0711111111)</label>
+          <input type="text" id="loginId" class="form-control" placeholder="Weka namba ya simu..." required />
+        </div>
+        <div class="form-group">
+          <label>🔒 Nenosiri (Password / PIN)</label>
+          <input type="password" id="loginPass" class="form-control" placeholder="Weka nenosiri lako..." required />
+        </div>
+        <div id="loginMsg" style="color:#f87171; font-size:0.9rem; margin-bottom:10px;"></div>
+        <button type="submit" class="btn-primary" style="width:100%; font-size:1.05rem;">INGIA SASA →</button>
+      </form>
+      <p style="text-align:center; margin-top:14px; font-size:0.9rem;">
+        Huna akaunti bado? <a href="#" onclick="closeModal('loginModal'); openModal('registerModal')"><strong>Jisajili Hapa</strong></a>
+      </p>
+    </div>
+  </div>
+
+  <!-- SIMPLE REGISTER MODAL -->
+  <div id="registerModal" class="modal-backdrop">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+      <h3 style="color:var(--orange); margin-bottom:4px;">📝 Usajili wa Mwanachama Mpya</h3>
+      <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:14px;">Jaza taarifa fupi upate namba yako ya WFC ID papo hapo.</p>
+      <form onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>👤 Majina Yako Kamili</label>
+          <input type="text" id="regName" class="form-control" placeholder="Mfano: Josephat Mushi" required />
+        </div>
+        <div class="form-group">
+          <label>📱 Namba ya Simu (Itatumika kuingia)</label>
+          <input type="tel" id="regPhone" class="form-control" placeholder="Mfano: 0754123456" required />
+        </div>
+        <div class="form-group">
+          <label>🔒 Tengeneza Nenosiri / PIN Rahisi</label>
+          <input type="password" id="regPass" class="form-control" placeholder="Weka namba au neno utakaloikumbuka" required />
+        </div>
+        <div class="grid-2" style="gap:10px;">
+          <div class="form-group">
+            <label>📍 Kanda Unayoishi</label>
+            <select id="regRegion" class="form-control">
+              <option value="Dar es Salaam">Dar es Salaam</option>
+              <option value="Kilimanjaro">Kilimanjaro</option>
+              <option value="Arusha">Arusha</option>
+              <option value="Mwanza">Mwanza</option>
+              <option value="Dodoma">Dodoma</option>
+              <option value="Mbeya">Mbeya</option>
+              <option value="Morogoro">Morogoro</option>
+              <option value="Tanga">Tanga</option>
+              <option value="Diaspora (Nje ya Nchi)">Diaspora (Nje ya Nchi)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>⛰️ Unapotoka (Asili Kilimanjaro)</label>
+            <input type="text" id="regOrigin" class="form-control" placeholder="Mfano: Marangu / Machame / Rombo" />
+          </div>
+        </div>
+        <div class="grid-2" style="gap:10px;">
+          <div class="form-group">
+            <label>🏘️ Halmashauri / Wilaya</label>
+            <input type="text" id="regDistrict" class="form-control" placeholder="Mfano: Kinondoni" />
+          </div>
+          <div class="form-group">
+            <label>🌿 Tawi / Mtaa</label>
+            <input type="text" id="regBranch" class="form-control" placeholder="Mfano: Mbezi Beach" />
+          </div>
+        </div>
+        <div id="regMsg" style="color:#f87171; font-size:0.9rem; margin-bottom:10px;"></div>
+        <button type="submit" class="btn-primary" style="width:100%;">KAMILISHA USAJILI ✓</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- BOOK EVENT TICKET MODAL -->
+  <div id="ticketModal" class="modal-backdrop">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('ticketModal')">✕</button>
+      <h3 style="color:var(--orange); margin-bottom:6px;">🎟️ Kata Tiketi ya Tukio</h3>
+      <p id="tktEventTitle" style="font-weight:700; margin-bottom:12px;"></p>
+
+      <div style="background:var(--bg-elevated); padding:12px; border-radius:10px; font-size:0.86rem; margin-bottom:14px; border:1px solid var(--border);">
+        <strong style="color:var(--gold);">Hatua ya 1: Lipa kwanza kwenye namba za WFC:</strong>
+        <div id="tktPayInfo" style="margin-top:4px; color:#d4d4d8;"></div>
+      </div>
+
+      <form onsubmit="handleBookTicket(event)">
+        <input type="hidden" id="tktEventId" />
+        <div class="form-group">
+          <label>👤 Jina la Mhudhuriaji</label>
+          <input type="text" id="tktBuyerName" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label>📱 Namba ya Simu</label>
+          <input type="tel" id="tktBuyerPhone" class="form-control" required />
+        </div>
+        <div class="grid-2" style="gap:10px;">
+          <div class="form-group">
+            <label>🎫 Aina ya Tiketi</label>
+            <select id="tktTier" class="form-control" onchange="updateTicketTotal()"></select>
+          </div>
+          <div class="form-group">
+            <label>🔢 Idadi ya Tiketi</label>
+            <input type="number" id="tktQty" class="form-control" value="1" min="1" max="20" onchange="updateTicketTotal()" />
+          </div>
+        </div>
+        <div style="background:rgba(255,107,0,0.15); padding:10px; border-radius:8px; margin-bottom:12px; font-weight:800; color:var(--gold);">
+          Jumla ya Kulipa: <span id="tktTotalDisplay">TSh 0</span>
+        </div>
+        <div class="form-group">
+          <label>💳 Mtandao Uliolipia</label>
+          <select id="tktMethod" class="form-control">
+            <option value="M-Pesa">M-Pesa</option>
+            <option value="Tigo Pesa">Tigo Pesa</option>
+            <option value="Airtel Money">Airtel Money</option>
+            <option value="HaloPesa">HaloPesa</option>
+            <option value="Benki">Benki</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>🔖 Namba ya Muamala (Transaction ID)</label>
+          <input type="text" id="tktRef" class="form-control" placeholder="Mfano: 8J4K9L2M1N" />
+        </div>
+        <div class="form-group">
+          <label>💬 Au Bandika SMS ya Muamala Hapa</label>
+          <textarea id="tktSms" class="form-control" rows="2" placeholder="Paste ujumbe wa muamala..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>📸 Au Pakia Picha/Screenshot ya Risiti</label>
+          <input type="file" id="tktProof" class="form-control" accept="image/*" />
+        </div>
+        <div id="tktMsg" style="margin-bottom:10px; font-size:0.9rem;"></div>
+        <button type="submit" class="btn-primary" style="width:100%;">TUMA UTHIBITISHO WA TIKETI ✓</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- CHECK TICKET MODAL -->
+  <div id="checkTicketModal" class="modal-backdrop">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('checkTicketModal')">✕</button>
+      <h3 style="color:var(--orange); margin-bottom:10px;">🔍 Angalia Tiketi Yako</h3>
+      <div class="form-group" style="display:flex; gap:8px;">
+        <input type="text" id="checkTktQuery" class="form-control" placeholder="Weka Namba ya Tiketi (WFC-TKT-...) au Simu" />
+        <button class="btn-primary" onclick="checkMyTicket()">Tafuta</button>
+      </div>
+      <div id="checkTktResults"></div>
+    </div>
+  </div>
+
+  <!-- Google Translate Script -->
+  <script>
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'sw',
+        includedLanguages: 'sw,en',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <script>
+    let homeData = null;
+    let selectedEvent = null;
+
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    // Redirect if already logged in
+    if (localStorage.getItem('wfc_token')) {
+      const navLinks = document.querySelector('.nav-links');
+      const dashBtn = document.createElement('a');
+      dashBtn.href = '/portal.html';
+      dashBtn.className = 'btn-primary';
+      dashBtn.textContent = '📊 Fungua Dashibodi Yangu';
+      navLinks.appendChild(dashBtn);
+    }
+
+    async function loadHome() {
+      try {
+        const res = await fetch('/api/public/home');
+        homeData = await res.json();
+
+        document.getElementById('statMembers').textContent = homeData.stats.total_members + '+';
+        document.getElementById('aboutText').textContent = homeData.settings.community_about || '';
+        document.getElementById('contactAddress').textContent = homeData.settings.contact_address || '';
+        document.getElementById('contactPhone').textContent = homeData.settings.contact_phone || '';
+        document.getElementById('contactEmail').textContent = homeData.settings.contact_email || '';
+        document.getElementById('payMpesa').textContent = homeData.settings.mpesa_number || '';
+        document.getElementById('payTigo').textContent = homeData.settings.tigopesa_number || '';
+        document.getElementById('payAirtel').textContent = homeData.settings.airtel_number || '';
+        document.getElementById('payBank').textContent = homeData.settings.bank_details || '';
+
+        // Render Events
+        const evContainer = document.getElementById('eventsList');
+        if (!homeData.events.length) {
+          evContainer.innerHTML = '<div class="card">Hakuna matukio wazi kwa sasa.</div>';
+        } else {
+          evContainer.innerHTML = homeData.events.map(ev => `
+            <div class="card card-orange">
+              <span class="badge badge-active">TIKETI ZINAUZWA</span>
+              <h4 style="font-size:1.2rem; margin:8px 0; color:#fff;">${ev.title}</h4>
+              <p style="font-size:0.92rem; color:#d4d4d8; margin-bottom:10px;">${ev.description || ''}</p>
+              <p style="font-size:0.9rem; margin-bottom:4px;">📍 <strong>Mahali:</strong> ${ev.venue}</p>
+              <p style="font-size:0.9rem; margin-bottom:10px;">📅 <strong>Tarehe:</strong> ${ev.event_date}</p>
+              <div style="background:var(--bg-elevated); padding:10px; border-radius:10px; font-size:0.88rem; margin-bottom:12px;">
+                Regular: <strong>TSh ${Number(ev.regular_price).toLocaleString()}</strong> |
+                VIP: <strong>TSh ${Number(ev.vip_price).toLocaleString()}</strong> |
+                Familia: <strong>TSh ${Number(ev.family_price).toLocaleString()}</strong>
+              </div>
+              <button class="btn-primary" style="width:100%;" onclick="openTicketBooking(${ev.id})">🎟️ Kata Tiketi Sasa</button>
+            </div>
+          `).join('');
+        }
+
+        // Render Posts
+        const postContainer = document.getElementById('publicPosts');
+        postContainer.innerHTML = homeData.posts.map(p => `
+          <div class="card">
+            <span class="badge badge-pending">${p.category}</span>
+            <h4 style="font-size:1.12rem; margin:8px 0;">${p.title}</h4>
+            <p style="font-size:0.92rem; color:#d4d4d8; margin-bottom:10px;">${p.content}</p>
+            ${p.meet_link ? `<p style="margin-bottom:8px;"><a href="${p.meet_link}" target="_blank" class="btn-outline" style="padding:6px 12px; font-size:0.85rem;">🎥 Jiunge Google Meet</a></p>` : ''}
+            <small style="color:var(--text-muted);">Imewekwa na: ${p.author_name || 'Uongozi WFC'} • 💬 Maoni ${p.comments_count}</small>
+          </div>
+        `).join('');
+
+        // Render Projects
+        const projContainer = document.getElementById('publicProjects');
+        projContainer.innerHTML = homeData.projects.map(pr => `
+          <div class="card">
+            <span class="badge badge-active">${pr.status}</span>
+            <h4 style="margin:8px 0; color:var(--gold);">${pr.name}</h4>
+            <p style="font-size:0.88rem; color:#d4d4d8;">${pr.description}</p>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openTicketBooking(eventId) {
+      selectedEvent = homeData.events.find(e => e.id === eventId);
+      if (!selectedEvent) return;
+      document.getElementById('tktEventId').value = selectedEvent.id;
+      document.getElementById('tktEventTitle').textContent = selectedEvent.title + ' (' + selectedEvent.venue + ')';
+      document.getElementById('tktPayInfo').innerHTML = `
+        M-Pesa: ${homeData.settings.mpesa_number}<br/>
+        Tigo Pesa: ${homeData.settings.tigopesa_number}
+      `;
+      const tierSel = document.getElementById('tktTier');
+      tierSel.innerHTML = `
+        <option value="Regular" data-price="${selectedEvent.regular_price}">Regular - TSh ${Number(selectedEvent.regular_price).toLocaleString()}</option>
+        <option value="VIP" data-price="${selectedEvent.vip_price}">VIP - TSh ${Number(selectedEvent.vip_price).toLocaleString()}</option>
+        <option value="Family" data-price="${selectedEvent.family_price}">Familia - TSh ${Number(selectedEvent.family_price).toLocaleString()}</option>
+      `;
+      updateTicketTotal();
+      openModal('ticketModal');
+    }
+
+    function updateTicketTotal() {
+      const sel = document.getElementById('tktTier');
+      const price = Number(sel.options[sel.selectedIndex].dataset.price || 0);
+      const qty = Math.max(1, Number(document.getElementById('tktQty').value || 1));
+      document.getElementById('tktTotalDisplay').textContent = 'TSh ' + (price * qty).toLocaleString();
+    }
+
+    async function handleBookTicket(e) {
+      e.preventDefault();
+      const fd = new FormData();
+      fd.append('event_id', document.getElementById('tktEventId').value);
+      fd.append('buyer_name', document.getElementById('tktBuyerName').value);
+      fd.append('buyer_phone', document.getElementById('tktBuyerPhone').value);
+      fd.append('tier', document.getElementById('tktTier').value);
+      fd.append('quantity', document.getElementById('tktQty').value);
+      fd.append('payment_method', document.getElementById('tktMethod').value);
+      fd.append('transaction_ref', document.getElementById('tktRef').value);
+      fd.append('sms_text', document.getElementById('tktSms').value);
+      const fileInput = document.getElementById('tktProof');
+      if (fileInput.files[0]) fd.append('proof_image', fileInput.files[0]);
+
+      const msgEl = document.getElementById('tktMsg');
+      msgEl.style.color = '#fbbf24';
+      msgEl.textContent = 'Inatuma ombi la tiketi...';
+
+      const res = await fetch('/api/public/tickets/book', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) {
+        msgEl.style.color = '#f87171';
+        msgEl.textContent = data.error || 'Hitilafu imetokea';
+      } else {
+        msgEl.style.color = '#4ade80';
+        msgEl.innerHTML = `✅ ${data.message}<br/><strong>Namba Yako ya Tiketi: ${data.ticket_code}</strong> (Ihifadhi!)`;
+      }
+    }
+
+    async function checkMyTicket() {
+      const q = document.getElementById('checkTktQuery').value.trim();
+      if (!q) return;
+      const res = await fetch('/api/public/tickets/check?q=' + encodeURIComponent(q));
+      const data = await res.json();
+      const box = document.getElementById('checkTktResults');
+      if (!data.tickets.length) {
+        box.innerHTML = '<p style="color:#f87171;">Hakuna tiketi iliyopatikana kwa taarifa hizo.</p>';
+        return;
+      }
+      box.innerHTML = data.tickets.map(t => `
+        <div class="card" style="margin-top:10px; border-color:${t.status === 'approved' ? '#16a34a' : '#f59e0b'};">
+          <div style="display:flex; justify-content:space-between;">
+            <strong>${t.ticket_code}</strong>
+            <span class="badge ${t.status === 'approved' ? 'badge-approved' : 'badge-pending'}">${t.status}</span>
+          </div>
+          <p style="margin-top:6px;"><strong>Tukio:</strong> ${t.event_title}</p>
+          <p><strong>Jina:</strong> ${t.buyer_name} (${t.tier} x${t.quantity})</p>
+          <p><strong>Kiasi:</strong> TSh ${Number(t.total_amount).toLocaleString()}</p>
+          ${t.status === 'approved' ? `<img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(t.ticket_code)}" style="margin-top:8px; border-radius:8px; background:#fff; padding:6px;" />` : '<small style="color:#fbbf24;">Inasubiri uthibitisho wa malipo kutoka kwa Mhasibu.</small>'}
+        </div>
+      `).join('');
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const identifier = document.getElementById('loginId').value;
+      const password = document.getElementById('loginPass').value;
+      const msg = document.getElementById('loginMsg');
+      msg.textContent = 'Inaingia...';
+
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.textContent = data.error || 'Imeshindwa kuingia.';
+      } else {
+        localStorage.setItem('wfc_token', data.token);
+        localStorage.setItem('wfc_user', JSON.stringify(data.user));
+        window.location.href = '/portal.html';
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const payload = {
+        full_name: document.getElementById('regName').value,
+        phone: document.getElementById('regPhone').value,
+        password: document.getElementById('regPass').value,
+        region: document.getElementById('regRegion').value,
+        home_origin: document.getElementById('regOrigin').value,
+        district: document.getElementById('regDistrict').value,
+        branch: document.getElementById('regBranch').value
+      };
+      const msg = document.getElementById('regMsg');
+      msg.textContent = 'Inasajili...';
+
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.textContent = data.error || 'Hitilafu ya usajili.';
+      } else {
+        localStorage.setItem('wfc_token', data.token);
+        localStorage.setItem('wfc_user', JSON.stringify(data.user));
+        window.location.href = '/portal.html';
+      }
+    }
+
+    loadHome();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
