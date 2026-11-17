@@ -2,7 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+
+function Year() {
+  return <>{new Date().getFullYear()}</>;
+}
 
 export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
@@ -85,7 +89,7 @@ export default function Home() {
       </div>
 
       <p className="mt-8 text-xs text-gray-400">
-        © {new Date().getFullYear()} Wachagga Family Community. Haki zote zimehifadhiwa.
+        © <Suspense fallback="2026"><Year /></Suspense> Wachagga Family Community. Haki zote zimehifadhiwa.
       </p>
     </div>
   );
