@@ -1,0 +1,312 @@
+/* ==========================================================================
+   WFC DIGITAL OFFICE — DESIGN TOKENS & CORE PRIMITIVES
+   Light Theme: Crisp White & Metallic Gold
+   Dark Theme: Deep Charcoal Black-Grey & Brushed Gold
+   ========================================================================== */
+
+:root {
+  /* Light Theme — White & Gold */
+  --bg-canvas: #f5f4f0;
+  --bg-surface: #ffffff;
+  --bg-subtle: #faf9f6;
+  --bg-hover: #f1eee6;
+
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #71717a;
+
+  --gold-primary: #b8860b;
+  --gold-hover: #9a6f07;
+  --gold-soft: rgba(184, 134, 11, 0.10);
+  --gold-border: rgba(184, 134, 11, 0.30);
+  --gold-on-solid: #ffffff;
+
+  --border-subtle: #e7e4dc;
+  --border-strong: #d4cfc3;
+
+  --danger-text: #b91c1c;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+
+  --success-text: #15803d;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+
+  --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.04);
+  --shadow-md: 0 6px 20px rgba(24, 24, 27, 0.07);
+  --shadow-modal: 0 18px 42px rgba(24, 24, 27, 0.16);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+[data-theme="dark"] {
+  /* Dark Theme — Deep Charcoal Black-Grey & Brushed Gold */
+  --bg-canvas: #111215;
+  --bg-surface: #181a1f;
+  --bg-subtle: #14161a;
+  --bg-hover: #21242b;
+
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+
+  --gold-primary: #d4af37;
+  --gold-hover: #e2be48;
+  --gold-soft: rgba(212, 175, 55, 0.13);
+  --gold-border: rgba(212, 175, 55, 0.34);
+  --gold-on-solid: #111215;
+
+  --border-subtle: #252830;
+  --border-strong: #323640;
+
+  --danger-text: #f87171;
+  --danger-bg: rgba(239, 68, 68, 0.11);
+  --danger-border: rgba(239, 68, 68, 0.25);
+
+  --success-text: #4ade80;
+  --success-bg: rgba(74, 222, 128, 0.10);
+  --success-border: rgba(74, 222, 128, 0.25);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.42);
+  --shadow-modal: 0 22px 48px rgba(0, 0, 0, 0.60);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-size: 14.5px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Crisp 1.75px Outline Icons */
+.icon-outline {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* Theme Icon Visibility */
+[data-theme="light"] .icon-sun { display: none; }
+[data-theme="dark"] .icon-moon { display: none; }
+
+/* Numeric Alignment */
+.num-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   BUTTON SYSTEM (Hierarchical White & Gold)
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  padding: 7px 13px;
+  font-size: 13px;
+}
+
+.btn-xs {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-gold {
+  background-color: var(--gold-primary);
+  color: var(--gold-on-solid);
+  border-color: var(--gold-primary);
+}
+
+.btn-gold:hover {
+  background-color: var(--gold-hover);
+  border-color: var(--gold-hover);
+}
+
+.btn-outline-gold {
+  background-color: var(--gold-soft);
+  color: var(--gold-primary);
+  border-color: var(--gold-border);
+}
+
+.btn-outline-gold:hover {
+  background-color: var(--gold-primary);
+  color: var(--gold-on-solid);
+  border-color: var(--gold-primary);
+}
+
+.btn-surface {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-surface:hover {
+  border-color: var(--gold-border);
+  color: var(--gold-primary);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+
+.btn-ghost:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn-danger-soft {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+
+.btn-danger-soft:hover {
+  opacity: 0.88;
+}
+
+/* Shared Form Controls */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.field-group input,
+.field-group select,
+.field-group textarea {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.16s ease;
+}
+
+.field-group input,
+.field-group select {
+  height: 42px;
+}
+
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus {
+  outline: none;
+  border-color: var(--gold-primary);
+}
+
+/* Shared Dialog Modal */
+.wfc-modal {
+  margin: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  width: min(440px, calc(100% - 32px));
+  padding: 0;
+  box-shadow: var(--shadow-modal);
+}
+
+.wfc-modal::backdrop {
+  background: rgba(12, 13, 16, 0.68);
+  backdrop-filter: blur(2px);
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.modal-head h3 {
+  font-size: 15.5px;
+  font-weight: 700;
+}
+
+.modal-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-foot {
+  padding: 12px 20px 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Toast Feedback Banner */
+.toast-banner {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  z-index: 90;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--gold-primary);
+  border-left: 4px solid var(--gold-primary);
+  border-radius: var(--radius-md);
+  padding: 13px 18px;
+  box-shadow: var(--shadow-modal);
+  font-size: 13.5px;
+  font-weight: 600;
+  max-width: 360px;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: transform 0.24s ease, opacity 0.24s ease;
+}
+
+.toast-banner.show {
+  transform: translateY(0);
+  opacity: 1;
+}
