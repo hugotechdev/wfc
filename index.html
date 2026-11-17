@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sw" data-theme="light">
+<html lang="sw" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,23 +7,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/tokens.css">
-  <link rel="stylesheet" href="assets/css/portal.css">
+  <link rel="stylesheet" href="assets/css/wfc-portal.css">
 </head>
 <body>
 
-  <!-- Top Navigation -->
+  <!-- Top Navigation Bar -->
   <header class="site-header">
     <div class="container header-inner">
-      <a href="index.html" class="brand">
-        <div class="brand-emblem" aria-hidden="true">WFC</div>
-        <div class="brand-text">
-          <span class="brand-title">WACHAGGA FAMILY COMMUNITY</span>
-          <span class="brand-subtitle">STAND UP, IT'S NOT OVER &bull; THE PRIDE OF CHAGGA</span>
+      <a href="#top" class="brand">
+        <div class="brand-crest" aria-hidden="true">WFC</div>
+        <div class="brand-copy">
+          <span class="brand-name">WACHAGGA FAMILY COMMUNITY</span>
+          <span class="brand-motto">STAND UP, IT'S NOT OVER &bull; THE PRIDE OF CHAGGA</span>
         </div>
       </a>
 
-      <nav class="primary-nav" id="primary-nav" aria-label="Menyu Kuu">
+      <nav class="main-nav" id="main-nav" aria-label="Menyu Kuu">
         <a href="#kuhusu" data-i18n="nav_about">Kuhusu WFC</a>
         <a href="#matukio" data-i18n="nav_events">Matukio &amp; Tiketi</a>
         <a href="#matangazo" data-i18n="nav_news">Matangazo</a>
@@ -31,8 +30,9 @@
         <a href="#mawasiliano" data-i18n="nav_contact">Mawasiliano</a>
       </nav>
 
-      <div class="header-actions">
-        <div class="lang-select-wrap">
+      <div class="header-tools">
+        <!-- Custom Styled Language Selector (Replaces Raw Google Translate Box) -->
+        <div class="lang-control">
           <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="9"></circle>
             <path d="M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18"></path>
@@ -43,7 +43,8 @@
           </select>
         </div>
 
-        <button type="button" id="theme-toggle" class="icon-btn" title="Badili Mandhari (White & Gold / Dark Charcoal & Gold)" aria-label="Badili Mandhari">
+        <!-- Light (White & Gold) / Dark (Charcoal & Gold) Switcher -->
+        <button type="button" id="theme-toggle" class="icon-square" title="Badili Mandhari (White & Gold / Dark Charcoal & Gold)" aria-label="Badili Mandhari">
           <svg class="icon-outline icon-moon" viewBox="0 0 24 24">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
@@ -53,16 +54,16 @@
           </svg>
         </button>
 
-        <a href="auth.html" class="btn btn-ghost btn-sm" data-i18n="btn_login">Ingia</a>
-        <a href="auth.html?mode=register" class="btn btn-gold btn-sm" data-i18n="btn_register">Jisajili</a>
-        <a href="dashboard.html" class="btn btn-outline-gold btn-sm">
-          <span data-i18n="btn_dashboard">Dashibodi Yangu</span>
+        <a href="#ingia" class="btn btn-ghost btn-sm" id="open-login-btn" data-i18n="btn_login">Ingia</a>
+        <a href="#jisajili" class="btn btn-gold btn-sm" id="open-register-btn" data-i18n="btn_register">Jisajili</a>
+        <a href="#dashibodi" class="btn btn-gold-outline btn-sm">
+          <span data-i18n="btn_dash">Dashibodi Yangu</span>
           <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6"></path>
           </svg>
         </a>
 
-        <button type="button" id="mobile-nav-btn" class="icon-btn mobile-only" aria-label="Fungua Menyu">
+        <button type="button" id="mobile-nav-toggle" class="icon-square mobile-only" aria-label="Fungua Menyu">
           <svg class="icon-outline" viewBox="0 0 24 24">
             <path d="M4 7h16M4 12h16M4 17h16"></path>
           </svg>
@@ -72,12 +73,15 @@
   </header>
 
   <main id="top">
-    <!-- Hero Section -->
-    <section class="hero-section">
-      <div class="container hero-inner">
-        <div class="hero-crest" aria-hidden="true">WFC</div>
 
-        <div class="hero-kicker">
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+      <div class="container hero-container">
+        <div class="hero-emblem" aria-hidden="true">
+          <span>WFC</span>
+        </div>
+
+        <div class="hero-pill">
           <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"></path>
           </svg>
@@ -85,26 +89,28 @@
         </div>
 
         <h1 data-i18n="hero_title">Ofisi ya Kidijitali ya Wachagga Family Community</h1>
-        <p class="hero-lead" data-i18n="hero_lead">
+        <p class="hero-subtitle" data-i18n="hero_subtitle">
           Umoja wa Wachagga, Nguvu ya Familia. Fuatilia taarifa zako, michango, misaada, miradi ya maendeleo, na kata tiketi za matukio mtandaoni saa 24.
         </p>
 
-        <div class="hero-cta-group">
-          <a href="auth.html" class="btn btn-gold">
+        <div class="hero-actions">
+          <button type="button" class="btn btn-gold" data-auth-open="login">
             <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"></path>
             </svg>
             <span data-i18n="cta_login">Ingia Kwenye Akaunti</span>
-          </a>
-          <a href="auth.html?mode=register" class="btn btn-surface">
+          </button>
+
+          <button type="button" class="btn btn-surface" data-auth-open="register">
             <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="8.5" cy="7" r="4"></circle>
               <path d="M20 8v6M23 11h-6"></path>
             </svg>
             <span data-i18n="cta_register">Jisajili Mwanachama Mpya</span>
-          </a>
-          <a href="#matukio" class="btn btn-outline-gold">
+          </button>
+
+          <a href="#matukio" class="btn btn-gold-outline">
             <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"></path>
               <path d="M13 7v10"></path>
@@ -113,41 +119,42 @@
           </a>
         </div>
 
-        <!-- Key Metrics Strip -->
-        <div class="stats-strip">
-          <div class="stat-box">
-            <span class="stat-num num-tabular">475+</span>
-            <span class="stat-label" data-i18n="stat_members">WANACHAMA HAI</span>
+        <!-- 3 Metrics Strip -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-value num-tabular">475+</span>
+            <span class="metric-label" data-i18n="stat_members">WANACHAMA HAI</span>
           </div>
-          <div class="stat-box">
-            <span class="stat-num status-live"><span class="live-dot"></span> ACTIVE</span>
-            <span class="stat-label" data-i18n="stat_status">HALI YA MFUMO</span>
+          <div class="metric-card">
+            <span class="metric-value status-active"><span class="pulse-dot"></span> ACTIVE</span>
+            <span class="metric-label" data-i18n="stat_system">HALI YA MFUMO</span>
           </div>
-          <div class="stat-box">
-            <span class="stat-num num-tabular">24/7</span>
-            <span class="stat-label" data-i18n="stat_office">OFISI MTANDAONI</span>
+          <div class="metric-card">
+            <span class="metric-value num-tabular">24/7</span>
+            <span class="metric-label" data-i18n="stat_online">OFISI MTANDAONI</span>
           </div>
         </div>
       </div>
     </section>
 
-    <div class="container sections-stack">
-      <!-- About WFC -->
-      <section class="panel-section" id="kuhusu" aria-labelledby="about-heading">
-        <div class="section-head-row">
-          <div class="section-title-bar">
-            <h2 id="about-heading">Kuhusu Wachagga Family Community (WFC)</h2>
+    <div class="container content-stack">
+
+      <!-- 1. KUHUSU WACHAGGA FAMILY COMMUNITY (WFC) -->
+      <section class="section-box" id="kuhusu" aria-labelledby="heading-about">
+        <div class="section-header">
+          <div class="section-heading-wrap">
+            <h2 id="heading-about">Kuhusu Wachagga Family Community (WFC)</h2>
           </div>
-          <span class="pill-gold">UMOJA &bull; MAENDELEO &bull; UWAZI</span>
+          <span class="tag-gold">UMOJA &bull; MAENDELEO &bull; UWAZI</span>
         </div>
 
-        <p class="section-intro">
+        <p class="section-lead">
           Wachagga Family Community (WFC) ni jumuiya rasmi inayowaunganisha Wachagga wote ndani na nje ya Tanzania kwa lengo la mshikamano, kusaidiana katika shida na raha, na kukuza maendeleo ya kiuchumi. <em>Stand up, It's not over!</em>
         </p>
 
-        <div class="pillars-grid">
-          <article class="pillar-card">
-            <div class="pillar-head">
+        <div class="grid-3">
+          <article class="inner-card">
+            <div class="card-title-row">
               <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
@@ -158,8 +165,8 @@
             <p>Kusaidiana katika misiba, ugonjwa, na sherehe za harusi kwa uwazi na heshima.</p>
           </article>
 
-          <article class="pillar-card">
-            <div class="pillar-head">
+          <article class="inner-card">
+            <div class="card-title-row">
               <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 3v18h18"></path>
                 <path d="M18 9l-5 5-3-3-4 4"></path>
@@ -169,8 +176,8 @@
             <p>Miradi ya pamoja kama WCSC, SACCOS, UTT AMIS, Community Tours na WFC Queens.</p>
           </article>
 
-          <article class="pillar-card">
-            <div class="pillar-head">
+          <article class="inner-card">
+            <div class="card-title-row">
               <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                 <path d="M9 12l2 2 4-4"></path>
@@ -182,29 +189,29 @@
         </div>
       </section>
 
-      <!-- Upcoming Events & Ticketing -->
-      <section class="panel-section" id="matukio" aria-labelledby="events-heading">
-        <div class="section-head-row">
-          <div class="section-title-bar">
-            <h2 id="events-heading">Matukio Yajayo &amp; Tiketi za Mtandaoni</h2>
+      <!-- 2. MATUKIO YAJAYO & TIKETI ZA MTANDAONI -->
+      <section class="section-box" id="matukio" aria-labelledby="heading-events">
+        <div class="section-header">
+          <div class="section-heading-wrap">
+            <h2 id="heading-events">Matukio Yajayo &amp; Tiketi za Mtandaoni</h2>
           </div>
-          <a href="dashboard.html#risiti" class="btn btn-ghost btn-sm">
+          <button type="button" class="btn btn-ghost btn-sm" id="open-verify-ticket">
             <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="11" cy="11" r="8"></circle>
               <path d="M21 21l-4.35-4.35"></path>
             </svg>
             <span>Hakiki / Pakua Tiketi Yangu</span>
-          </a>
+          </button>
         </div>
 
-        <article class="event-card">
-          <div class="event-top">
-            <span class="badge-gold">TIKETI ZINAUZWA</span>
+        <article class="featured-event-card">
+          <div class="event-header-copy">
+            <span class="tag-gold">TIKETI ZINAUZWA</span>
             <h3>Wachagga Family Community Festival 2026</h3>
             <p>Tamasha kubwa la utamaduni, mbege, nyama choma, maendeleo, biashara na burudani ya asili kwa familia zote za WFC na marafiki!</p>
           </div>
 
-          <ul class="event-meta-list">
+          <ul class="event-details-list">
             <li>
               <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -221,22 +228,22 @@
             </li>
           </ul>
 
-          <div class="ticket-tiers">
-            <div class="tier-chip">
+          <div class="tiers-row">
+            <div class="tier-box">
               <span>Regular</span>
               <strong class="num-tabular">TSh 25,000</strong>
             </div>
-            <div class="tier-chip tier-vip">
+            <div class="tier-box tier-highlight">
               <span>VIP</span>
               <strong class="num-tabular">TSh 60,000</strong>
             </div>
-            <div class="tier-chip">
+            <div class="tier-box">
               <span>Familia</span>
               <strong class="num-tabular">TSh 120,000</strong>
             </div>
           </div>
 
-          <button type="button" class="btn btn-gold btn-block" id="open-ticket-modal">
+          <button type="button" class="btn btn-gold btn-full" id="open-book-ticket">
             <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"></path>
             </svg>
@@ -245,85 +252,87 @@
         </article>
       </section>
 
-      <!-- Official Announcements -->
-      <section class="panel-section" id="matangazo" aria-labelledby="announcements-heading">
-        <div class="section-head-row">
-          <div class="section-title-bar">
-            <h2 id="announcements-heading">Matangazo Rasmi ya WFC</h2>
+      <!-- 3. MATANGAZO RASMI YA WFC -->
+      <section class="section-box" id="matangazo" aria-labelledby="heading-news">
+        <div class="section-header">
+          <div class="section-heading-wrap">
+            <h2 id="heading-news">Matangazo Rasmi ya WFC</h2>
           </div>
         </div>
 
-        <article class="announcement-card">
-          <span class="badge-gold">KIKAO</span>
+        <article class="inner-card announcement-box">
+          <span class="tag-gold">KIKAO</span>
           <h3>Kikao Kikuu cha Robo Mwaka cha WFC Mtandaoni</h3>
-          <p>Habari wana-WFC. Tunawakaribisha kwenye kikao chetu kikuu kupitia Google Meet kujadili maendeleo ya WCSC, SACCOS na maandalizi ya Wachagga Family Community Festival. <em>Stand up, it's not over!</em></p>
+          <p>
+            Habari wana-WFC. Tunawakaribisha kwenye kikao chetu kikuu kupitia Google Meet kujadili maendeleo ya WCSC, SACCOS na maandalizi ya Wachagga Family Community Festival. <em>Stand up, it's not over!</em>
+          </p>
 
-          <div class="announcement-actions">
-            <a href="https://meet.google.com" target="_blank" rel="noopener" class="btn btn-outline-gold btn-sm">
+          <div class="announcement-footer">
+            <a href="https://meet.google.com" target="_blank" rel="noopener" class="btn btn-gold-outline btn-sm">
               <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
                 <polygon points="23 7 16 12 23 17 23 7"></polygon>
                 <rect x="1" y="5" width="15" height="14" rx="2"></rect>
               </svg>
               <span>Jiunge Google Meet</span>
             </a>
-            <span class="announcement-author">Imetumwa na Katibu Mkuu WFC &bull; Mwezi 8</span>
+            <span class="meta-muted">Imetumwa na Katibu Mkuu WFC &bull; Mwezi 8</span>
           </div>
         </article>
       </section>
 
-      <!-- Projects & Investments -->
-      <section class="panel-section" id="miradi" aria-labelledby="projects-heading">
-        <div class="section-head-row">
-          <div class="section-title-bar">
-            <h2 id="projects-heading">Miradi na Uwekezaji wa WFC</h2>
+      <!-- 4. MIRADI NA UWEKEZAJI WA WFC (Balanced 2-Row Grid, Zero Orphan Card) -->
+      <section class="section-box" id="miradi" aria-labelledby="heading-projects">
+        <div class="section-header">
+          <div class="section-heading-wrap">
+            <h2 id="heading-projects">Miradi na Uwekezaji wa WFC</h2>
           </div>
         </div>
 
         <div class="projects-grid">
-          <article class="project-card">
-            <span class="project-tag">UWEKEZAJI</span>
+          <article class="inner-card project-item">
+            <span class="tag-gold">UWEKEZAJI</span>
             <h3>WCSC (Wachagga Community Savings &amp; Credit)</h3>
             <p>Mfuko wa uwekezaji wa pamoja na mikopo nafuu kwa wanachama wa WFC.</p>
           </article>
 
-          <article class="project-card">
-            <span class="project-tag">MAENDELEO</span>
+          <article class="inner-card project-item">
+            <span class="tag-gold">MAENDELEO</span>
             <h3>WFC SACCOS &amp; UTT AMIS</h3>
             <p>Uwekezaji wa pamoja katika mifuko ya UTT AMIS (Umoja &amp; Wekeza Maisha) kwa niaba ya jumuiya.</p>
           </article>
 
-          <article class="project-card">
-            <span class="project-tag">UTAMADUNI</span>
+          <article class="inner-card project-item">
+            <span class="tag-gold">UTAMADUNI</span>
             <h3>Community Tours (Kilimanjaro &amp; Ngorongoro)</h3>
             <p>Utalii wa ndani na utamaduni wa Wachagga kuimarisha umoja na vipato.</p>
           </article>
 
-          <article class="project-card">
-            <span class="project-tag">UWEZESHAJI</span>
+          <article class="inner-card project-item">
+            <span class="tag-gold">UWEZESHAJI</span>
             <h3>WFC Queens Empowerment</h3>
             <p>Programu maalum ya wanawake wa WFC katika ujasiriamali na uongozi.</p>
           </article>
 
-          <article class="project-card">
-            <span class="project-tag">MAANDALIZI</span>
+          <article class="inner-card project-item project-span-2">
+            <span class="tag-gold">MAANDALIZI</span>
             <h3>Wachagga Family Community Festival</h3>
-            <p>Tamasha la kila mwaka linalokutanisha wanachama wote wa WFC.</p>
+            <p>Tamasha la kila mwaka linalokutanisha wanachama wote wa WFC kwa maonesho ya biashara, utamaduni na mshikamano.</p>
           </article>
         </div>
       </section>
 
-      <!-- Contact & Official Payment Accounts -->
-      <section class="panel-section" id="mawasiliano" aria-labelledby="contact-heading">
-        <div class="section-head-row">
-          <div class="section-title-bar">
-            <h2 id="contact-heading">Mawasiliano &amp; Akaunti Rasmi za Malipo</h2>
+      <!-- 5. MAWASILIANO & AKAUNTI RASMI ZA MALIPO -->
+      <section class="section-box" id="mawasiliano" aria-labelledby="heading-contact">
+        <div class="section-header">
+          <div class="section-heading-wrap">
+            <h2 id="heading-contact">Mawasiliano &amp; Akaunti Rasmi za Malipo</h2>
           </div>
         </div>
 
-        <div class="contact-grid">
-          <div class="info-box">
-            <h3>Ofisi &amp; Mawasiliano</h3>
-            <ul class="contact-list">
+        <div class="contact-split">
+          <div class="inner-card">
+            <h3 class="gold-heading">Ofisi &amp; Mawasiliano</h3>
+            <ul class="contact-items">
               <li>
                 <svg class="icon-outline" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -347,33 +356,34 @@
             </ul>
           </div>
 
-          <div class="info-box">
-            <h3>Namba Rasmi za Malipo WFC</h3>
-            <ul class="accounts-list">
+          <div class="inner-card">
+            <h3 class="gold-heading">Namba Rasmi za Malipo WFC</h3>
+            <ul class="payment-channels">
               <li>
-                <span class="acc-label">M-Pesa</span>
-                <span class="acc-val num-tabular">0755 000 888 <small>Jina: WACHAGGA FAMILY COMMUNITY</small></span>
-                <button type="button" class="copy-btn" data-copy="0755000888">Nakili</button>
+                <span class="channel-name">M-Pesa</span>
+                <span class="channel-detail num-tabular">0755 000 888 <small>Jina: WACHAGGA FAMILY COMMUNITY</small></span>
+                <button type="button" class="btn-copy" data-copy="0755000888">Nakili</button>
               </li>
               <li>
-                <span class="acc-label">Tigo Pesa</span>
-                <span class="acc-val num-tabular">0715 000 888 <small>Lipa Namba: 889900 - WFC</small></span>
-                <button type="button" class="copy-btn" data-copy="889900">Nakili</button>
+                <span class="channel-name">Tigo Pesa</span>
+                <span class="channel-detail num-tabular">0715 000 888 <small>Lipa Namba: 889900 - WFC</small></span>
+                <button type="button" class="btn-copy" data-copy="889900">Nakili</button>
               </li>
               <li>
-                <span class="acc-label">Airtel Money</span>
-                <span class="acc-val num-tabular">0785 000 888 <small>Jina: WACHAGGA FAMILY COMMUNITY</small></span>
-                <button type="button" class="copy-btn" data-copy="0785000888">Nakili</button>
+                <span class="channel-name">Airtel Money</span>
+                <span class="channel-detail num-tabular">0785 000 888 <small>Jina: WACHAGGA FAMILY COMMUNITY</small></span>
+                <button type="button" class="btn-copy" data-copy="0785000888">Nakili</button>
               </li>
               <li>
-                <span class="acc-label">Benki (CRDB)</span>
-                <span class="acc-val num-tabular">0150888442200 <small>WACHAGGA FAMILY COMMUNITY</small></span>
-                <button type="button" class="copy-btn" data-copy="0150888442200">Nakili</button>
+                <span class="channel-name">Benki (CRDB)</span>
+                <span class="channel-detail num-tabular">0150888442200 <small>WACHAGGA FAMILY COMMUNITY</small></span>
+                <button type="button" class="btn-copy" data-copy="0150888442200">Nakili</button>
               </li>
             </ul>
           </div>
         </div>
       </section>
+
     </div>
   </main>
 
@@ -383,19 +393,19 @@
     </div>
   </footer>
 
-  <!-- Ticket Modal -->
-  <dialog id="ticket-modal" class="wfc-modal">
-    <form method="dialog" class="modal-box" id="ticket-form">
-      <div class="modal-head">
+  <!-- MODAL 1: TICKET BOOKING -->
+  <dialog id="ticket-modal" class="wfc-dialog">
+    <form method="dialog" class="dialog-box" id="ticket-form">
+      <div class="dialog-head">
         <h3>Kata Tiketi &mdash; WFC Festival 2026</h3>
-        <button type="button" class="icon-btn" id="close-ticket-modal" aria-label="Funga">
+        <button type="button" class="icon-square" data-close-dialog="ticket-modal" aria-label="Funga">
           <svg class="icon-outline" viewBox="0 0 24 24">
             <path d="M18 6L6 18M6 6l12 12"></path>
           </svg>
         </button>
       </div>
 
-      <div class="modal-body">
+      <div class="dialog-body">
         <label class="field-group">
           <span>Jina Kamili la Mshiriki</span>
           <input type="text" name="fullname" placeholder="Mfano: Hugo Mushi" required>
@@ -414,14 +424,73 @@
         </label>
       </div>
 
-      <div class="modal-foot">
-        <button type="button" class="btn btn-ghost" id="cancel-ticket-modal">Ghairi</button>
+      <div class="dialog-foot">
+        <button type="button" class="btn btn-ghost" data-close-dialog="ticket-modal">Ghairi</button>
         <button type="submit" class="btn btn-gold">Endelea Kulipa Tiketi</button>
       </div>
     </form>
   </dialog>
 
+  <!-- MODAL 2: VERIFY TICKET -->
+  <dialog id="verify-modal" class="wfc-dialog">
+    <form method="dialog" class="dialog-box" id="verify-form">
+      <div class="dialog-head">
+        <h3>Hakiki / Pakua Tiketi Yangu</h3>
+        <button type="button" class="icon-square" data-close-dialog="verify-modal" aria-label="Funga">
+          <svg class="icon-outline" viewBox="0 0 24 24">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <label class="field-group">
+          <span>Namba ya Tiketi au Namba ya Simu</span>
+          <input type="text" id="verify-query" placeholder="Mfano: WFC-TKT-0007 au 0755..." required>
+        </label>
+      </div>
+
+      <div class="dialog-foot">
+        <button type="button" class="btn btn-ghost" data-close-dialog="verify-modal">Funga</button>
+        <button type="submit" class="btn btn-gold">Hakiki Tiketi</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- MODAL 3: MEMBER LOGIN / REGISTER -->
+  <dialog id="auth-modal" class="wfc-dialog">
+    <div class="dialog-box">
+      <div class="dialog-head">
+        <h3 id="auth-modal-title">Ingia Kwenye Akaunti ya WFC</h3>
+        <button type="button" class="icon-square" data-close-dialog="auth-modal" aria-label="Funga">
+          <svg class="icon-outline" viewBox="0 0 24 24">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form class="dialog-body" id="auth-form">
+        <label class="field-group">
+          <span>WFC ID au Namba ya Simu</span>
+          <input type="text" value="WFC-0007" required>
+        </label>
+        <label class="field-group" id="auth-name-wrap" style="display:none;">
+          <span>Jina Kamili</span>
+          <input type="text" placeholder="Mfano: Hugo Mushi">
+        </label>
+        <label class="field-group">
+          <span>Nywila (Password)</span>
+          <input type="password" value="••••••••" required>
+        </label>
+        <div class="dialog-foot" style="padding: 6px 0 0;">
+          <button type="button" class="btn btn-ghost" data-close-dialog="auth-modal">Ghairi</button>
+          <button type="submit" class="btn btn-gold">Endelea</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
   <div class="toast-banner" id="toast-banner" role="status" aria-live="polite"></div>
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/wfc-portal.js"></script>
 </body>
 </html>
