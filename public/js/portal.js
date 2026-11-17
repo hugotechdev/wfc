@@ -89,12 +89,14 @@ async function loadDashboard() {
   badge.className = 'badge ' + (u.status === 'active' ? 'badge-active' : 'badge-pending');
 
   if (u.status !== 'active' && u.role === 'member') {
+    document.body.classList.add('account-locked');
     document.getElementById('memberWorkspace').style.display = 'none';
     document.getElementById('pendingGate').style.display = 'block';
     document.getElementById('pendingName').textContent = u.full_name;
     document.getElementById('pendingId').textContent = u.wfc_id;
     return;
   }
+  document.body.classList.remove('account-locked');
   document.getElementById('memberWorkspace').style.display = 'block';
   document.getElementById('pendingGate').style.display = 'none';
 
