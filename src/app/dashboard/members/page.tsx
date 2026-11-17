@@ -1,21 +1,23 @@
-export default function MembersPage() {
-  const members = [
-    { id: "WFC-0001", name: "John M. Mwakipesile", kanda: "Dar es Salaam", status: "Hai", debt: 0 },
-    { id: "WFC-0002", name: "Anna E. Shao", kanda: "Arusha", status: "Hai", debt: 20000 },
-    { id: "WFC-0003", name: "Peter S. Mmari", kanda: "Moshi", status: "Hai", debt: 0 },
-    { id: "WFC-0004", name: "Grace T. Urio", kanda: "Dar es Salaam", status: "Amesimamishwa", debt: 68000 },
-    { id: "WFC-0005", name: "Mariam J. Lyimo", kanda: "Tanga", status: "Hai", debt: 10000 },
-    { id: "WFC-0006", name: "David J. Ngowi", kanda: "Dodoma", status: "Hai", debt: 0 },
-    { id: "WFC-0007", name: "Neema P. Swai", kanda: "Dar es Salaam", status: "Hai", debt: 5000 },
-    { id: "WFC-0008", name: "Fatuma A. Mtui", kanda: "Moshi", status: "Hai", debt: 0 },
-  ];
+import { prisma } from "@/lib/prisma";
+
+export default async function MembersPage() {
+  let members: any[] = [];
+  try {
+    members = await prisma.member.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { contributions: true },
+    });
+  } catch (e) {
+    // Fallback if DB not ready
+    members = [];
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Wanachama</h1>
-          <p className="text-gray-600 text-sm">Jumla: 469 wanachama</p>
+          <p className="text-gray-600 text-sm">Jumla: {members.length} wanachama</p>
         </div>
         <button className="bg-[#ff6b00] hover:bg-[#e55a00] text-white px-5 py-2.5 rounded-xl text-sm font-medium">
           + Ongeza Mwanachama
@@ -37,29 +39,35 @@ export default function MembersPage() {
                 <th className="text-left px-5 py-3 font-medium">Jina</th>
                 <th className="text-left px-5 py-3 font-medium">Kanda</th>
                 <th className="text-left px-5 py-3 font-medium">Hali</th>
-                <th className="text-left px-5 py-3 font-medium">Deni</th>
                 <th className="text-left px-5 py-3 font-medium">Hatua</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {members.map((m) => (
-                <tr key={m.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-3 font-medium text-orange-600">{m.id}</td>
-                  <td className="px-5 py-3">{m.name}</td>
-                  <td className="px-5 py-3">{m.kanda}</td>
-                  <td className="px-5 py-3">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                      m.status === "Hai" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                    }`}>
-                      {m.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">{m.debt > 0 ? `TSh ${m.debt.toLocaleString()}` : "—"}</td>
-                  <td className="px-5 py-3">
-                    <button className="text-orange-600 hover:underline text-xs">Tazama</button>
+              {members.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-8 text-center text-gray-500">
+                    Hakuna wanachama bado. Endesha seed kwanza.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                members.map((m) => (
+                  <tr key={m.id} className="hover:bg-gray-50">
+                    <td className="px-5 py-3 font-medium text-orange-600">{m.wfcId}</td>
+                    <td className="px-5 py-3">{m.firstName} {m.lastName}</td>
+                    <td className="px-5 py-3">{m.region}</td>
+                    <td className="px-5 py-3">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        m.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      }`}>
+                        {m.status === "ACTIVE" ? "Hai" : m.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <button className="text-orange-600 hover:underline text-xs">Tazama</button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
