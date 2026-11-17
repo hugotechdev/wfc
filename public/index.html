@@ -47,36 +47,23 @@
 
   <!-- Hero Section -->
   <section class="hero">
-    <img src="/img/logo.png" alt="WFC Emblem" class="hero-logo" />
-    <div class="motto">STAND UP, IT'S NOT OVER • THE PRIDE OF CHAGGA</div>
-    <h2>Ofisi ya Kidijitali ya<br>Wachagga Family Community</h2>
-    <p>
-      Umoja wa Wachagga, Nguvu ya Familia. Fuatilia michango, misaada, miradi na kata tiketi za matukio mtandaoni.
-    </p>
-    <div class="hero-actions">
-      <button class="btn-primary" onclick="openModal('loginModal')">
-        <span class="icon"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
-        Ingia kwenye Akaunti
-      </button>
-      <button class="btn-outline" onclick="openModal('registerModal')">
-        <span class="icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></span>
-        Jisajili Mwanachama
-      </button>
+    <div class="hero-copy">
+      <div class="motto">STAND UP, IT'S NOT OVER</div>
+      <h2>Ofisi ya Kidijitali ya<br>Wachagga Family Community</h2>
+      <p>Umoja wa Wachagga, Nguvu ya Familia. Fuatilia michango, misaada, miradi na kata tiketi za matukio mtandaoni.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="openModal('loginModal')">Ingia kwenye Akaunti</button>
+        <button class="btn-outline" onclick="openModal('registerModal')">Jisajili Mwanachama</button>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-box"><div class="num" id="statMembers">475+</div><div class="lbl">Wanachama Hai</div></div>
+        <div class="stat-box"><div class="num text-green">ACTIVE</div><div class="lbl">Hali ya Mfumo</div></div>
+        <div class="stat-box"><div class="num">24/7</div><div class="lbl">Ofisi Mtandaoni</div></div>
+      </div>
     </div>
-
-    <div class="stats-bar">
-      <div class="stat-box">
-        <div class="num" id="statMembers">475+</div>
-        <div class="lbl">Wanachama Hai</div>
-      </div>
-      <div class="stat-box">
-        <div class="num text-green">ACTIVE</div>
-        <div class="lbl">Hali ya Mfumo</div>
-      </div>
-      <div class="stat-box">
-        <div class="num">24/7</div>
-        <div class="lbl">Ofisi Mtandaoni</div>
-      </div>
+    <div class="hero-panel">
+      <img src="/img/logo.png" alt="WFC" class="hero-logo" />
+      <div class="hero-note">The Pride of Chagga</div>
     </div>
   </section>
 
@@ -424,7 +411,7 @@
         // Render Events
         const evContainer = document.getElementById('eventsList');
         if (!homeData.events.length) {
-          evContainer.innerHTML = '<div class="card"><div class="empty-state"><div class="icon">🎟️</div><p>Hakuna matukio wazi kwa sasa.</p></div></div>';
+          evContainer.innerHTML = '<div class="empty-soft">Hakuna matukio wazi kwa sasa. Matukio mapya yataonekana hapa.</div>';
         } else {
           evContainer.innerHTML = homeData.events.map(ev => `
             <div class="event-card">
@@ -479,7 +466,7 @@
         // Render Posts
         const postContainer = document.getElementById('publicPosts');
         if (!homeData.posts.length) {
-          postContainer.innerHTML = '<div class="card"><div class="empty-state"><div class="icon">📢</div><p>Hakuna matangazo kwa sasa.</p></div></div>';
+          postContainer.innerHTML = '<div class="empty-soft">Hakuna matangazo mengine kwa sasa.</div>';
         } else {
           postContainer.innerHTML = homeData.posts.map(p => `
             <div class="card">
