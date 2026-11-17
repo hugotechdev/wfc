@@ -20,11 +20,11 @@ function toggleTheme() {
   const current = html.getAttribute('data-theme') || 'dark';
   const next = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
-  localStorage.setItem('wfc_theme', next);
+  localStorage.setItem('wfc_look', next);
   setThemeIcon(next);
 }
 (function() {
-  const t = localStorage.getItem('wfc_theme') || 'dark';
+  const t = localStorage.getItem('wfc_look') || 'light';
   setThemeIcon(t);
 })();
 
