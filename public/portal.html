@@ -70,8 +70,16 @@
       </div>
     </div>
 
-    <!-- BIG FRIENDLY ACTION TILES (Easy for all members) -->
-    <div class="action-tiles">
+    <div id="pendingGate" class="card" style="display:none; text-align:center; padding:48px 24px;">
+      <h2 style="margin-bottom:8px;">Usajili umepokelewa</h2>
+      <p class="text-secondary" style="max-width:46ch; margin:0 auto 10px;">
+        Habari <span id="pendingName"></span>. Namba yako ni <strong id="pendingId"></strong>.
+        Ada ya TSh 1,000 inakaguliwa. Utaona taarifa za akaunti baada ya kuidhinishwa.
+      </p>
+      <p class="text-muted">Unaweza kutoka na kurudi baadaye.</p>
+    </div>
+
+    <div id="memberWorkspace">
       <button class="tile-btn active" id="tabBtn-overview" onclick="switchTab('overview')">
         <span class="tile-icon"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></span>
         <span class="tile-title">Taarifa & Madeni</span>
@@ -560,6 +568,7 @@
         </div>
       </div>
     </section>
+    </div>
 
   </main>
 

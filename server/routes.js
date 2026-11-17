@@ -154,16 +154,25 @@ router.get('/public/home', (req, res) => {
   });
 });
 
-// Register new member
+// Register new member — requires TSh 1,000 joining fee proof
 router.post('/auth/register', (req, res) => {
-  const { full_name, phone, password, region, district, branch, home_origin, email } = req.body;
+  const { full_name, phone, password, region, district, branch, home_origin, email, transaction_ref, sms_text, payment_method } = req.body;
   if (!full_name || !phone || !password) {
     return res.status(400).json({ error: 'Jina kamili, namba ya simu na nenosiri vinahitajika.' });
+  }
+  if (!transaction_ref && !sms_text) {
+    return res.status(400).json({ error: 'Lipa ada ya kujiunga TSh 1,000 kisha weka namba ya muamala au SMS.' });
   }
   const cleanPhone = phone.trim().replace(/\s+/g, '');
   const existing = get('SELECT id FROM users WHERE phone = ?', [cleanPhone]);
   if (existing) {
     return res.status(400).json({ error: 'Namba hii ya simu tayari imesajiliwa kwenye WFC.' });
+  }
+
+  const cleanRef = (transaction_ref || '').trim().toUpperCase();
+  if (cleanRef) {
+    const dup = get('SELECT id FROM payments WHERE transaction_ref = ?', [cleanRef]);
+    if (dup) return res.status(400).json({ error: 'Namba hii ya muamala tayari imetumika.' });
   }
 
   const countRow = get('SELECT MAX(id) as maxId FROM users');
@@ -178,13 +187,19 @@ router.post('/auth/register', (req, res) => {
   `, [wfcId, full_name.trim(), cleanPhone, email || '', hash, region || 'Dar es Salaam', district || '', branch || '', home_origin || '', today]);
 
   const newUser = get('SELECT * FROM users WHERE wfc_id = ?', [wfcId]);
-  notifyUser(newUser.id, 'Usajili Umepokelewa!', `Karibu ${newUser.full_name}! Namba yako ya WFC ni ${wfcId}. Lipa Kiingilio (TSh 50,000) ili akaunti yako iwe Hai (Active).`);
-  logAudit(newUser, 'MEMBER_REGISTER', `Mwanachama mpya amejisajili: ${newUser.full_name} (${wfcId})`);
+  const receiptNo = 'WFC-R-' + Date.now().toString().slice(-8);
+  run(`
+    INSERT INTO payments (receipt_no, user_id, fund_account, amount, payment_method, transaction_ref, sms_text, for_month, status)
+    VALUES (?, ?, 'kiingilio', 1000, ?, ?, ?, ?, 'pending')
+  `, [receiptNo, newUser.id, payment_method || 'M-Pesa', cleanRef, sms_text || '', today.slice(0, 7)]);
+
+  notifyUser(newUser.id, 'Usajili umepokelewa', `Karibu ${newUser.full_name}. Namba yako ni ${wfcId}. Ada ya TSh 1,000 inasubiri uthibitisho. Utaona taarifa baada ya kuidhinishwa.`);
+  logAudit(newUser, 'MEMBER_REGISTER', `Usajili mpya na ada TSh 1,000: ${newUser.full_name} (${wfcId})`);
 
   const token = jwt.sign({ id: newUser.id, wfc_id: newUser.wfc_id, full_name: newUser.full_name, role: newUser.role, region: newUser.region }, JWT_SECRET, { expiresIn: '7d' });
 
   res.json({
-    message: 'Usajili umekamilika! Namba yako ya utambulisho ni ' + wfcId,
+    message: 'Usajili umepokelewa. Utaona taarifa baada ya kuidhinishwa.',
     token,
     user: { id: newUser.id, wfc_id: newUser.wfc_id, full_name: newUser.full_name, role: newUser.role, status: newUser.status }
   });

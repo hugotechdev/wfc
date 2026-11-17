@@ -80,6 +80,22 @@
     </div>
   </section>
 
+  <!-- Announcements Slider (published by leadership) -->
+  <section class="slider-wrap" id="announcements">
+    <div class="slider-head">
+      <h3>Matangazo ya Uongozi</h3>
+      <span>Yanachapishwa na viongozi kutoka ofisi yao</span>
+    </div>
+    <div class="slider" id="announceSlider">
+      <div class="slide active">
+        <div class="slide-kicker">Matangazo</div>
+        <h4>Karibu kwenye ofisi ya kidijitali</h4>
+        <p>Viongozi watachapisha matangazo rasmi hapa. Yataonekana kwa wanachama na wageni.</p>
+      </div>
+    </div>
+    <div class="slider-dots" id="sliderDots"></div>
+  </section>
+
   <main class="container">
 
     <!-- About Section -->
@@ -193,24 +209,24 @@
   <div id="registerModal" class="modal-backdrop">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
-      <h3 style="color:var(--orange); margin-bottom:4px;">📝 Usajili wa Mwanachama Mpya</h3>
-      <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:14px;">Jaza taarifa fupi upate namba yako ya WFC ID papo hapo.</p>
+      <h3>Usajili wa mwanachama</h3>
+      <p class="text-muted" style="margin-bottom:14px;">Ada ya kujiunga ni TSh 1,000. Lipa kwanza, kisha tuma uthibitisho. Utaingia akaunti, lakini utaona taarifa baada ya kuidhinishwa.</p>
       <form onsubmit="handleRegister(event)">
         <div class="form-group">
-          <label>👤 Majina Yako Kamili</label>
-          <input type="text" id="regName" class="form-control" placeholder="Mfano: Josephat Mushi" required />
+          <label>Majina kamili</label>
+          <input type="text" id="regName" class="form-control" placeholder="Josephat Mushi" required />
         </div>
         <div class="form-group">
-          <label>📱 Namba ya Simu (Itatumika kuingia)</label>
-          <input type="tel" id="regPhone" class="form-control" placeholder="Mfano: 0754123456" required />
+          <label>Namba ya simu</label>
+          <input type="tel" id="regPhone" class="form-control" placeholder="0754123456" required />
         </div>
         <div class="form-group">
-          <label>🔒 Tengeneza Nenosiri / PIN Rahisi</label>
-          <input type="password" id="regPass" class="form-control" placeholder="Weka namba au neno utakaloikumbuka" required />
+          <label>Nenosiri</label>
+          <input type="password" id="regPass" class="form-control" placeholder="PIN au neno utakaloikumbuka" required />
         </div>
         <div class="grid-2" style="gap:10px;">
           <div class="form-group">
-            <label>📍 Kanda Unayoishi</label>
+            <label>Kanda</label>
             <select id="regRegion" class="form-control">
               <option value="Dar es Salaam">Dar es Salaam</option>
               <option value="Kilimanjaro">Kilimanjaro</option>
@@ -224,22 +240,43 @@
             </select>
           </div>
           <div class="form-group">
-            <label>⛰️ Unapotoka (Asili Kilimanjaro)</label>
-            <input type="text" id="regOrigin" class="form-control" placeholder="Mfano: Marangu / Machame / Rombo" />
+            <label>Asili</label>
+            <input type="text" id="regOrigin" class="form-control" placeholder="Marangu / Machame" />
           </div>
         </div>
         <div class="grid-2" style="gap:10px;">
           <div class="form-group">
-            <label>🏘️ Halmashauri / Wilaya</label>
-            <input type="text" id="regDistrict" class="form-control" placeholder="Mfano: Kinondoni" />
+            <label>Wilaya</label>
+            <input type="text" id="regDistrict" class="form-control" placeholder="Kinondoni" />
           </div>
           <div class="form-group">
-            <label>🌿 Tawi / Mtaa</label>
-            <input type="text" id="regBranch" class="form-control" placeholder="Mfano: Mbezi Beach" />
+            <label>Tawi</label>
+            <input type="text" id="regBranch" class="form-control" placeholder="Mbezi Beach" />
           </div>
         </div>
-        <div id="regMsg" style="color:#f87171; font-size:0.9rem; margin-bottom:10px;"></div>
-        <button type="submit" class="btn-primary" style="width:100%;">KAMILISHA USAJILI ✓</button>
+        <div class="fee-box">
+          <strong>Ada ya kujiunga: TSh 1,000</strong>
+          <p>Lipa kwenye namba rasmi za WFC, kisha weka uthibitisho hapa chini.</p>
+        </div>
+        <div class="form-group">
+          <label>Mtandao</label>
+          <select id="regMethod" class="form-control">
+            <option>M-Pesa</option>
+            <option>Tigo Pesa</option>
+            <option>Airtel Money</option>
+            <option>Benki</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Namba ya muamala</label>
+          <input type="text" id="regRef" class="form-control" placeholder="8J4K9L2M1N" />
+        </div>
+        <div class="form-group">
+          <label>SMS ya muamala</label>
+          <textarea id="regSms" class="form-control" rows="2" placeholder="Bandika SMS ya malipo hapa"></textarea>
+        </div>
+        <div id="regMsg" class="form-error"></div>
+        <button type="submit" class="btn-primary" style="width:100%;">Tuma usajili</button>
       </form>
     </div>
   </div>
@@ -408,6 +445,37 @@
           `).join('');
         }
 
+        // Announcements slider
+        const slides = homeData.posts.length ? homeData.posts : [{
+          category: 'Matangazo',
+          title: 'Karibu kwenye ofisi ya kidijitali',
+          content: 'Viongozi watachapisha matangazo rasmi hapa. Yataonekana kwa wanachama na wageni.',
+          author_name: 'Uongozi WFC'
+        }];
+        const slider = document.getElementById('announceSlider');
+        const dots = document.getElementById('sliderDots');
+        slider.innerHTML = slides.map((p, i) => `
+          <div class="slide ${i === 0 ? 'active' : ''}">
+            <div class="slide-kicker">${p.category || 'Matangazo'}</div>
+            <h4>${p.title}</h4>
+            <p>${p.content}</p>
+            <small>${p.author_name || 'Uongozi WFC'}</small>
+          </div>
+        `).join('');
+        dots.innerHTML = slides.map((_, i) => `<button class="dot ${i === 0 ? 'on' : ''}" data-i="${i}"></button>`).join('');
+        let idx = 0;
+        function go(n) {
+          const all = slider.querySelectorAll('.slide');
+          const ds = dots.querySelectorAll('.dot');
+          all[idx].classList.remove('active');
+          ds[idx].classList.remove('on');
+          idx = (n + all.length) % all.length;
+          all[idx].classList.add('active');
+          ds[idx].classList.add('on');
+        }
+        dots.querySelectorAll('.dot').forEach(d => d.onclick = () => go(Number(d.dataset.i)));
+        if (slides.length > 1) setInterval(() => go(idx + 1), 5500);
+
         // Render Posts
         const postContainer = document.getElementById('publicPosts');
         if (!homeData.posts.length) {
@@ -552,7 +620,10 @@
         region: document.getElementById('regRegion').value,
         home_origin: document.getElementById('regOrigin').value,
         district: document.getElementById('regDistrict').value,
-        branch: document.getElementById('regBranch').value
+        branch: document.getElementById('regBranch').value,
+        payment_method: document.getElementById('regMethod').value,
+        transaction_ref: document.getElementById('regRef').value,
+        sms_text: document.getElementById('regSms').value
       };
       const msg = document.getElementById('regMsg');
       msg.textContent = 'Inasajili...';

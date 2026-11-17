@@ -85,8 +85,18 @@ async function loadDashboard() {
   document.getElementById('headerUserRole').textContent = `${ROLE_LABELS[u.role] || u.role} • STAND UP, IT'S NOT OVER`;
 
   const badge = document.getElementById('memberStatusBadge');
-  badge.textContent = u.status === 'active' ? 'MWANACHAMA HAI' : 'INASUBIRI UTHIBITISHO';
+  badge.textContent = u.status === 'active' ? 'HAI' : 'INASUBIRI';
   badge.className = 'badge ' + (u.status === 'active' ? 'badge-active' : 'badge-pending');
+
+  if (u.status !== 'active' && u.role === 'member') {
+    document.getElementById('memberWorkspace').style.display = 'none';
+    document.getElementById('pendingGate').style.display = 'block';
+    document.getElementById('pendingName').textContent = u.full_name;
+    document.getElementById('pendingId').textContent = u.wfc_id;
+    return;
+  }
+  document.getElementById('memberWorkspace').style.display = 'block';
+  document.getElementById('pendingGate').style.display = 'none';
 
   // Show Leadership Tab if not ordinary member
   if (u.role !== 'member') {
