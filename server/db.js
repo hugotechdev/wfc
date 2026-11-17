@@ -245,7 +245,7 @@ async function initDb() {
     ['tigopesa_number', '0715 000 888 (Lipa Namba: 889900 - WFC)'],
     ['airtel_number', '0785 000 888 (Jina: WACHAGGA FAMILY COMMUNITY)'],
     ['bank_details', 'CRDB Bank - A/C: 0150889944200 (WACHAGGA FAMILY COMMUNITY)'],
-    ['community_about', 'Wachagga Family Community (WFC) ni jumuiya rasmi inayowaunganisha Wachagga wote ndani na nje ya Tanzania kwa lengo la mshikamano, kusaidiana katika shida na raha, na kukuza maendeleo ya kiuchumi. Stand up, It\'s not over!'],
+    ['community_about', 'Wachagga Family Community (WFC) ni jumuiya rasmi inayowaunganisha Wachagga wote ndani na nje ya Tanzania kwa lengo la mshikamano, kusaidiana katika shida na raha, na kukuza maendeleo ya kiuchumi. Stand up, It''s not over!'],
     ['contact_phone', '+255 755 000 888'],
     ['contact_email', 'info@wachaggacommunity.or.tz'],
     ['contact_address', 'Moshi, Kilimanjaro & Dar es Salaam, Tanzania']
@@ -288,7 +288,7 @@ async function initDb() {
 
     // Seed sample post
     run(`INSERT INTO posts (title, content, category, meet_link, event_date, status, author_id, likes_count)
-         VALUES ('Kikao Kikuu cha Robo Mwaka cha WFC Mtandaoni', 'Habari wana-WFC! Tunawakaribisha kwenye kikao chetu kikuu kupitia Google Meet kujadili maendeleo ya WCSC, SACCOS na maandalizi ya Wachagga Family Community Festival. Stand up, It\'s not over!', 'Kikao', 'https://meet.google.com/wfc-general-meeting', '2026-11-28 19:00', 'published', 3, 24)`);
+         VALUES ('Kikao Kikuu cha Robo Mwaka cha WFC Mtandaoni', 'Habari wana-WFC! Tunawakaribisha kwenye kikao chetu kikuu kupitia Google Meet kujadili maendeleo ya WCSC, SACCOS na maandalizi ya Wachagga Family Community Festival. Stand up, It''s not over!', 'Kikao', 'https://meet.google.com/wfc-general-meeting', '2026-11-28 19:00', 'published', 3, 24)`);
 
     // Seed sample event
     run(`INSERT INTO events (title, description, venue, event_date, regular_price, vip_price, family_price, total_capacity, status, created_by)
