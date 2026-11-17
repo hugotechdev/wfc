@@ -245,7 +245,7 @@ async function initDb() {
     ['tigopesa_number', '0715 000 888 (Lipa Namba: 889900 - WFC)'],
     ['airtel_number', '0785 000 888 (Jina: WACHAGGA FAMILY COMMUNITY)'],
     ['bank_details', 'CRDB Bank - A/C: 0150889944200 (WACHAGGA FAMILY COMMUNITY)'],
-    ['community_about', 'Wachagga Family Community (WFC) ni jumuiya rasmi inayowaunganisha Wachagga wote ndani na nje ya Tanzania kwa lengo la mshikamano, kusaidiana katika shida na raha, na kukuza maendeleo ya kiuchumi. Stand up, It''s not over!'],
+    ['community_about', 'Wachagga Family Community (WFC) ni jumuiya rasmi inayowaunganisha Wachagga wote ndani na nje ya Tanzania kwa lengo la mshikamano, kusaidiana katika shida na raha, na kukuza maendeleo ya kiuchumi. Stand up, It\'s not over!'],
     ['contact_phone', '+255 755 000 888'],
     ['contact_email', 'info@wachaggacommunity.or.tz'],
     ['contact_address', 'Moshi, Kilimanjaro & Dar es Salaam, Tanzania']
