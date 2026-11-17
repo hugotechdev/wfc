@@ -6,6 +6,28 @@ if (!token) {
 let dashData = null;
 let adminData = null;
 
+// Theme toggle (Light / Dark) – outline icons
+const ICON_MOON = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const ICON_SUN = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+
+function setThemeIcon(theme) {
+  const el = document.getElementById('themeIcon');
+  if (el) el.innerHTML = theme === 'dark' ? ICON_MOON : ICON_SUN;
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('wfc_theme', next);
+  setThemeIcon(next);
+}
+(function() {
+  const t = localStorage.getItem('wfc_theme') || 'dark';
+  setThemeIcon(t);
+})();
+
 function authHeaders(isJson = true) {
   const h = { Authorization: 'Bearer ' + token };
   if (isJson) h['Content-Type'] = 'application/json';
@@ -91,7 +113,7 @@ async function loadDashboard() {
   document.getElementById('notifList').innerHTML = dashData.notifications.length
     ? dashData.notifications.map(n => `
         <div class="card" style="padding:12px; margin-bottom:10px; border-color:${n.is_read ? 'var(--border)' : 'var(--orange)'};">
-          <strong style="color:var(--accent);">${n.title}</strong>
+          <strong style="color:var(--gold);">${n.title}</strong>
           <p style="font-size:0.9rem; margin:4px 0;">${n.message}</p>
           <small style="color:var(--text-muted);">${n.created_at}</small>
         </div>
@@ -141,13 +163,13 @@ async function loadDashboard() {
 
   const actionBox = document.getElementById('actionableList');
   if (!actions.length) {
-    actionBox.innerHTML = '<div style="color:var(--status-success); font-weight:700;">🎉 Hongera! Huna deni wala mchango unaokusubiri kwa sasa.</div>';
+    actionBox.innerHTML = '<div style="color:#4ade80; font-weight:700;">🎉 Hongera! Huna deni wala mchango unaokusubiri kwa sasa.</div>';
   } else {
     actionBox.innerHTML = actions.map(a => `
-      <div style="background:var(--bg-elevated); padding:16px; border-radius:12px; border:1px solid var(--border-subtle); display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+      <div style="background:var(--bg-elevated); padding:14px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
         <div>
-          <strong style="color:var(--accent); font-size:1.02rem;">${a.title}</strong>
-          <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:4px;">${a.desc}</p>
+          <strong style="color:var(--gold); font-size:1.02rem;">${a.title}</strong>
+          <p style="font-size:0.88rem; color:#d4d4d8; margin-top:4px;">${a.desc}</p>
         </div>
         <button class="btn-primary" onclick="quickPay('${a.fund}', ${a.amount}, '${a.campaignId}')">
           ⚡ Lipa TSh ${Number(a.amount).toLocaleString()} Sasa
@@ -167,9 +189,9 @@ async function loadDashboard() {
     disbBox.innerHTML = '<p style="color:var(--text-muted); font-size:0.92rem;">Bado hujapokea marejesho au msaada wowote wa kifedha kutoka WFC.</p>';
   } else {
     disbBox.innerHTML = dashData.disbursements.map(d => `
-      <div style="background:var(--bg-elevated); padding:14px; border-radius:10px; border:1px solid var(--border-subtle); margin-bottom:8px; border-left:4px solid var(--status-success);">
+      <div style="background:var(--bg-elevated); padding:12px; border-radius:10px; margin-bottom:8px; border-left:4px solid var(--green);">
         <strong>${d.voucher_no} — TSh ${Number(d.amount).toLocaleString()}</strong> (${d.expense_type.toUpperCase()})
-        <p style="font-size:0.9rem; color:var(--text-secondary);">${d.reason}</p>
+        <p style="font-size:0.9rem; color:#d4d4d8;">${d.reason}</p>
         <small style="color:var(--text-muted);">Imeidhinishwa: ${d.chairperson_at || d.created_at}</small>
       </div>
     `).join('');
@@ -184,7 +206,7 @@ async function loadDashboard() {
           <td>${p.fund_account.toUpperCase()} ${p.campaign_title ? '(' + p.campaign_title + ')' : ''}</td>
           <td><strong>TSh ${Number(p.amount).toLocaleString()}</strong></td>
           <td>${p.payment_method} (${p.transaction_ref || '-'})</td>
-          <td><span class="badge badge-${p.status}">${p.status}</span>${p.rejection_reason ? '<br/><small style="color:var(--status-danger);">' + p.rejection_reason + '</small>' : ''}</td>
+          <td><span class="badge badge-${p.status}">${p.status}</span>${p.rejection_reason ? '<br/><small style="color:#f87171;">' + p.rejection_reason + '</small>' : ''}</td>
           <td>
             ${p.status === 'approved' ? `<button class="btn-primary" style="padding:6px 12px; font-size:0.82rem;" onclick='showReceipt(${JSON.stringify(p)})'>🧾 Risiti</button>` : '<small style="color:var(--text-muted);">Inasubiri</small>'}
           </td>
@@ -316,12 +338,12 @@ async function loadFeed() {
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <div>
           <span class="badge badge-pending">${p.category}</span>
-          <strong style="margin-left:8px; color:var(--accent);">${p.author_name || 'Uongozi WFC'}</strong>
+          <strong style="margin-left:8px; color:var(--gold);">${p.author_name || 'Uongozi WFC'}</strong>
         </div>
         <small style="color:var(--text-muted);">${p.created_at}</small>
       </div>
       <h3 style="margin:10px 0 6px; font-size:1.22rem;">${p.title}</h3>
-      <p style="color:var(--text-secondary); white-space:pre-line; margin-bottom:12px;">${p.content}</p>
+      <p style="color:#e4e4e7; white-space:pre-line; margin-bottom:12px;">${p.content}</p>
 
       ${p.image_path ? `<img src="${p.image_path}" style="max-width:100%; max-height:360px; border-radius:12px; margin-bottom:12px; border:1px solid var(--border);" />` : ''}
       ${p.doc_path ? `<p style="margin-bottom:10px;"><a href="${p.doc_path}" target="_blank" class="btn-outline">📄 Pakua Nyaraka: ${p.doc_name || 'Document'}</a></p>` : ''}
@@ -335,14 +357,14 @@ async function loadFeed() {
       </div>
 
       <!-- Text-only Comments Section -->
-      <div style="margin-top:12px; background:var(--bg-elevated); padding:14px; border-radius:12px; border:1px solid var(--border-subtle);">
+      <div style="margin-top:12px; background:var(--bg-elevated); padding:12px; border-radius:12px;">
         ${p.comments.map(c => `
           <div style="padding:8px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:8px;">
             <div>
-              <strong style="color:var(--accent); font-size:0.88rem;">${c.full_name} (${c.wfc_id}):</strong>
-              <span style="font-size:0.92rem; color:var(--text-primary);">${escapeHtml(c.comment_text)}</span>
+              <strong style="color:var(--orange); font-size:0.88rem;">${c.full_name} (${c.wfc_id}):</strong>
+              <span style="font-size:0.92rem; color:#f4f4f5;">${escapeHtml(c.comment_text)}</span>
             </div>
-            ${canModerate ? `<button onclick="deleteComment(${c.id})" style="background:none; border:none; color:var(--status-danger); cursor:pointer;" title="Futa maoni">🗑️</button>` : ''}
+            ${canModerate ? `<button onclick="deleteComment(${c.id})" style="background:none; border:none; color:#f87171; cursor:pointer;" title="Futa maoni">🗑️</button>` : ''}
           </div>
         `).join('')}
 
@@ -432,8 +454,8 @@ async function loadAdminOverview() {
       <td><strong>TSh ${Number(p.amount).toLocaleString()}</strong></td>
       <td>
         <strong>${p.payment_method}:</strong> ${p.transaction_ref || '-'}<br/>
-        ${p.sms_text ? `<small style="color:var(--text-secondary);">"${escapeHtml(p.sms_text)}"</small><br/>` : ''}
-        ${p.proof_image ? `<a href="${p.proof_image}" target="_blank" style="color:var(--accent); font-weight:700;">🖼️ Angalia Risiti</a>` : ''}
+        ${p.sms_text ? `<small style="color:#d4d4d8;">"${escapeHtml(p.sms_text)}"</small><br/>` : ''}
+        ${p.proof_image ? `<a href="${p.proof_image}" target="_blank" style="color:var(--orange); font-weight:700;">🖼️ Angalia Risiti</a>` : ''}
       </td>
       <td><span class="badge badge-${p.status}">${p.status}</span></td>
       <td>
@@ -480,8 +502,8 @@ async function loadAdminOverview() {
         <small>${c.category.toUpperCase()}</small>
       </div>
       <h4 style="margin:8px 0;">${c.title}</h4>
-      <p style="font-size:0.88rem; color:var(--text-secondary);">${c.description || ''}</p>
-      <p style="margin-top:6px; font-weight:700; color:var(--accent);">Imekusanywa: TSh ${Number(c.collected_amount).toLocaleString()}</p>
+      <p style="font-size:0.88rem; color:#d4d4d8;">${c.description || ''}</p>
+      <p style="margin-top:6px; font-weight:700; color:var(--gold);">Imekusanywa: TSh ${Number(c.collected_amount).toLocaleString()}</p>
       ${c.status === 'pending_secretary' && isSecretary ? `<button class="btn-primary" style="margin-top:8px;" onclick="approveCampaign(${c.id})">✓ Katibu Thibitisha</button>` : ''}
       ${c.status === 'pending_chairperson' && isChair ? `<button class="btn-success" style="margin-top:8px;" onclick="approveCampaign(${c.id})">✓ Mwenyekiti Zindua</button>` : ''}
     </div>
@@ -489,9 +511,9 @@ async function loadAdminOverview() {
 
   // 4. Funds Grid
   document.getElementById('adminFundsGrid').innerHTML = adminData.funds.map(f => `
-    <div class="card" style="border-top:3px solid var(--accent);">
-      <strong style="color:var(--accent); text-transform:uppercase;">${f.fund}</strong>
-      <div style="font-size:1.35rem; font-weight:900; margin:6px 0; color:var(--status-success);">TSh ${Number(f.balance).toLocaleString()}</div>
+    <div class="card" style="border-top:3px solid var(--orange);">
+      <strong style="color:var(--gold); text-transform:uppercase;">${f.fund}</strong>
+      <div style="font-size:1.35rem; font-weight:900; margin:6px 0; color:#4ade80;">TSh ${Number(f.balance).toLocaleString()}</div>
       <small style="color:var(--text-muted);">Mapato: ${Number(f.income).toLocaleString()} | Matumizi: ${Number(f.expense).toLocaleString()}</small>
     </div>
   `).join('');

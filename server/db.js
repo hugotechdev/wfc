@@ -288,7 +288,7 @@ async function initDb() {
 
     // Seed sample post
     run(`INSERT INTO posts (title, content, category, meet_link, event_date, status, author_id, likes_count)
-         VALUES ('Kikao Kikuu cha Robo Mwaka cha WFC Mtandaoni', 'Habari wana-WFC! Tunawakaribisha kwenye kikao chetu kikuu kupitia Google Meet kujadili maendeleo ya WCSC, SACCOS na maandalizi ya Wachagga Family Community Festival. Stand up, It''s not over!', 'Kikao', 'https://meet.google.com/wfc-general-meeting', '2026-11-28 19:00', 'published', 3, 24)`);
+         VALUES ('Kikao Kikuu cha Robo Mwaka cha WFC Mtandaoni', 'Habari wana-WFC! Tunawakaribisha kwenye kikao chetu kikuu kupitia Google Meet kujadili maendeleo ya WCSC, SACCOS na maandalizi ya Wachagga Family Community Festival. Stand up, It\'s not over!', 'Kikao', 'https://meet.google.com/wfc-general-meeting', '2026-11-28 19:00', 'published', 3, 24)`);
 
     // Seed sample event
     run(`INSERT INTO events (title, description, venue, event_date, regular_price, vip_price, family_price, total_capacity, status, created_by)

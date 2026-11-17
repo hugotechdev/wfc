@@ -6,7 +6,12 @@
   <title>WFC Member & Leadership Portal | Wachagga Family Community</title>
   <link rel="icon" href="/img/logo.png" />
   <link rel="stylesheet" href="/css/style.css" />
-  <script src="/js/theme.js"></script>
+  <script>
+    (function() {
+      const t = localStorage.getItem('wfc_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 </head>
 <body>
 
@@ -23,11 +28,17 @@
 
       <div class="nav-links">
         <div id="google_translate_element"></div>
-        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Badili Rangi ya Mwanga">☀️</button>
-        <button class="notif-btn" onclick="openNotifications()" title="Taarifa Zangu">
-          🔔 <span class="notif-count" id="notifCount">0</span>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Badilisha rangi" id="themeBtn" aria-label="Theme">
+          <span class="icon" id="themeIcon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
         </button>
-        <a href="/index.html" class="nav-btn">Mwanzo</a>
+        <button class="notif-btn" onclick="openNotifications()" title="Taarifa Zangu">
+          <span class="icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+          <span class="notif-count" id="notifCount">0</span>
+        </button>
+        <a href="/index.html" class="nav-btn">
+          <span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+          Mwanzo
+        </a>
         <button class="btn-danger" onclick="logout()">Toka</button>
       </div>
     </div>
@@ -36,120 +47,118 @@
   <main class="container">
 
     <!-- Welcome & Member Identity Card -->
-    <div class="card card-accent" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+    <div class="member-card">
       <div>
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-          <h2 id="memberName" style="font-size:1.4rem;">Karibu Mwanachama</h2>
+        <div class="flex items-center gap-1 flex-wrap">
+          <h2 id="memberName">Karibu Mwanachama</h2>
           <span id="memberStatusBadge" class="badge badge-active">HAI</span>
         </div>
-        <p style="color:var(--text-secondary); margin-top:6px; font-size:0.9rem;">
-          <strong style="color:var(--text-primary);">WFC ID:</strong> <span id="memberWfcId" style="color:var(--accent); font-weight:800;">WFC-0000</span> &nbsp;•&nbsp;
-          <strong style="color:var(--text-primary);">Kanda:</strong> <span id="memberRegion">-</span> &nbsp;•&nbsp;
-          <strong style="color:var(--text-primary);">Asili:</strong> <span id="memberOrigin">-</span>
+        <p class="member-meta">
+          <strong>WFC ID:</strong> <span id="memberWfcId" class="text-gold fw-800">WFC-0000</span> &nbsp;·&nbsp;
+          <strong>Kanda:</strong> <span id="memberRegion">-</span> &nbsp;·&nbsp;
+          <strong>Asili:</strong> <span id="memberOrigin">-</span>
         </p>
       </div>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn-primary" style="padding:12px 22px;" onclick="switchTab('pay')">
-          Lipa Mchango Sasa →
+      <div class="flex gap-1 flex-wrap">
+        <button class="btn-primary" onclick="switchTab('pay')">
+          <span class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>
+          Lipa Mchango Sasa
         </button>
       </div>
     </div>
 
-    <!-- EXECUTIVE ACTION TILES -->
+    <!-- BIG FRIENDLY ACTION TILES (Easy for all members) -->
     <div class="action-tiles">
       <button class="tile-btn active" id="tabBtn-overview" onclick="switchTab('overview')">
-        <span class="tile-icon">📊</span>
+        <span class="tile-icon"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></span>
         <span class="tile-title">Taarifa & Madeni</span>
         <span class="tile-sub">Michango, deni & marejesho</span>
       </button>
       <button class="tile-btn" id="tabBtn-pay" onclick="switchTab('pay')">
-        <span class="tile-icon">💳</span>
+        <span class="tile-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>
         <span class="tile-title">Lipa & Tuma Risiti</span>
         <span class="tile-sub">Ada, dharura, msiba, harusi</span>
       </button>
       <button class="tile-btn" id="tabBtn-receipts" onclick="switchTab('receipts')">
-        <span class="tile-icon">🧾</span>
+        <span class="tile-icon"><svg viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><path d="M8 10h8"/><path d="M8 14h6"/></svg></span>
         <span class="tile-title">Risiti & Tiketi</span>
         <span class="tile-sub">Pakua au tuma WhatsApp</span>
       </button>
       <button class="tile-btn" id="tabBtn-feed" onclick="switchTab('feed')">
-        <span class="tile-icon">💬</span>
+        <span class="tile-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
         <span class="tile-title">Matangazo & Maoni</span>
         <span class="tile-sub">Vikao, nyaraka & majadiliano</span>
       </button>
-      <button class="tile-btn" id="tabBtn-leader" style="display:none;" onclick="switchTab('leader')">
-        <span class="tile-icon">🏛️</span>
+      <button class="tile-btn" id="tabBtn-leader" style="display:none; border-color:var(--gold);" onclick="switchTab('leader')">
+        <span class="tile-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg></span>
         <span class="tile-title">Ofisi ya Uongozi</span>
         <span class="tile-sub">Approve malipo, vocha & wanachama</span>
       </button>
     </div>
 
-    <!-- TAB 1: OVERVIEW -->
-    <section id="tab-overview" class="tab-panel">
-      <div class="grid-4" style="margin-bottom:22px;">
-        <div class="kpi-card">
-          <div class="kpi-label">Jumla Niliyolipa</div>
-          <div id="sumTotalPaid" class="kpi-value" style="color:var(--status-success);">TSh 0</div>
-          <div class="kpi-sub">Malipo yaliyothibitishwa</div>
+    <!-- TAB 1: OVERVIEW (Michango, Deni, Actionable Items, Marejesho) -->
+    <section id="tab-overview">
+      <!-- Financial Summary Boxes -->
+      <div class="grid-4" style="margin-bottom:20px;">
+        <div class="stat-card" style="border-left-color: var(--green);">
+          <small>Jumla Niliyolipa</small>
+          <div id="sumTotalPaid" class="value text-green">TSh 0</div>
+          <div class="sub">Malipo yaliyothibitishwa</div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Deni Langu la Jumla</div>
-          <div id="sumTotalDebt" class="kpi-value" style="color:var(--status-danger);">TSh 0</div>
-          <div id="debtBreakdown" class="kpi-sub">Ada + Kiingilio + Dharura</div>
+        <div class="stat-card" style="border-left-color: var(--red);">
+          <small>Deni Langu la Jumla</small>
+          <div id="sumTotalDebt" class="value text-red">TSh 0</div>
+          <div id="debtBreakdown" class="sub">Ada + Kiingilio + Dharura</div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Mfuko wa Dharura</div>
-          <div id="sumEmergency" class="kpi-value" style="color:var(--accent);">TSh 0 / 60,000</div>
-          <div class="kpi-sub">Salio lako la dharura</div>
+        <div class="stat-card" style="border-left-color: var(--brand);">
+          <small>Mfuko wa Dharura</small>
+          <div id="sumEmergency" class="value text-brand">TSh 0 / 60,000</div>
+          <div class="sub">Salio lako la dharura</div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Inayosubiri Uthibitisho</div>
-          <div id="sumPending" class="kpi-value">0</div>
-          <div class="kpi-sub">Risiti zinakaguliwa na Mhasibu</div>
+        <div class="stat-card" style="border-left-color: var(--gold);">
+          <small>Inayosubiri Uthibitisho</small>
+          <div id="sumPending" class="value text-gold">0</div>
+          <div class="sub">Risiti zinakaguliwa na Mhasibu</div>
         </div>
       </div>
 
-      <!-- ACTIONABLE ITEMS -->
-      <div class="card card-accent">
-        <div class="section-header">
-          <h3 class="section-title">Hatua za Haraka (Michango Unayotakiwa Kutoa)</h3>
-        </div>
+      <!-- ACTIONABLE ITEMS (Michango unayotakiwa kutoa haraka) -->
+      <div class="card card-orange">
+        <h3 style="color:var(--orange); margin-bottom:10px;">Hatua za Haraka (Michango Unayotakiwa Kutoa)</h3>
         <div id="actionableList" class="grid-2"></div>
       </div>
 
-      <!-- REFUNDS & DISBURSEMENTS -->
+      <!-- REFUNDS & DISBURSEMENTS RECEIVED (Marejesho na Misaada Niliyopokea) -->
       <div class="card">
-        <div class="section-header">
-          <h3 class="section-title">Marejesho na Misaada Niliyopokea Kutoka WFC</h3>
-        </div>
+        <h3 style="color:var(--gold); margin-bottom:10px;">🎁 Marejesho na Misaada Niliyopokea Kutoka WFC</h3>
         <div id="disbursementsList"></div>
       </div>
     </section>
 
     <!-- TAB 2: PAY & UPLOAD RECEIPT/SMS -->
-    <section id="tab-pay" class="tab-panel" style="display:none;">
+    <section id="tab-pay" style="display:none;">
       <div class="grid-2">
-        <div class="card card-accent">
-          <h3 style="color:var(--text-primary); margin-bottom:8px;">1. Namba za Kulipia (WFC Accounts)</h3>
-          <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:14px;">
+        <div class="card card-orange">
+          <h3 style="color:var(--orange); margin-bottom:10px;">1️⃣ Namba za Kulipia (WFC Accounts)</h3>
+          <p style="font-size:0.9rem; color:#d4d4d8; margin-bottom:12px;">
             Fanya malipo kupitia mtandao wako wa simu au benki, kisha jaza fomu ya kulia kutuma SMS ya muamala au picha ya risiti.
           </p>
-          <div class="sub-panel" style="line-height:2; font-size:0.9rem; color:var(--text-secondary);">
-            <div><strong style="color:var(--text-primary);">M-Pesa:</strong> <span id="portalMpesa"></span></div>
-            <div><strong style="color:var(--text-primary);">Tigo Pesa:</strong> <span id="portalTigo"></span></div>
-            <div><strong style="color:var(--text-primary);">Airtel Money:</strong> <span id="portalAirtel"></span></div>
-            <div><strong style="color:var(--text-primary);">Benki:</strong> <span id="portalBank"></span></div>
+          <div style="background:var(--bg-elevated); padding:14px; border-radius:12px; line-height:1.9;">
+            <div><strong>M-Pesa:</strong> <span id="portalMpesa"></span></div>
+            <div><strong>Tigo Pesa:</strong> <span id="portalTigo"></span></div>
+            <div><strong>Airtel Money:</strong> <span id="portalAirtel"></span></div>
+            <div><strong>Benki:</strong> <span id="portalBank"></span></div>
           </div>
-          <div class="sub-panel" style="margin-top:14px; border-color:var(--accent-border); font-size:0.86rem; color:var(--text-secondary);">
-            💡 <strong style="color:var(--text-primary);">Kidokezo:</strong> Ukishatuma uthibitisho, Mhasibu wa WFC atakagua muamala na kubonyeza <em>Approve</em>. Utapata taarifa kwenye kengele 🔔 na risiti yako itatokea papo hapo.
+          <div style="margin-top:14px; padding:12px; background:rgba(22,163,74,0.15); border:1px solid #16a34a; border-radius:10px; font-size:0.88rem;">
+            <strong>Kidokezo:</strong> Ukishatuma uthibitisho, Mhasibu wa WFC atakagua muamala na kubonyeza <em>Approve</em>. Utapata taarifa kwenye kengele na risiti yako itatokea papo hapo.
           </div>
         </div>
 
         <div class="card">
-          <h3 style="color:var(--text-primary); margin-bottom:14px;">2. Tuma Uthibitisho wa Malipo</h3>
+          <h3 style="color:var(--gold); margin-bottom:12px;">2️⃣ Tuma Uthibitisho wa Malipo</h3>
           <form onsubmit="submitPaymentProof(event)">
             <div class="form-group">
-              <label>Unalipia Nini? (Chagua Mfuko)</label>
+              <label>📂 Unalipia Nini? (Chagua Mfuko)</label>
               <select id="payFund" class="form-control" onchange="toggleCampaignSelect()" required>
                 <option value="ada">Ada ya Mwezi (TSh 10,000)</option>
                 <option value="kiingilio">Kiingilio cha Uanachama (TSh 50,000)</option>
@@ -163,7 +172,7 @@
             </div>
 
             <div class="form-group" id="campaignSelectWrap" style="display:none;">
-              <label>Chagua Tukio / Mchango Husika</label>
+              <label>🎯 Chagua Tukio / Mchango Husika</label>
               <select id="payCampaignId" class="form-control">
                 <option value="">-- Chagua Tukio --</option>
               </select>
@@ -171,7 +180,7 @@
 
             <div class="grid-2" style="gap:10px;">
               <div class="form-group">
-                <label>Kiasi Ulicholipa (TSh)</label>
+                <label>💵 Kiasi Ulicholipa (TSh)</label>
                 <input type="number" id="payAmount" class="form-control" value="10000" min="500" required />
               </div>
               <div class="form-group">
@@ -181,7 +190,7 @@
             </div>
 
             <div class="form-group">
-              <label>Njia Uliyotumia Kulipa</label>
+              <label>📲 Njia Uliyotumia Kulipa</label>
               <select id="payMethod" class="form-control">
                 <option value="M-Pesa">M-Pesa</option>
                 <option value="Tigo Pesa">Tigo Pesa</option>
@@ -192,7 +201,7 @@
             </div>
 
             <div class="form-group">
-              <label>Namba ya Muamala (Transaction ID)</label>
+              <label>🔖 Namba ya Muamala (Transaction ID)</label>
               <input type="text" id="payRef" class="form-control" placeholder="Mfano: 8J4K9L2M1N" />
             </div>
 
@@ -202,23 +211,21 @@
             </div>
 
             <div class="form-group">
-              <label>Au Pakia Picha / Screenshot ya Risiti</label>
+              <label>📸 Au Pakia Picha / Screenshot ya Risiti</label>
               <input type="file" id="payProofFile" class="form-control" accept="image/*" />
             </div>
 
-            <div id="paySubmitMsg" style="margin-bottom:10px; font-size:0.9rem;"></div>
-            <button type="submit" class="btn-primary" style="width:100%; padding:12px;">Tuma Kwa Mhasibu ✓</button>
+            <div id="paySubmitMsg" style="margin-bottom:10px; font-size:0.92rem;"></div>
+            <button type="submit" class="btn-primary" style="width:100%; font-size:1.05rem;">TUMA KWA MHASIBU ✓</button>
           </form>
         </div>
       </div>
     </section>
 
     <!-- TAB 3: RECEIPTS & EVENT TICKETS -->
-    <section id="tab-receipts" class="tab-panel" style="display:none;">
+    <section id="tab-receipts" style="display:none;">
       <div class="card">
-        <div class="section-header">
-          <h3 class="section-title">Historia ya Malipo & Risiti Zangu</h3>
-        </div>
+        <h3 style="color:var(--orange); margin-bottom:12px;">Historia ya Malipo & Risiti Zangu</h3>
         <div class="table-wrap">
           <table>
             <thead>
@@ -237,17 +244,15 @@
       </div>
 
       <div class="card">
-        <div class="section-header">
-          <h3 class="section-title">Tiketi Zangu za Matukio</h3>
-        </div>
+        <h3 style="color:var(--gold); margin-bottom:12px;">Tiketi Zangu za Matukio</h3>
         <div id="myTicketsGrid" class="grid-2"></div>
       </div>
     </section>
 
-    <!-- TAB 4: COMMUNITY SOCIAL FEED -->
-    <section id="tab-feed" class="tab-panel" style="display:none;">
-      <div id="createPostBox" class="card card-accent" style="display:none;">
-        <h3 style="color:var(--text-primary); margin-bottom:12px;">Chapisha Tangazo / Nyaraka kwa Wanachama</h3>
+    <!-- TAB 4: COMMUNITY SOCIAL FEED (Text-Only Comments) -->
+    <section id="tab-feed" style="display:none;">
+      <div id="createPostBox" class="card card-orange" style="display:none;">
+        <h3 style="color:var(--orange); margin-bottom:10px;">✍️ Chapisha Tangazo / Nyaraka kwa Wanachama</h3>
         <form onsubmit="createPost(event)">
           <div class="grid-2" style="gap:10px;">
             <div class="form-group">
@@ -274,11 +279,11 @@
               <input type="url" id="postMeet" class="form-control" placeholder="https://meet.google.com/..." />
             </div>
             <div class="form-group">
-              <label>Picha ya Tangazo (Hiari)</label>
+              <label>🖼️ Picha ya Tangazo (Hiari)</label>
               <input type="file" id="postImage" class="form-control" accept="image/*" />
             </div>
             <div class="form-group">
-              <label>Nyaraka PDF/Doc (Hiari)</label>
+              <label>📄 Nyaraka PDF/Doc (Hiari)</label>
               <input type="file" id="postDoc" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx" />
             </div>
           </div>
@@ -290,13 +295,13 @@
     </section>
 
     <!-- TAB 5: LEADERSHIP & MULTI-LEVEL APPROVALS -->
-    <section id="tab-leader" class="tab-panel" style="display:none;">
-      <div class="card card-accent">
-        <h3 style="color:var(--text-primary); margin-bottom:6px;">Ofisi ya Uongozi & Ngazi za Uidhinishaji</h3>
-        <p style="font-size:0.88rem; color:var(--text-secondary);">
-          <strong style="color:var(--text-primary);">Mtiririko wa Idhini:</strong> Malipo yanayoingia yanathibitishwa na <strong style="color:var(--text-primary);">Mhasibu</strong>. Matumizi, misaada na marejesho yanaanzishwa na <strong style="color:var(--text-primary);">Mhasibu/Katibu</strong> → Yanahakikiwa na <strong style="color:var(--text-primary);">Katibu</strong> → Yanaidhinishwa mwisho na <strong style="color:var(--text-primary);">Mwenyekiti</strong>.
+    <section id="tab-leader" style="display:none;">
+      <div class="card card-orange">
+        <h3 style="color:var(--orange); margin-bottom:6px;">Ofisi ya Uongozi & Ngazi za Uidhinishaji</h3>
+        <p style="font-size:0.9rem; color:#d4d4d8;">
+          <strong>Mtiririko wa Idhini:</strong> Malipo yanayoingia yanathibitishwa na <strong>Mhasibu</strong>. Matumizi, misaada na marejesho yanaanzishwa na <strong>Mhasibu/Katibu</strong> → Yanahakikiwa na <strong>Katibu</strong> → Yanaidhinishwa mwisho na <strong>Mwenyekiti</strong>.
         </p>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
           <button class="btn-primary" onclick="showLeaderSub('sub-payments')">1. Malipo Yanayoingia (<span id="badgePendingPay">0</span>)</button>
           <button class="btn-outline" onclick="showLeaderSub('sub-expenses')">2. Vocha za Matumizi & Misaada</button>
           <button class="btn-outline" onclick="showLeaderSub('sub-campaigns')">3. Michango (Misiba/Harusi)</button>
@@ -307,9 +312,9 @@
         </div>
       </div>
 
-      <!-- SUB 1: Incoming Payments Approval -->
+      <!-- SUB 1: Incoming Payments Approval (Treasurer) -->
       <div id="sub-payments" class="leader-sub card">
-        <h4 style="color:var(--text-primary); margin-bottom:12px;">Uhakiki wa Malipo ya Wanachama (Mhasibu Approve)</h4>
+        <h4 style="color:var(--gold); margin-bottom:10px;">Uhakiki wa Malipo ya Wanachama</h4>
         <div class="table-wrap">
           <table>
             <thead>
@@ -327,10 +332,10 @@
         </div>
       </div>
 
-      <!-- SUB 2: Multi-Level Expenses -->
+      <!-- SUB 2: Multi-Level Expenses / Aid / Refunds -->
       <div id="sub-expenses" class="leader-sub card" style="display:none;">
-        <h4 style="color:var(--text-primary); margin-bottom:12px;">Anzisha Vocha ya Matumizi / Msaada / Marejesho</h4>
-        <form onsubmit="createExpenseVoucher(event)" class="sub-panel" style="margin-bottom:18px;">
+        <h4 style="color:var(--gold); margin-bottom:10px;">📤 Anzisha Vocha ya Matumizi / Msaada / Marejesho</h4>
+        <form onsubmit="createExpenseVoucher(event)" style="background:var(--bg-elevated); padding:14px; border-radius:12px; margin-bottom:16px;">
           <div class="grid-3" style="gap:10px;">
             <div class="form-group">
               <label>Mfuko Unaotoa Fedha</label>
@@ -374,10 +379,10 @@
             <label>Sababu Kamili ya Matumizi / Msaada</label>
             <input type="text" id="expReason" class="form-control" required />
           </div>
-          <button type="submit" class="btn-primary">Wasilisha Vocha Kwa Idhini</button>
+          <button type="submit" class="btn-primary">Wasilisha Vocha kwa Idhini</button>
         </form>
 
-        <h4 style="color:var(--text-primary); margin-bottom:10px;">Orodha ya Vocha & Hatua za Idhini (Katibu → Mwenyekiti)</h4>
+        <h4 style="color:var(--orange); margin-bottom:10px;">📋 Orodha ya Vocha & Hatua za Idhini (Katibu → Mwenyekiti)</h4>
         <div class="table-wrap">
           <table>
             <thead>
@@ -395,10 +400,10 @@
         </div>
       </div>
 
-      <!-- SUB 3: Campaigns -->
+      <!-- SUB 3: Campaigns (Misiba, Harusi, Ugonjwa) -->
       <div id="sub-campaigns" class="leader-sub card" style="display:none;">
-        <h4 style="color:var(--text-primary); margin-bottom:12px;">Tangaza Mchango Mpya (Msiba / Harusi / Ugonjwa)</h4>
-        <form onsubmit="createCampaign(event)" class="sub-panel" style="margin-bottom:18px;">
+        <h4 style="color:var(--gold); margin-bottom:10px;">🕊️ Tangaza Mchango Mpya (Msiba / Harusi / Ugonjwa)</h4>
+        <form onsubmit="createCampaign(event)" style="background:var(--bg-elevated); padding:14px; border-radius:12px; margin-bottom:16px;">
           <div class="grid-3" style="gap:10px;">
             <div class="form-group">
               <label>Kichwa cha Mchango</label>
@@ -430,14 +435,14 @@
 
       <!-- SUB 4: Fund Accounts -->
       <div id="sub-funds" class="leader-sub card" style="display:none;">
-        <h4 style="color:var(--text-primary); margin-bottom:12px;">Mchanganuo wa Akaunti za Fedha za WFC</h4>
+        <h4 style="color:var(--gold); margin-bottom:10px;">Mchanganuo wa Akaunti za Fedha za WFC</h4>
         <div id="adminFundsGrid" class="grid-4"></div>
       </div>
 
       <!-- SUB 5: Members & Roles -->
       <div id="sub-members" class="leader-sub card" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-          <h4 style="color:var(--text-primary);">Orodha ya Wanachama & Usimamizi wa Vyeo</h4>
+          <h4 style="color:var(--gold);">👥 Orodha ya Wanachama & Usimamizi wa Vyeo</h4>
           <input type="text" id="memberSearchInput" class="form-control" style="max-width:280px;" placeholder="🔍 Tafuta jina, WFC ID, kanda..." oninput="renderAdminMembers()" />
         </div>
         <div class="table-wrap">
@@ -459,9 +464,9 @@
 
       <!-- SUB 6: Events & Ticket Check-in -->
       <div id="sub-events" class="leader-sub card" style="display:none;">
-        <div class="grid-2" style="margin-bottom:18px;">
-          <div class="sub-panel">
-            <h4 style="color:var(--text-primary); margin-bottom:10px;">Kagua Tiketi Mlangoni (Gate Check-In)</h4>
+        <div class="grid-2" style="margin-bottom:16px;">
+          <div style="background:var(--bg-elevated); padding:14px; border-radius:12px;">
+            <h4 style="color:var(--orange); margin-bottom:8px;">📷 Kagua Tiketi Mlangoni (Gate Check-In)</h4>
             <div style="display:flex; gap:8px;">
               <input type="text" id="checkinCodeInput" class="form-control" placeholder="Weka Namba ya Tiketi (WFC-TKT-...)" />
               <button class="btn-success" onclick="checkinTicket()">Kagua ✓</button>
@@ -469,8 +474,8 @@
             <div id="checkinResult" style="margin-top:8px; font-weight:700;"></div>
           </div>
 
-          <div class="sub-panel">
-            <h4 style="color:var(--text-primary); margin-bottom:10px;">Tangaza Tukio Jipya (Event)</h4>
+          <div style="background:var(--bg-elevated); padding:14px; border-radius:12px;">
+            <h4 style="color:var(--gold); margin-bottom:8px;">➕ Tangaza Tukio Jipya (Event)</h4>
             <form onsubmit="createEvent(event)">
               <input type="text" id="evTitle" class="form-control" placeholder="Jina la Tukio" style="margin-bottom:8px;" required />
               <div class="grid-2" style="gap:8px; margin-bottom:8px;">
@@ -487,7 +492,7 @@
           </div>
         </div>
 
-        <h4 style="color:var(--text-primary); margin-bottom:10px;">Tiketi Zilizokatwa (Mhasibu Approve)</h4>
+        <h4 style="color:var(--gold); margin-bottom:8px;">🎟️ Tiketi Zilizokatwa (Mhasibu Approve)</h4>
         <div class="table-wrap">
           <table>
             <thead>
@@ -507,8 +512,8 @@
 
       <!-- SUB 7: Audit Trail & Settings -->
       <div id="sub-audit" class="leader-sub card" style="display:none;">
-        <h4 style="color:var(--text-primary); margin-bottom:12px;">Mipangilio ya Viwango & Akaunti za WFC</h4>
-        <form onsubmit="saveSettings(event)" class="sub-panel" style="margin-bottom:20px;">
+        <h4 style="color:var(--orange); margin-bottom:10px;">⚙️ Mipangilio ya Viwango & Akaunti za WFC</h4>
+        <form onsubmit="saveSettings(event)" style="background:var(--bg-elevated); padding:14px; border-radius:12px; margin-bottom:18px;">
           <div class="grid-3" style="gap:10px;">
             <div class="form-group">
               <label>Kiingilio (TSh)</label>
@@ -533,10 +538,10 @@
               <input type="text" id="setTigo" class="form-control" />
             </div>
           </div>
-          <button type="submit" class="btn-primary">Hifadhi Mipangilio</button>
+          <button type="submit" class="btn-primary">💾 Hifadhi Mipangilio</button>
         </form>
 
-        <h4 style="color:var(--text-primary); margin-bottom:10px;">Kumbukumbu za Ukaguzi (Audit Trail)</h4>
+        <h4 style="color:var(--gold); margin-bottom:10px;">🛡️ Kumbukumbu za Ukaguzi (Audit Trail)</h4>
         <div class="table-wrap">
           <table>
             <thead>
@@ -555,36 +560,32 @@
 
   </main>
 
-  <footer class="site-footer">
-    © 2026 Wachagga Family Community (WFC) — <em>Stand up, It's not over</em>. Haki zote zimehifadhiwa.
-  </footer>
-
   <!-- NOTIFICATIONS MODAL -->
   <div id="notifModal" class="modal-backdrop">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('notifModal')">✕</button>
-      <h3 style="color:var(--text-primary); margin-bottom:14px;">🔔 Taarifa Zangu (Notifications)</h3>
+      <h3 style="color:var(--orange); margin-bottom:12px;">🔔 Taarifa Zangu (Notifications)</h3>
       <div id="notifList"></div>
     </div>
   </div>
 
   <!-- DIGITAL RECEIPT / TICKET PRINT MODAL -->
   <div id="receiptModal" class="modal-backdrop">
-    <div class="modal-box" style="background:#ffffff; color:#09090b;">
+    <div class="modal-box" style="background:#fff; color:#000;">
       <button class="modal-close" onclick="closeModal('receiptModal')">✕</button>
       <div id="printable-area" style="text-align:center; padding:10px;">
-        <img src="/img/logo.png" alt="WFC" style="width:72px; height:72px; border-radius:50%; border:2px solid #ea580c;" />
-        <h3 style="margin-top:8px; color:#09090b;">WACHAGGA FAMILY COMMUNITY</h3>
-        <p style="font-size:0.78rem; color:#ea580c; font-weight:800; letter-spacing:0.04em;">STAND UP, IT'S NOT OVER • RISITI RASMI</p>
-        <hr style="margin:12px 0; border-color:#e4e4e7;" />
-        <div id="receiptDetails" style="text-align:left; font-size:0.92rem; line-height:1.8; color:#18181b;"></div>
+        <img src="/img/logo.png" style="width:74px; height:74px; border-radius:50%; border:2px solid #ff6b00;" />
+        <h3 style="margin-top:6px; color:#000;">WACHAGGA FAMILY COMMUNITY</h3>
+        <p style="font-size:0.8rem; color:#ff6b00; font-weight:800;">STAND UP, IT'S NOT OVER • RISITI RASMI</p>
+        <hr style="margin:12px 0; border-color:#ddd;" />
+        <div id="receiptDetails" style="text-align:left; font-size:0.94rem; line-height:1.8;"></div>
         <div style="margin-top:14px;">
           <img id="receiptQr" src="" alt="QR Code" style="width:120px; height:120px;" />
         </div>
       </div>
-      <div style="display:flex; gap:10px; margin-top:16px;">
+      <div style="display:flex; gap:10px; margin-top:14px;">
         <button class="btn-primary" style="flex:1;" onclick="window.print()">🖨️ Chapisha / PDF</button>
-        <a id="whatsappShareBtn" href="#" target="_blank" class="btn-success" style="flex:1; text-align:center; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">📲 Tuma WhatsApp</a>
+        <a id="whatsappShareBtn" href="#" target="_blank" class="btn-success" style="flex:1; text-align:center; text-decoration:none;">📲 Tuma WhatsApp</a>
       </div>
     </div>
   </div>
