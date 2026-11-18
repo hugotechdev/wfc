@@ -150,6 +150,7 @@ async function load(p){
     const d = await api("/api/dashboard");
     const max = Math.max(...(d.regions||[]).map(r=>r.value), 1);
     const money = n => "TSh " + Number(n||0).toLocaleString();
+    const fin = d.finance || {mapato:0, matumizi:0, balance:0, totalDebt:0, debtors:0};
     c.innerHTML = `<section class="hero-band">
       <div><span class="pill">${d.user.status}</span><h2 class="serif" style="margin:8px 0 0;font-size:2rem">Karibu, ${d.user.name}</h2><p>WFC ID ${d.user.wfcId||"—"} · ${d.user.region||""}</p></div>
       <div><div class="kicker">Umechanga</div><strong class="serif" style="font-size:1.8rem">${money(d.myTotalPaid)}</strong></div>
@@ -160,25 +161,62 @@ async function load(p){
       <div class="stat"><div>Malipo yote</div><div class="val">${d.stats.payments}</div></div>
       <div class="stat"><div>Matukio</div><div class="val">${d.stats.events}</div></div>
     </div>
-    ${d.finance ? `<div class="stats">
-      <div class="stat"><div>Mapato</div><div class="val">${money(d.finance.mapato)}</div></div>
-      <div class="stat"><div>Matumizi</div><div class="val">${money(d.finance.matumizi)}</div></div>
-      <div class="stat"><div>Balance</div><div class="val">${money(d.finance.balance)}</div></div>
-      <div class="stat"><div>Madeni</div><div class="val">${money(d.finance.totalDebt)}<br><small>${d.finance.debtors} wanadaiwa</small></div></div>
-    </div>` : ""}
+    <div class="stats">
+      <div class="stat" style="background:linear-gradient(135deg,#1a160f,#2a2418);color:#f6f1e7"><div>Mapato</div><div class="val" style="color:#e6d3a1">${money(fin.mapato)}</div></div>
+      <div class="stat" style="background:linear-gradient(135deg,#3a2e1c,#1a160f);color:#f6f1e7"><div>Matumizi</div><div class="val" style="color:#e6d3a1">${money(fin.matumizi)}</div></div>
+      <div class="stat" style="background:linear-gradient(135deg,#c6a15b,#8d6a2a);color:#1a140c"><div>Balance</div><div class="val">${money(fin.balance)}</div></div>
+      <div class="stat"><div>Madeni</div><div class="val">${money(fin.totalDebt)}</div><small>${fin.debtors} wanadaiwa</small></div>
+    </div>
     <div class="split">
+      <div class="card"><h3>Mapato na Matumizi</h3><canvas id="financeChart" height="160"></canvas></div>
       <div class="card"><h3>Kanda</h3>${(d.regions||[]).map(r=>`<div class="bar-row"><span><b>${r.name}</b><em>${r.value}</em></span><div class="track"><i style="width:${Math.round(r.value/max*100)}%"></i></div></div>`).join("")||"<p>Hakuna data</p>"}</div>
-      <div class="card"><h3>Matukio</h3>${(d.upcoming||[]).map(e=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${e.title}</strong><br><small>${e.location||""}</small></div>`).join("")||"<p>Hakuna</p>"}</div>
     </div>
     <div class="card"><h3>Malipo ya hivi karibuni</h3><table><thead><tr><th>Jina</th><th>Aina</th><th>Kiasi</th><th>Hali</th></tr></thead><tbody>
-      ${(d.recent||[]).map(x=>`<tr><td>${x.userName||""}</td><td>${x.type}</td><td>${money(x.amount)}</td><td>${x.status}</td></tr>`).join("")||"<tr><td colspan=4>Hakuna</td></tr>"}
+      ${(d.recent||[]).map(x=>`<tr><td>${x.userName||""}</td><td>${x.type}</td><td>${money(x.amount)}</td><td><span class="badge ${x.status==="APPROVED"?"badge-approved":"badge-pending"}">${x.status}</span></td></tr>`).join("")||"<tr><td colspan=4>Hakuna</td></tr>"}
     </tbody></table></div>`;
+    if (window.Chart) {
+      new Chart(document.getElementById("financeChart"), {
+        type: "doughnut",
+        data: { labels: ["Mapato", "Matumizi"], datasets: [{ data: [fin.mapato||1, fin.matumizi||1], backgroundColor: ["#c6a15b", "#1a160f"], borderWidth: 0 }] },
+        options: { responsive: true, plugins: { legend: { position: "bottom" } }, cutout: "68%" }
+      });
+    }
   }
   if(p==="members"){
     const m = await api("/api/members");
-    c.innerHTML = `<div class="card"><table><thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th>Hali</th><th>Hatua</th></tr></thead><tbody>
-      ${m.map(x=>`<tr><td>${x.name}</td><td>${x.phone}</td><td>${x.region}</td><td><span class="badge ${x.status==="ACTIVE"?"badge-active":x.status==="SUSPENDED"?"badge-suspended":"badge-pending"}">${x.status==="ACTIVE"?"Hai":x.status==="SUSPENDED"?"Imesimamishwa":"Inasubiri"}</span></td><td>${x.status==="PENDING"?`<button class="btn btn-sm" onclick="approve('${x.id}')">Idhinisha</button>`:""}</td></tr>`).join("")}
-    </tbody></table></div>`;
+    window.__members = m;
+    c.innerHTML = `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <input id="memberSearch" placeholder="Tafuta jina, simu, kanda..." style="flex:1;min-width:200px">
+      <span class="muted">${m.length} wanachama</span>
+    </div>
+    <div id="memberGrid" class="member-grid"></div>`;
+    const render = (list) => {
+      document.getElementById("memberGrid").innerHTML = list.map(x => {
+        const initials = (x.name||"?").split(" ").map(s=>s[0]).slice(0,2).join("").toUpperCase();
+        const wa = x.phone ? `https://wa.me/255${x.phone.replace(/^0/,"")}` : "#";
+        return `<div class="member-card">
+          <div class="avatar">${initials}</div>
+          <div class="member-info">
+            <strong>${x.name}</strong>
+            <div class="muted">${x.wfcId||"WFC-—"} · ${x.region||""}</div>
+            <div class="muted">${x.phone||""}</div>
+          </div>
+          <span class="badge ${x.status==="ACTIVE"?"badge-active":x.status==="SUSPENDED"?"badge-suspended":"badge-pending"}">${x.status==="ACTIVE"?"Hai":x.status==="SUSPENDED"?"Imesimamishwa":"Inasubiri"}</span>
+          <div class="member-actions">
+            <a class="btn btn-sm ghost" href="${wa}" target="_blank">WhatsApp</a>
+            <button class="btn btn-sm ghost" onclick="sendMsg('${x.phone}','${x.name}')">Ujumbe</button>
+            ${x.status==="PENDING"?`<button class="btn btn-sm" onclick="approve('${x.id}')">Idhinisha</button>`:""}
+            ${x.status==="ACTIVE"?`<button class="btn btn-sm ghost" onclick="suspendMember('${x.id}')">Simamisha</button>`:""}
+            <button class="btn btn-sm ghost" style="color:#9c2b2b" onclick="removeMember('${x.id}')">Ondoa</button>
+          </div>
+        </div>`;
+      }).join("") || "<p>Hakuna wanachama</p>";
+    };
+    render(m);
+    document.getElementById("memberSearch").oninput = e => {
+      const q = e.target.value.toLowerCase();
+      render(m.filter(x => (x.name||"").toLowerCase().includes(q) || (x.phone||"").includes(q) || (x.region||"").toLowerCase().includes(q) || (x.wfcId||"").toLowerCase().includes(q)));
+    };
   }
   if(p==="payments"){
     const list = await api("/api/payments");
@@ -310,9 +348,18 @@ async function load(p){
   }
   if(p==="documents"){
     const list = await api("/api/documents");
-    c.innerHTML = `<div class="card"><h3>Ongeza Nyaraka</h3><form id="docf"><div class="form-group"><label>Jina</label><input name="title" required></div><div class="form-group"><label>URL</label><input name="url"></div><button class="btn" type="submit">Hifadhi</button></form></div>
-    <div class="card"><h3>Nyaraka</h3>${list.map(d=>`<div><a href="${d.url||"#"}" target="_blank">${d.title}</a></div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    const constitution = list.find(d => (d.title||"").toLowerCase().includes("katiba")) || {title:"Katiba ya WFC", url:"#", summary:"Sheria na misingi ya Wachagga Family Community."};
+    c.innerHTML = `<div class="card" style="background:linear-gradient(135deg,var(--sidebar),#2a2418);color:#f6f1e7">
+      <h3 style="color:#e6d3a1">Katiba ya Chama</h3>
+      <p>${constitution.summary||"Soma katiba ili ujue haki na wajibu wako kama mwanachama."}</p>
+      <a class="btn" href="${constitution.url||"#"}" target="_blank" style="width:auto">Soma Katiba</a>
+    </div>
+    <div class="card"><h3>Nyaraka Nyingine</h3>
+      <div class="doc-list">${list.filter(d=>d!==constitution).map(d=>`<div class="doc-item"><strong>${d.title}</strong><br><small>${d.summary||""}</small><br><a href="${d.url||"#"}" target="_blank">Fungua</a></div>`).join("")||"<p>Hakuna nyaraka nyingine</p>"}</div>
+    </div>
+    <div class="card"><h3>Ongeza Nyaraka</h3><form id="docf"><div class="form-group"><label>Jina</label><input name="title" required></div><div class="form-group"><label>Maelezo mafupi</label><input name="summary"></div><div class="form-group"><label>URL</label><input name="url"></div><button class="btn" type="submit">Hifadhi</button></form></div>`;
     document.getElementById("docf").onsubmit = async e => { e.preventDefault(); await api("/api/documents",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("documents"); };
+  }
   }
   if(p==="pending"){
     const m = await api("/api/members");
@@ -480,8 +527,11 @@ async function downloadReceipt(id){
   doc.save((row.receiptNo||"risiti")+".pdf");
 }
 
-async function approve(id){ const d = await api("/api/approve-member",{method:"POST",body:{userId:id}}); if(d.success){ alert("Imeidhinishwa: "+d.wfcId); load("pending"); } else alert(d.error||"Imeshindwa"); }
+async function approve(id){ const d = await api("/api/approve-member",{method:"POST",body:{userId:id}}); if(d.success){ alert("Imeidhinishwa: "+d.wfcId); load("members"); } else alert(d.error||"Imeshindwa"); }
 async function approvePay(id){ const d = await api("/api/approve-payment",{method:"POST",body:{paymentId:id}}); if(d.success){ alert("Imeidhinishwa. Risiti: "+d.receiptNo); load("payments"); } else alert(d.error||"Imeshindwa"); }
+async function suspendMember(id){ if(!confirm("Simamisha mwanachama huyu?")) return; const d = await api("/api/suspend-member",{method:"POST",body:{userId:id}}); if(d.success) load("members"); else alert(d.error||"Imeshindwa"); }
+async function removeMember(id){ if(!confirm("Ondoa mwanachama huyu kabisa?")) return; const d = await api("/api/remove-member",{method:"POST",body:{userId:id}}); if(d.success) load("members"); else alert(d.error||"Imeshindwa"); }
+function sendMsg(phone, name){ const msg = prompt("Ujumbe kwa "+name+":"); if(msg) alert("Ujumbe umewekwa. (SMS/WhatsApp itatuma baadaye)"); }
 async function logout(){ await api("/api/logout",{method:"POST"}); showLogin(); }
 
 (async()=>{ const me = await api("/api/me"); if(me.user) showDash(); else showLogin(); })();
