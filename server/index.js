@@ -31,19 +31,19 @@ const localStoreFile = path.join(localDataDir, 'local_kv_store.json');
 async function ensureStoreInitialized() {
   if (pool) {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS wfc_kv_store (
+      CREATE TABLE IF NOT EXISTS wfc_v7_kv_store (
         key TEXT PRIMARY KEY,
         value JSONB NOT NULL,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `);
-    const existing = await pool.query('SELECT value FROM wfc_kv_store WHERE key = $1', [STORE_KEY]);
+    const existing = await pool.query('SELECT value FROM wfc_v7_kv_store WHERE key = $1', [STORE_KEY]);
     if (existing.rows.length === 0) {
       await pool.query(
-        'INSERT INTO wfc_kv_store (key, value, updated_at) VALUES ($1, $2::jsonb, NOW())',
+        'INSERT INTO wfc_v7_kv_store (key, value, updated_at) VALUES ($1, $2::jsonb, NOW())',
         [STORE_KEY, JSON.stringify(INITIAL_STATE)]
       );
-      console.log('[WFC-DB] Seeded initial state into PostgreSQL wfc_kv_store.');
+      console.log('[WFC-DB] Seeded initial state into PostgreSQL wfc_v7_kv_store.');
     }
   } else {
     if (!fs.existsSync(localDataDir)) {
@@ -58,7 +58,7 @@ async function ensureStoreInitialized() {
 
 async function readState() {
   if (pool) {
-    const res = await pool.query('SELECT value FROM wfc_kv_store WHERE key = $1', [STORE_KEY]);
+    const res = await pool.query('SELECT value FROM wfc_v7_kv_store WHERE key = $1', [STORE_KEY]);
     if (res.rows.length > 0) return res.rows[0].value;
     await writeState(INITIAL_STATE);
     return INITIAL_STATE;
@@ -75,7 +75,7 @@ async function writeState(newState) {
   };
   if (pool) {
     await pool.query(
-      `INSERT INTO wfc_kv_store (key, value, updated_at)
+      `INSERT INTO wfc_v7_kv_store (key, value, updated_at)
        VALUES ($1, $2::jsonb, NOW())
        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
       [STORE_KEY, JSON.stringify(newState)]
@@ -91,7 +91,7 @@ app.get('/api/health', async (req, res) => {
   res.json({
     ok: true,
     service: 'WFC Portal V7',
-    storage: pool ? 'postgresql:wfc_kv_store' : 'local:json',
+    storage: pool ? 'postgresql:wfc_v7_kv_store' : 'local:json',
     timestamp: new Date().toISOString()
   });
 });
@@ -100,7 +100,7 @@ app.get('/api/health', async (req, res) => {
 app.get('/api/state', async (req, res) => {
   try {
     const state = await readState();
-    res.json({ ok: true, storage: pool ? 'PostgreSQL (wfc_kv_store)' : 'Local Fallback Store', state });
+    res.json({ ok: true, storage: pool ? 'PostgreSQL (wfc_v7_kv_store)' : 'Local Fallback Store', state });
   } catch (err) {
     console.error('Error reading state:', err);
     res.status(500).json({ ok: false, error: err.message });
