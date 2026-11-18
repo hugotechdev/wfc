@@ -5,9 +5,13 @@ const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, "../data/db.json");
+const DATA_DIR = path.join(__dirname, "../data");
+const DATA_FILE = path.join(DATA_DIR, "db.json");
 
-// Ensure data file exists
+// Ensure data directory and file exist
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 if (!fs.existsSync(DATA_FILE)) {
   fs.writeFileSync(DATA_FILE, JSON.stringify({
     users: [],
