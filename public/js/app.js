@@ -22,6 +22,32 @@ function showOtp(phone, devCode){
   };
 }
 
+function ico(d){return `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`}
+const IC={
+  home:ico('<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/>'),
+  users:ico('<path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 4.13a3 3 0 0 1 0 5.75"/>'),
+  coin:ico('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>'),
+  cal:ico('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>'),
+  meg:ico('<path d="M4 10v4a2 2 0 0 0 2 2h2l5 4V4L8 8H6a2 2 0 0 0-2 2z"/><path d="M16 9a4 4 0 0 1 0 6"/>'),
+  id:ico('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="12" r="2"/><path d="M14 10h4M14 14h4"/>'),
+  home2:ico('<path d="M4 11.5 12 5l8 6.5"/><path d="M7 10v9h10v-9"/>'),
+  book:ico('<path d="M5 5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 0-3 3z"/><path d="M5 5v15"/>'),
+  life:ico('<circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/>'),
+  clock:ico('<circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/>'),
+  vote:ico('<path d="M4 6h16v12H4z"/><path d="M8 12l2 2 4-4"/>'),
+  case:ico('<path d="M4 8h16v11H4z"/><path d="M9 8V6h6v2"/>'),
+  bank:ico('<path d="M4 10h16M6 10v8M10 10v8M14 10v8M18 10v8M3 18h18M12 3 3 8h18z"/>'),
+  box:ico('<path d="M3 8l9-4 9 4-9 4z"/><path d="M3 8v8l9 4 9-4V8"/>'),
+  flag:ico('<path d="M5 21V4"/><path d="M5 5h11l-2 4 2 4H5"/>'),
+  file:ico('<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v6h6"/>'),
+  key:ico('<circle cx="8" cy="14" r="3"/><path d="M11 14h9l-2 2 2 2"/>'),
+  bell:ico('<path d="M6 16V10a6 6 0 1 1 12 0v6l1 2H5z"/><path d="M10 19a2 2 0 0 0 4 0"/>'),
+  chart:ico('<path d="M4 19V5M4 19h16"/><path d="M8 15v-4M12 15V8M16 15v-6"/>'),
+  mail:ico('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="m4 7 8 6 8-6"/>'),
+  phone:ico('<rect x="8" y="3" width="8" height="18" rx="2"/><path d="M11 18h2"/>'),
+  gear:ico('<circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/>')
+};
+
 function showLogin(){
   app.innerHTML = `<div class="container">
     <div style="text-align:right"><button class="theme-toggle" onclick="toggleTheme()">◐</button></div>
@@ -32,7 +58,12 @@ function showLogin(){
       <div class="form-group"><label>Nenosiri</label><input name="password" type="password" required></div>
       <button class="btn" type="submit">Ingia</button><div id="m"></div>
     </form>
-    <p class="link"><a href="#" id="r">Jisajili</a></p>
+    <p class="link"><a href="#" id="r">Jisajili</a> · <a href="/">Tovuti</a></p>
+    <details class="demo-box"><summary>Akaunti za majaribio</summary>
+      <p>Mwenyekiti: 0700000000 / admin123</p>
+      <p>Mwanachama: 0711000001 / demo123</p>
+      <p>Mhazini: 0711000002 / demo123</p>
+    </details>
   </div>`;
   document.getElementById("r").onclick = e => { e.preventDefault(); showRegister(); };
   document.getElementById("f").onsubmit = async e => {
@@ -73,62 +104,74 @@ async function showDash(){
     app.innerHTML = `<div class="container"><img src="/wfc-logo.jpg" class="logo"><h1>Inasubiri Idhini</h1><p class="subtitle">Habari ${me.user.name}</p><div class="card"><p>Usajili wako na malipo ya TSh 1,000 yamepokelewa. Subiri viongozi.</p></div><button class="btn" onclick="logout()">Toka nje</button></div>`;
     return;
   }
+  window.__me = me.user;
+  const groups = [
+    ["Kila siku", [["home","Dashibodi",IC.home],["members","Wanachama",IC.users],["payments","Michango",IC.coin],["events","Matukio",IC.cal],["announcements","Matangazo",IC.meg]]],
+    ["Mwanachama", [["card","Kitambulisho",IC.id],["family","Familia",IC.home2],["directory","Directory",IC.book],["help","Msaada",IC.life],["notifications","Taarifa",IC.bell]]],
+    ["Ofisi", [["pending","Inasubiri",IC.clock],["attendance","Mahudhurio",IC.cal],["elections","Uchaguzi",IC.vote],["cases","Kesi",IC.case],["saccos","SACCOS",IC.bank],["assets","Mali",IC.box],["projects","Miradi",IC.flag],["penalties","Faini",IC.file],["documents","Nyaraka",IC.file],["roles","Majukumu",IC.key],["charts","Grafu",IC.chart],["messages","Ujumbe",IC.mail],["momo","Malipo ya simu",IC.phone],["settings","Mipangilio",IC.gear]]]
+  ];
   app.innerHTML = `<div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-logo"><img src="/wfc-logo.jpg"><p>WACHAGGA FAMILY COMMUNITY</p></div>
-      <a class="nav-item active" data-p="home">Dashboard</a>
-      <a class="nav-item" data-p="members">Wanachama</a>
-      <a class="nav-item" data-p="payments">Michango</a>
-      <a class="nav-item" data-p="events">Matukio</a>
-      <a class="nav-item" data-p="announcements">Matangazo</a>
-      <a class="nav-item" data-p="card">Kitambulisho</a>
-      <a class="nav-item" data-p="family">Familia</a>
-      <a class="nav-item" data-p="directory">Directory</a>
-      <a class="nav-item" data-p="help">Msaada</a>
-      <a class="nav-item" data-p="pending">Inasubiri</a>
-      <a class="nav-item" data-p="attendance">Mahudhurio</a>
-      <a class="nav-item" data-p="elections">Uchaguzi</a>
-      <a class="nav-item" data-p="cases">Kesi</a>
-      <a class="nav-item" data-p="saccos">SACCOS</a>
-      <a class="nav-item" data-p="assets">Mali</a>
-      <a class="nav-item" data-p="projects">Miradi</a>
-      <a class="nav-item" data-p="penalties">Faini</a>
-      <a class="nav-item" data-p="documents">Nyaraka</a>
-      <a class="nav-item" data-p="roles">Roles</a>
-      <a class="nav-item" data-p="notifications">Taarifa</a>
-      <a class="nav-item" data-p="charts">Grafu</a>
-      <a class="nav-item" data-p="messages">Ujumbe</a>
-      <a class="nav-item" data-p="momo">Malipo ya simu</a>
-      <a class="nav-item" data-p="settings">Mipangilio</a>
-      <a class="nav-item" onclick="logout()">Toka nje</a>
+    <div class="scrim" id="scrim"></div>
+    <aside class="sidebar" id="side">
+      <div class="sidebar-logo"><img src="/wfc-logo.jpg" alt=""><p>WACHAGGA FAMILY</p></div>
+      ${groups.map(([label, items])=>`<div class="nav-label">${label}</div>${items.map(([id,name,icon])=>`<a class="nav-item" data-p="${id}">${icon}${name}</a>`).join("")}`).join("")}
+      <a class="nav-item" id="out">${IC.home}Toka nje</a>
     </aside>
     <div class="main">
-      <div class="topbar"><strong id="pt">Dashboard</strong><div><button class="theme-toggle" onclick="toggleTheme()">◐</button> <span>${me.user.name} · ${me.user.role}</span></div></div>
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:10px"><button class="menu-btn" id="menuBtn" type="button">Menyu</button><strong id="pt">Dashibodi</strong></div>
+        <div><button class="theme-toggle" onclick="toggleTheme()" type="button">Mwanga</button> <span class="who">${me.user.name} · ${me.user.role}</span></div>
+      </div>
       <div class="content" id="c"></div>
     </div>
+    <nav class="tabbar">
+      <button type="button" data-p="home">${IC.home}Nyumbani</button>
+      <button type="button" data-p="payments">${IC.coin}Michango</button>
+      <button type="button" data-p="events">${IC.cal}Matukio</button>
+      <button type="button" id="moreBtn">${IC.meg}Zaidi</button>
+    </nav>
   </div>`;
-  document.querySelectorAll(".nav-item[data-p]").forEach(el => el.onclick = () => load(el.dataset.p));
+  const close = () => { document.getElementById("side").classList.remove("open"); document.getElementById("scrim").classList.remove("on"); };
+  document.getElementById("menuBtn").onclick = () => { document.getElementById("side").classList.add("open"); document.getElementById("scrim").classList.add("on"); };
+  document.getElementById("moreBtn").onclick = document.getElementById("menuBtn").onclick;
+  document.getElementById("scrim").onclick = close;
+  document.getElementById("out").onclick = logout;
+  document.querySelectorAll("[data-p]").forEach(el => el.onclick = () => { close(); load(el.dataset.p); });
   load("home");
 }
 
 async function load(p){
   const c = document.getElementById("c");
-  const titles = {home:"Dashboard",members:"Wanachama",payments:"Michango",events:"Matukio",announcements:"Matangazo",card:"Kitambulisho",family:"Familia",directory:"Directory",help:"Msaada",pending:"Inasubiri Idhini",attendance:"Mahudhurio",elections:"Uchaguzi",cases:"Kesi",saccos:"SACCOS",assets:"Mali",projects:"Miradi",penalties:"Faini",documents:"Nyaraka",charts:"Grafu",messages:"Ujumbe",momo:"Malipo ya simu",settings:"Mipangilio"};
+  const titles = {home:"Dashibodi",members:"Wanachama",payments:"Michango",events:"Matukio",announcements:"Matangazo",card:"Kitambulisho",family:"Familia",directory:"Directory",help:"Msaada",pending:"Inasubiri Idhini",attendance:"Mahudhurio",elections:"Uchaguzi",cases:"Kesi",saccos:"SACCOS",assets:"Mali",projects:"Miradi",penalties:"Faini",documents:"Nyaraka",charts:"Grafu",messages:"Ujumbe",momo:"Malipo ya simu",settings:"Mipangilio",roles:"Majukumu",notifications:"Taarifa"};
   document.getElementById("pt").textContent = titles[p] || p;
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.p === p));
 
   if(p==="home"){
     const d = await api("/api/dashboard");
-    c.innerHTML = `<div class="stats">
-      <div class="stat"><div>Wanachama Hai</div><div class="val">${d.stats.members}</div></div>
+    const max = Math.max(...(d.regions||[]).map(r=>r.value), 1);
+    const money = n => "TSh " + Number(n||0).toLocaleString();
+    c.innerHTML = `<section class="hero-band">
+      <div><span class="pill">${d.user.status}</span><h2 class="serif" style="margin:8px 0 0;font-size:2rem">Karibu, ${d.user.name}</h2><p>WFC ID ${d.user.wfcId||"—"} · ${d.user.region||""}</p></div>
+      <div><div class="kicker">Umechanga</div><strong class="serif" style="font-size:1.8rem">${money(d.myTotalPaid)}</strong></div>
+    </section>
+    <div class="stats">
+      <div class="stat"><div>Wanachama hai</div><div class="val">${d.stats.members}</div></div>
       <div class="stat"><div>Inasubiri</div><div class="val">${d.stats.pending}</div></div>
-      <div class="stat"><div>Malipo</div><div class="val">${d.stats.payments}</div></div>
-      <div class="stat"><div>Nimechangia</div><div class="val">TSh ${(d.myTotalPaid||0).toLocaleString()}</div></div>
-    </div><div class="card"><h3>Karibu ${d.user.name}</h3><p style="margin-top:6px;color:var(--muted)">WFC ID: ${d.user.wfcId||"—"} · Hali: ${d.user.status}</p></div>`;
+      <div class="stat"><div>Malipo yote</div><div class="val">${d.stats.payments}</div></div>
+      <div class="stat"><div>Matukio</div><div class="val">${d.stats.events}</div></div>
+    </div>
+    <div class="split">
+      <div class="card"><h3>Kanda</h3>${(d.regions||[]).map(r=>`<div class="bar-row"><span><b>${r.name}</b><em>${r.value}</em></span><div class="track"><i style="width:${Math.round(r.value/max*100)}%"></i></div></div>`).join("")||"<p>Hakuna data</p>"}</div>
+      <div class="card"><h3>Matukio</h3>${(d.upcoming||[]).map(e=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${e.title}</strong><br><small>${e.location||""}</small></div>`).join("")||"<p>Hakuna</p>"}</div>
+    </div>
+    <div class="card"><h3>Malipo ya hivi karibuni</h3><table><thead><tr><th>Jina</th><th>Aina</th><th>Kiasi</th><th>Hali</th></tr></thead><tbody>
+      ${(d.recent||[]).map(x=>`<tr><td>${x.userName||""}</td><td>${x.type}</td><td>${money(x.amount)}</td><td>${x.status}</td></tr>`).join("")||"<tr><td colspan=4>Hakuna</td></tr>"}
+    </tbody></table></div>`;
   }
   if(p==="members"){
     const m = await api("/api/members");
     c.innerHTML = `<div class="card"><table><thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th>Hali</th><th>Hatua</th></tr></thead><tbody>
-      ${m.map(x=>`<tr><td>${x.name}</td><td>${x.phone}</td><td>${x.region}</td><td><span class="badge ${x.status==="ACTIVE"?"badge-active":"badge-pending"}">${x.status==="ACTIVE"?"Hai":"Inasubiri"}</span></td><td>${x.status==="PENDING"?`<button class="btn btn-sm" onclick="approve('${x.id}')">Idhinisha</button>`:""}</td></tr>`).join("")}
+      ${m.map(x=>`<tr><td>${x.name}</td><td>${x.phone}</td><td>${x.region}</td><td><span class="badge ${x.status==="ACTIVE"?"badge-active":x.status==="SUSPENDED"?"badge-suspended":"badge-pending"}">${x.status==="ACTIVE"?"Hai":x.status==="SUSPENDED"?"Imesimamishwa":"Inasubiri"}</span></td><td>${x.status==="PENDING"?`<button class="btn btn-sm" onclick="approve('${x.id}')">Idhinisha</button>`:""}</td></tr>`).join("")}
     </tbody></table></div>`;
   }
   if(p==="payments"){
@@ -173,23 +216,24 @@ async function load(p){
     c.innerHTML = `<div class="card"><h3>Tangazo Jipya</h3><form id="af" style="margin-top:10px">
       <div class="form-group"><label>Kichwa</label><input name="title" required></div>
       <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" required></textarea></div>
+      <div class="form-group"><label>Kiungo (hiari)</label><input name="link" placeholder="/#matukio au https://..."></div>
       <button class="btn" type="submit">Chapisha</button>
     </form></div>
-    <div class="card"><h3>Matangazo</h3>${list.map(a=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${a.title}</strong><p style="margin-top:4px">${a.body}</p><small>${a.author}</small></div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    <div class="card"><h3>Matangazo</h3>${list.map(a=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${a.title}</strong><p style="margin-top:4px">${a.body}</p>${a.link?`<a href="${a.link}">${a.link}</a>`:""}<br><small>${a.author||""}</small></div>`).join("")||"<p>Hakuna</p>"}</div>`;
     document.getElementById("af").onsubmit = async e => { e.preventDefault(); const d = await api("/api/announcements",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); if(d.error) alert(d.error); else load("announcements"); };
   }
   if(p==="card"){
     const d = await api("/api/dashboard");
-    c.innerHTML = `<div class="card" style="max-width:380px;text-align:center;border:2px solid var(--gold)">
-      <img src="/wfc-logo.jpg" style="width:70px;height:70px;border-radius:50%;margin:0 auto 10px">
-      <h2 style="color:var(--gold-dark)">WFC MEMBERSHIP CARD</h2>
-      <p style="margin:12px 0;font-size:1.05rem"><strong>${d.user.name}</strong></p>
-      <p>WFC ID: <strong>${d.user.wfcId||"—"}</strong></p>
-      <p>Kanda: ${d.user.region||"—"}</p>
-      <p>Hali: <span class="badge badge-active">${d.user.status}</span></p>
-      <div style="margin:16px auto;width:100px;height:100px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center">QR</div>
-      <button class="btn" onclick="window.print()">Print / Pakua</button>
+    c.innerHTML = `<div class="card idcard">
+      <img src="/wfc-logo.jpg" style="width:70px;height:70px;border-radius:50%">
+      <h2>WFC MEMBERSHIP</h2>
+      <p style="font-size:1.35rem;margin:8px 0"><strong>${d.user.name}</strong></p>
+      <p>${d.user.wfcId||"—"}</p>
+      <p>${d.user.region||"—"} · ${d.user.status}</p>
+      <img id="qrc" class="qr" alt="QR">
+      <button class="btn" onclick="window.print()">Pakua / chapisha</button>
     </div>`;
+    if (window.QRCode) QRCode.toDataURL(d.user.wfcId || d.user.name, { margin:1, width:180 }).then(url => { const img=document.getElementById("qrc"); if(img) img.src=url; });
   }
   if(p==="family"){
     const f = await api("/api/family");
@@ -273,7 +317,7 @@ async function load(p){
   }
   if(p==="charts"){
     const d = await api("/api/analytics");
-    const bar = rows => rows.map(r => `<div style="margin:8px 0"><div>${r.name}</div><div style="height:12px;background:var(--gold);width:${Math.max(8, Math.min(100, r.value))}%"></div><small>${r.value}</small></div>`).join("") || "<p>Hakuna data</p>";
+    const bar = rows => { const max = Math.max(...rows.map(r=>Number(r.value)||0), 1); return rows.map(r => `<div class="bar-row"><span><b>${r.name}</b><em>${Number(r.value).toLocaleString()}</em></span><div class="track"><i style="width:${Math.round((Number(r.value)||0)/max*100)}%"></i></div></div>`).join("") || "<p>Hakuna data</p>"; };
     c.innerHTML = `<div class="card"><h3>Wanachama kwa kanda</h3>${bar(d.regions||[])}</div><div class="card"><h3>Makusanyo (TSh)</h3>${bar((d.types||[]).map(t=>({name:t.name,value:t.value})))}</div>`;
   }
   if(p==="messages"){
@@ -320,6 +364,7 @@ async function load(p){
     const d = await api("/api/dashboard");
     const s = d.settings || {};
     c.innerHTML = `<div class="card"><h3>OTP</h3><button class="btn" id="tfa" type="button">Washa / zima OTP</button><p id="tfam" style="margin-top:8px"></p></div>
+    <div class="card"><h3>Data ya majaribio</h3><p>Akaunti 0711000001 hadi 0711000005, nenosiri demo123. Kuondoa hakuathiri wanachama halisi.</p><button class="btn" id="cleardemo" type="button">Ondoa data ya majaribio</button></div>
     <div class="card"><h3>Funguo za huduma</h3><form id="sf">
       <div class="form-group"><label>Africa's Talking username</label><input name="smsUsername" value="${s.smsUsername||""}"></div>
       <div class="form-group"><label>SMS API key</label><input name="smsKey" value="${s.smsKey||""}"></div>
@@ -331,7 +376,22 @@ async function load(p){
       <button class="btn" type="submit">Hifadhi</button>
     </form></div>`;
     document.getElementById("tfa").onclick = async () => { const r = await api("/api/toggle-2fa",{method:"POST",body:{}}); document.getElementById("tfam").textContent = r.twoFactor ? "OTP imewashwa." : "OTP imezimwa."; };
+    document.getElementById("cleardemo").onclick = async () => { const r = await api("/api/demo/clear",{method:"POST",body:{}}); alert(r.error || "Data ya majaribio imeondolewa. Haitarudi ikianzishwa tena."); };
     document.getElementById("sf").onsubmit = async e => { e.preventDefault(); const r = await api("/api/settings",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); alert(r.error || "Imehifadhiwa"); };
+  }
+  if(p==="roles"){
+    const members = await api("/api/members");
+    const roles = await api("/api/roles");
+    c.innerHTML = `<div class="card"><h3>Majukumu</h3><p>Badilisha cheo cha mwanachama. Admin pekee.</p>
+      ${members.map(m=>`<form class="rolef" style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap"><input type="hidden" name="userId" value="${m.id}"><strong style="min-width:140px">${m.name}</strong><select name="role">${roles.map(r=>`<option ${r===m.role?"selected":""}>${r}</option>`).join("")}</select><button class="btn btn-sm" type="submit">Hifadhi</button></form>`).join("")}
+    </div>`;
+    document.querySelectorAll(".rolef").forEach(f => f.onsubmit = async e => { e.preventDefault(); const d = await api("/api/set-role",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); alert(d.error || "Imehifadhiwa"); });
+  }
+  if(p==="notifications"){
+    const list = await api("/api/notifications");
+    c.innerHTML = `<div class="card"><h3>Tuma taarifa</h3><form id="nf"><div class="form-group"><label>Kichwa</label><input name="title" required></div><div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" required></textarea></div><button class="btn" type="submit">Tuma kwa wote</button></form></div>
+    <div class="card"><h3>Zilizopo</h3>${(list||[]).map(n=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${n.title}</strong><p>${n.body}</p></div>`).join("")||"<p>Hakuna taarifa</p>"}</div>`;
+    document.getElementById("nf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/notifications",{method:"POST",body:{...Object.fromEntries(new FormData(e.target)), userId:"all"}}); if(d.error) alert(d.error); else load("notifications"); };
   }
 }
 
