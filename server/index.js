@@ -70,6 +70,13 @@ function saveDB(db) { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); 
       { id: "demo-pay-2", userId: "demo-john", userName: "John Mushi", type: "Dharura", amount: 60000, transactionId: "DEMO-MP-1002", status: "APPROVED", receiptNo: "RCP-DEMO2", createdAt: ago(30) },
       { id: "demo-pay-3", userId: "demo-baraka", userName: "Baraka Kimaro", type: "Ada ya mwezi", amount: 10000, transactionId: "DEMO-MP-1003", status: "PENDING", createdAt: ago(1) }
     ],
+    expenses: [
+      { id: "demo-exp-1", title: "Kukodi ukumbi", amount: 25000, category: "Matukio", note: "Mkutano mkuu", createdAt: ago(20), demo: true },
+      { id: "demo-exp-2", title: "Msaada wa msiba", amount: 50000, category: "Misaada", note: "Familia ya Mushi", createdAt: ago(45), demo: true }
+    ],
+    manualIncome: [
+      { id: "demo-inc-1", title: "Mchango wa mgeni", amount: 15000, source: "Mgeni", note: "Festival", createdAt: ago(10), demo: true }
+    ],
     events: [
       { id: "demo-ev-1", type: "Harusi", title: "Harusi ya Familia Swai", location: "Kibo Hall, Moshi", ticketPrice: 20000, poster: "", public: true, status: "ACTIVE", raisedAmount: 0, reportedBy: "Ofisi", createdAt: ago(4) },
       { id: "demo-ev-2", type: "Festival", title: "WFC Festival ya Mwaka", location: "Mnazi Mmoja, Dar es Salaam", ticketPrice: 10000, poster: "", public: true, status: "ACTIVE", raisedAmount: 0, reportedBy: "Ofisi", createdAt: ago(8) }
@@ -207,8 +214,84 @@ app.get("/api/dashboard", requireAuth, (req, res) => {
       registrationFee: db.settings.registrationFee,
       monthlyFee: db.settings.monthlyFee,
       paymentNumbers: db.settings.paymentNumbers
-    }
+    },
+    finance: isLeader(req.session.user.role) ? computeFinance(db) : null
   });
+});
+
+function computeFinance(db) {
+  const approved = (db.payments || []).filter(p => p.status === "APPROVED");
+  const incomeFromPayments = approved.reduce((s, p) => s + (p.amount || 0), 0);
+  const manual = (db.manualIncome || []).reduce((s, i) => s + (i.amount || 0), 0);
+  const expenses = (db.expenses || []).reduce((s, e) => s + (e.amount || 0), 0);
+  const monthly = db.settings.monthlyFee || 10000;
+  const active = (db.users || []).filter(u => u.status === "ACTIVE");
+  let totalDebt = 0;
+  let debtors = 0;
+  active.forEach(u => {
+    const months = Math.max(1, Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (30*24*60*60*1000)));
+    const expected = months * monthly;
+    const paid = approved.filter(p => p.userId === u.id && p.type === "Ada ya mwezi").reduce((s, p) => s + (p.amount || 0), 0);
+    const debt = Math.max(0, expected - paid);
+    if (debt > 0) { totalDebt += debt; debtors++; }
+  });
+  return {
+    mapato: incomeFromPayments + manual,
+    matumizi: expenses,
+    balance: incomeFromPayments + manual - expenses,
+    totalDebt,
+    debtors,
+    incomeFromPayments,
+    manualIncome: manual
+  };
+}
+
+app.get("/api/accounting/summary", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  res.json(computeFinance(db));
+});
+
+app.get("/api/accounting/debts", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  const monthly = db.settings.monthlyFee || 10000;
+  const approved = (db.payments || []).filter(p => p.status === "APPROVED" && p.type === "Ada ya mwezi");
+  const list = (db.users || []).filter(u => u.status === "ACTIVE").map(u => {
+    const months = Math.max(1, Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (30*24*60*60*1000)));
+    const expected = months * monthly;
+    const paid = approved.filter(p => p.userId === u.id).reduce((s, p) => s + (p.amount || 0), 0);
+    return { id: u.id, name: u.name, region: u.region, wfcId: u.wfcId, expected, paid, debt: Math.max(0, expected - paid), months };
+  }).filter(x => x.debt > 0);
+  res.json(list);
+});
+
+app.get("/api/expenses", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  res.json(loadDB().expenses || []);
+});
+
+app.post("/api/expenses", requireAuth, (req, res) => {
+  if (!["ADMIN", "TREASURER", "CHAIRPERSON"].includes(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  if (!db.expenses) db.expenses = [];
+  db.expenses.unshift({ id: Date.now().toString(), title: req.body.title, amount: Number(req.body.amount) || 0, category: req.body.category || "Nyingine", note: req.body.note || "", createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+app.get("/api/manual-income", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  res.json(loadDB().manualIncome || []);
+});
+
+app.post("/api/manual-income", requireAuth, (req, res) => {
+  if (!["ADMIN", "TREASURER", "CHAIRPERSON"].includes(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  if (!db.manualIncome) db.manualIncome = [];
+  db.manualIncome.unshift({ id: Date.now().toString(), title: req.body.title, amount: Number(req.body.amount) || 0, source: req.body.source || "Nyingine", note: req.body.note || "", createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
 });
 
 // Members

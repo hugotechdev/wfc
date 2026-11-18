@@ -108,7 +108,7 @@ async function showDash(){
   const groups = [
     ["Kila siku", [["home","Dashibodi",IC.home],["members","Wanachama",IC.users],["payments","Michango",IC.coin],["events","Matukio",IC.cal],["announcements","Matangazo",IC.meg]]],
     ["Mwanachama", [["card","Kitambulisho",IC.id],["family","Familia",IC.home2],["directory","Directory",IC.book],["help","Msaada",IC.life],["notifications","Taarifa",IC.bell]]],
-    ["Ofisi", [["pending","Inasubiri",IC.clock],["attendance","Mahudhurio",IC.cal],["elections","Uchaguzi",IC.vote],["cases","Kesi",IC.case],["saccos","SACCOS",IC.bank],["assets","Mali",IC.box],["projects","Miradi",IC.flag],["penalties","Faini",IC.file],["documents","Nyaraka",IC.file],["roles","Majukumu",IC.key],["charts","Grafu",IC.chart],["messages","Ujumbe",IC.mail],["momo","Malipo ya simu",IC.phone],["settings","Mipangilio",IC.gear]]]
+    ["Ofisi", [["pending","Inasubiri",IC.clock],["attendance","Mahudhurio",IC.cal],["elections","Uchaguzi",IC.vote],["cases","Kesi",IC.case],["saccos","SACCOS",IC.bank],["assets","Mali",IC.box],["projects","Miradi",IC.flag],["penalties","Faini",IC.file],["documents","Nyaraka",IC.file],["roles","Majukumu",IC.key],["charts","Grafu",IC.chart],["messages","Ujumbe",IC.mail],["momo","Malipo ya simu",IC.phone],["accounting","Uhasibu",IC.coin],["settings","Mipangilio",IC.gear]]]
   ];
   app.innerHTML = `<div class="layout">
     <div class="scrim" id="scrim"></div>
@@ -142,7 +142,7 @@ async function showDash(){
 
 async function load(p){
   const c = document.getElementById("c");
-  const titles = {home:"Dashibodi",members:"Wanachama",payments:"Michango",events:"Matukio",announcements:"Matangazo",card:"Kitambulisho",family:"Familia",directory:"Directory",help:"Msaada",pending:"Inasubiri Idhini",attendance:"Mahudhurio",elections:"Uchaguzi",cases:"Kesi",saccos:"SACCOS",assets:"Mali",projects:"Miradi",penalties:"Faini",documents:"Nyaraka",charts:"Grafu",messages:"Ujumbe",momo:"Malipo ya simu",settings:"Mipangilio",roles:"Majukumu",notifications:"Taarifa"};
+  const titles = {home:"Dashibodi",members:"Wanachama",payments:"Michango",events:"Matukio",announcements:"Matangazo",card:"Kitambulisho",family:"Familia",directory:"Directory",help:"Msaada",pending:"Inasubiri Idhini",attendance:"Mahudhurio",elections:"Uchaguzi",cases:"Kesi",saccos:"SACCOS",assets:"Mali",projects:"Miradi",penalties:"Faini",documents:"Nyaraka",charts:"Grafu",messages:"Ujumbe",momo:"Malipo ya simu",settings:"Mipangilio",roles:"Majukumu",notifications:"Taarifa",accounting:"Uhasibu"};
   document.getElementById("pt").textContent = titles[p] || p;
   document.querySelectorAll(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.p === p));
 
@@ -160,6 +160,12 @@ async function load(p){
       <div class="stat"><div>Malipo yote</div><div class="val">${d.stats.payments}</div></div>
       <div class="stat"><div>Matukio</div><div class="val">${d.stats.events}</div></div>
     </div>
+    ${d.finance ? `<div class="stats">
+      <div class="stat"><div>Mapato</div><div class="val">${money(d.finance.mapato)}</div></div>
+      <div class="stat"><div>Matumizi</div><div class="val">${money(d.finance.matumizi)}</div></div>
+      <div class="stat"><div>Balance</div><div class="val">${money(d.finance.balance)}</div></div>
+      <div class="stat"><div>Madeni</div><div class="val">${money(d.finance.totalDebt)}<br><small>${d.finance.debtors} wanadaiwa</small></div></div>
+    </div>` : ""}
     <div class="split">
       <div class="card"><h3>Kanda</h3>${(d.regions||[]).map(r=>`<div class="bar-row"><span><b>${r.name}</b><em>${r.value}</em></span><div class="track"><i style="width:${Math.round(r.value/max*100)}%"></i></div></div>`).join("")||"<p>Hakuna data</p>"}</div>
       <div class="card"><h3>Matukio</h3>${(d.upcoming||[]).map(e=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${e.title}</strong><br><small>${e.location||""}</small></div>`).join("")||"<p>Hakuna</p>"}</div>
@@ -382,16 +388,73 @@ async function load(p){
   if(p==="roles"){
     const members = await api("/api/members");
     const roles = await api("/api/roles");
-    c.innerHTML = `<div class="card"><h3>Majukumu</h3><p>Badilisha cheo cha mwanachama. Admin pekee.</p>
-      ${members.map(m=>`<form class="rolef" style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap"><input type="hidden" name="userId" value="${m.id}"><strong style="min-width:140px">${m.name}</strong><select name="role">${roles.map(r=>`<option ${r===m.role?"selected":""}>${r}</option>`).join("")}</select><button class="btn btn-sm" type="submit">Hifadhi</button></form>`).join("")}
+    const isAdmin = window.__me && window.__me.role === "ADMIN";
+    c.innerHTML = `<div class="card"><h3>Usimamizi wa Viongozi</h3>
+      <p style="color:var(--muted);margin-bottom:12px">${isAdmin ? "Chagua mwanachama na umpe jukumu. Mabadiliko yanahifadhiwa mara moja." : "Tazama tu. Admin pekee anaweza kubadilisha."}</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input id="roleSearch" placeholder="Tafuta jina au simu..." style="flex:1;min-width:180px">
+      </div>
+      <div id="roleList">${members.map(m=>`<div class="role-row" data-name="${m.name.toLowerCase()}" data-phone="${m.phone}" style="display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
+        <div style="flex:1;min-width:160px"><strong>${m.name}</strong><br><small style="color:var(--muted)">${m.phone} · ${m.wfcId||"—"}</small></div>
+        ${isAdmin ? `<select class="role-select" data-id="${m.id}" style="width:auto">${roles.map(r=>`<option ${r===m.role?"selected":""}>${r}</option>`).join("")}</select><button class="btn btn-sm" data-save="${m.id}">Hifadhi</button>` : `<span class="badge">${m.role}</span>`}
+      </div>`).join("")}</div>
     </div>`;
-    document.querySelectorAll(".rolef").forEach(f => f.onsubmit = async e => { e.preventDefault(); const d = await api("/api/set-role",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); alert(d.error || "Imehifadhiwa"); });
+    const search = document.getElementById("roleSearch");
+    if (search) search.oninput = () => {
+      const q = search.value.toLowerCase();
+      document.querySelectorAll(".role-row").forEach(row => {
+        row.style.display = row.dataset.name.includes(q) || row.dataset.phone.includes(q) ? "" : "none";
+      });
+    };
+    if (isAdmin) {
+      document.querySelectorAll("[data-save]").forEach(btn => btn.onclick = async () => {
+        const id = btn.dataset.save;
+        const sel = document.querySelector(`.role-select[data-id="${id}"]`);
+        const d = await api("/api/set-role", {method:"POST", body:{userId:id, role:sel.value}});
+        alert(d.error || "Jukumu limehifadhiwa");
+      });
+    }
   }
   if(p==="notifications"){
     const list = await api("/api/notifications");
     c.innerHTML = `<div class="card"><h3>Tuma taarifa</h3><form id="nf"><div class="form-group"><label>Kichwa</label><input name="title" required></div><div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" required></textarea></div><button class="btn" type="submit">Tuma kwa wote</button></form></div>
     <div class="card"><h3>Zilizopo</h3>${(list||[]).map(n=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${n.title}</strong><p>${n.body}</p></div>`).join("")||"<p>Hakuna taarifa</p>"}</div>`;
     document.getElementById("nf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/notifications",{method:"POST",body:{...Object.fromEntries(new FormData(e.target)), userId:"all"}}); if(d.error) alert(d.error); else load("notifications"); };
+  }
+  if(p==="accounting"){
+    const sum = await api("/api/accounting/summary");
+    const debts = await api("/api/accounting/debts");
+    const expenses = await api("/api/expenses");
+    const income = await api("/api/manual-income");
+    const money = n => "TSh " + Number(n||0).toLocaleString();
+    const canEdit = window.__me && ["ADMIN","TREASURER","CHAIRPERSON"].includes(window.__me.role);
+    c.innerHTML = `<div class="stats">
+      <div class="stat"><div>Mapato</div><div class="val">${money(sum.mapato)}</div></div>
+      <div class="stat"><div>Matumizi</div><div class="val">${money(sum.matumizi)}</div></div>
+      <div class="stat"><div>Balance</div><div class="val">${money(sum.balance)}</div></div>
+      <div class="stat"><div>Madeni</div><div class="val">${money(sum.totalDebt)}<br><small>${sum.debtors} wanadaiwa</small></div></div>
+    </div>
+    ${canEdit ? `<div class="card"><h3>Ongeza Matumizi</h3><form id="expf" style="display:grid;gap:8px;grid-template-columns:1fr 120px 1fr auto;align-items:end">
+      <div class="form-group"><label>Kichwa</label><input name="title" required></div>
+      <div class="form-group"><label>Kiasi</label><input name="amount" type="number" required></div>
+      <div class="form-group"><label>Aina</label><select name="category"><option>Matukio</option><option>Misaada</option><option>Ofisi</option><option>Nyingine</option></select></div>
+      <button class="btn btn-sm" type="submit">Ongeza</button>
+    </form></div>
+    <div class="card"><h3>Ongeza Mapato (zaidi ya michango)</h3><form id="incf" style="display:grid;gap:8px;grid-template-columns:1fr 120px 1fr auto;align-items:end">
+      <div class="form-group"><label>Kichwa</label><input name="title" required></div>
+      <div class="form-group"><label>Kiasi</label><input name="amount" type="number" required></div>
+      <div class="form-group"><label>Chanzo</label><input name="source" placeholder="Mf. Mgeni, Mchango"></div>
+      <button class="btn btn-sm" type="submit">Ongeza</button>
+    </form></div>` : ""}
+    <div class="card"><h3>Wanadaiwa (${debts.length})</h3><table><thead><tr><th>Jina</th><th>Kanda</th><th>Deni</th></tr></thead><tbody>
+      ${debts.map(d=>`<tr><td>${d.name}</td><td>${d.region||""}</td><td>${money(d.debt)}</td></tr>`).join("")||"<tr><td colspan=3>Hakuna madeni</td></tr>"}
+    </tbody></table></div>
+    <div class="card"><h3>Matumizi</h3>${expenses.map(e=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${e.title}</strong> · ${money(e.amount)} <small style="color:var(--muted)">${e.category||""}</small></div>`).join("")||"<p>Hakuna</p>"}</div>
+    <div class="card"><h3>Mapato ya ziada</h3>${income.map(i=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${i.title}</strong> · ${money(i.amount)} <small style="color:var(--muted)">${i.source||""}</small></div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    if (canEdit) {
+      document.getElementById("expf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/expenses",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); if(d.error) alert(d.error); else load("accounting"); };
+      document.getElementById("incf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/manual-income",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); if(d.error) alert(d.error); else load("accounting"); };
+    }
   }
 }
 
