@@ -46,6 +46,52 @@ function saveDB(db) { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); 
   }
 })();
 
+(function seedDemo() {
+  const db = loadDB();
+  let changed = false;
+  const ago = (days) => new Date(Date.now() - days * 86400000).toISOString();
+  const people = [
+    { id: "demo-amina", name: "Amina Swai", phone: "0711000001", region: "Dar es Salaam", password: "demo123", role: "MEMBER", status: "ACTIVE", wfcId: "WFC-0145", profession: "Muuguzi", family: { head: "Amina Swai", spouse: "Godson Swai", children: ["Nuru", "Eli"] }, createdAt: ago(140) },
+    { id: "demo-john", name: "John Mushi", phone: "0711000002", region: "Moshi", password: "demo123", role: "TREASURER", status: "ACTIVE", wfcId: "WFC-0088", profession: "Mhasibu", family: { head: "John Mushi", spouse: "", children: [] }, createdAt: ago(400) },
+    { id: "demo-neema", name: "Neema Lyimo", phone: "0711000003", region: "Arusha", password: "demo123", role: "MEMBER", status: "PENDING", wfcId: null, profession: "", family: { head: "Neema Lyimo", spouse: "", children: [] }, createdAt: ago(3) },
+    { id: "demo-baraka", name: "Baraka Kimaro", phone: "0711000004", region: "Kilimanjaro", password: "demo123", role: "SECRETARY", status: "ACTIVE", wfcId: "WFC-0102", profession: "Mwalimu", family: { head: "Baraka Kimaro", spouse: "Aika", children: ["Imani"] }, createdAt: ago(220) },
+    { id: "demo-sarah", name: "Sarah Mrema", phone: "0711000005", region: "Tanga", password: "demo123", role: "MEMBER", status: "SUSPENDED", wfcId: "WFC-0119", profession: "Mfanyabiashara", family: { head: "Sarah Mrema", spouse: "", children: [] }, createdAt: ago(300) }
+  ];
+  people.forEach((p) => {
+    if (!db.users.find((u) => u.id === p.id || u.phone === p.phone)) {
+      db.users.push({ ...p, demo: true, paymentProof: "DEMO" });
+      changed = true;
+    }
+  });
+  const extras = {
+    payments: [
+      { id: "demo-pay-1", userId: "demo-amina", userName: "Amina Swai", type: "Ada ya mwezi", amount: 10000, transactionId: "DEMO-MP-1001", status: "APPROVED", receiptNo: "RCP-DEMO1", createdAt: ago(12) },
+      { id: "demo-pay-2", userId: "demo-john", userName: "John Mushi", type: "Dharura", amount: 60000, transactionId: "DEMO-MP-1002", status: "APPROVED", receiptNo: "RCP-DEMO2", createdAt: ago(30) },
+      { id: "demo-pay-3", userId: "demo-baraka", userName: "Baraka Kimaro", type: "Ada ya mwezi", amount: 10000, transactionId: "DEMO-MP-1003", status: "PENDING", createdAt: ago(1) }
+    ],
+    events: [
+      { id: "demo-ev-1", type: "Harusi", title: "Harusi ya Familia Swai", location: "Kibo Hall, Moshi", ticketPrice: 20000, poster: "", public: true, status: "ACTIVE", raisedAmount: 0, reportedBy: "Ofisi", createdAt: ago(4) },
+      { id: "demo-ev-2", type: "Festival", title: "WFC Festival ya Mwaka", location: "Mnazi Mmoja, Dar es Salaam", ticketPrice: 10000, poster: "", public: true, status: "ACTIVE", raisedAmount: 0, reportedBy: "Ofisi", createdAt: ago(8) }
+    ],
+    announcements: [
+      { id: "demo-an-1", title: "Mkutano mkuu mwezi huu", body: "Wanachama wote hai wanakutana kujadili ada na miradi. Weka tiketi yako mapema.", link: "/#matukio", author: "Katibu", createdAt: ago(1) },
+      { id: "demo-an-2", title: "Ada ya mwezi inakamilika", body: "TSh 10,000 kwa kila mwanachama hai. Wasilisha namba ya muamala ndani ya portal.", link: "/app", author: "Mhazini", createdAt: ago(2) },
+      { id: "demo-an-3", title: "Jiunge na directory ya taaluma", body: "Weka kazi yako ili wanachama waweze kukutana kwa msaada wa kitaalamu.", link: "/app", author: "Ofisi", createdAt: ago(6) }
+    ]
+  };
+  Object.entries(extras).forEach(([key, rows]) => {
+    if (!db[key]) db[key] = [];
+    rows.forEach((row) => {
+      if (!db[key].find((x) => x.id === row.id)) {
+        db[key].push({ ...row, demo: true });
+        changed = true;
+      }
+    });
+  });
+  if (!db.contacts) db.contacts = [];
+  if (changed) saveDB(db);
+})();
+
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "../public")));
@@ -70,6 +116,26 @@ app.get("/api/public/events", (req, res) => {
   res.json((db.events || []).filter(e => e.public !== false));
 });
 app.get("/api/public/announcements", (req, res) => res.json(loadDB().announcements || []));
+app.get("/api/public/stats", (req, res) => {
+  const db = loadDB();
+  res.json({
+    members: db.users.filter(u => u.status === "ACTIVE").length,
+    events: (db.events || []).filter(e => e.public !== false).length
+  });
+});
+app.post("/api/contact", (req, res) => {
+  const { name, phone, message } = req.body || {};
+  if (!name || !phone || !message) return res.status(400).json({ error: "Jaza taarifa" });
+  const db = loadDB();
+  if (!db.contacts) db.contacts = [];
+  db.contacts.unshift({ id: Date.now().toString(), name, phone, email: req.body.email || "", message, createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+app.get("/api/contacts", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  res.json(loadDB().contacts || []);
+});
 
 app.post("/api/register", (req, res) => {
   const { name, phone, region, password, paymentProof } = req.body;
@@ -132,7 +198,15 @@ app.get("/api/dashboard", requireAuth, (req, res) => {
       events: (db.events || []).length
     },
     myTotalPaid: totalPaid,
-    settings: db.settings
+    recent: db.payments.slice(-6).reverse(),
+    upcoming: (db.events || []).slice(0, 4),
+    notices: (db.announcements || []).slice(0, 3),
+    regions: Object.entries(db.users.filter(u => u.status === "ACTIVE").reduce((m, u) => { m[u.region || "Nyingine"] = (m[u.region || "Nyingine"] || 0) + 1; return m; }, {})).map(([name, value]) => ({ name, value })),
+    settings: req.session.user.role === "ADMIN" ? db.settings : {
+      registrationFee: db.settings.registrationFee,
+      monthlyFee: db.settings.monthlyFee,
+      paymentNumbers: db.settings.paymentNumbers
+    }
   });
 });
 
@@ -532,6 +606,19 @@ app.get("/api/analytics", requireAuth, (req, res) => {
     regions: Object.entries(regions).map(([name, value]) => ({ name, value })),
     types: Object.entries(types).map(([name, value]) => ({ name, value }))
   });
+});
+
+app.post("/api/demo/clear", requireAuth, (req, res) => {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Admin only" });
+  const db = loadDB();
+  const demoIds = new Set(db.users.filter(u => u.demo).map(u => u.id));
+  db.users = db.users.filter(u => !u.demo);
+  ["payments", "events", "announcements", "tickets", "attendance"].forEach(k => {
+    if (Array.isArray(db[k])) db[k] = db[k].filter(x => !x.demo && !demoIds.has(x.userId));
+  });
+  db.settings.demoSeed = false;
+  saveDB(db);
+  res.json({ success: true });
 });
 
 // Catch-all
