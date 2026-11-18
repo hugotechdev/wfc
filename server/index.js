@@ -90,6 +90,26 @@ app.post("/api/login", (req, res) => {
   const db = loadDB();
   const user = db.users.find(u => u.phone === phone && u.password === password);
   if (!user) return res.status(401).json({ error: "Taarifa si sahihi" });
+  if (user.twoFactor) {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    db.otps = (db.otps || []).filter(o => o.exp > Date.now());
+    db.otps.push({ phone: user.phone, code, exp: Date.now() + 5 * 60 * 1000 });
+    saveDB(db);
+    const smsOn = !!(db.settings.smsKey && db.settings.smsUsername);
+    return res.json({ needOtp: true, devCode: smsOn ? null : code });
+  }
+  req.session.user = { id: user.id, name: user.name, phone: user.phone, role: user.role, status: user.status, wfcId: user.wfcId };
+  res.json({ success: true, user: req.session.user });
+});
+
+app.post("/api/verify-otp", (req, res) => {
+  const db = loadDB();
+  const otp = (db.otps || []).find(o => o.phone === req.body.phone && o.code === String(req.body.code || "").trim() && o.exp > Date.now());
+  if (!otp) return res.status(401).json({ error: "Msimbo si sahihi au umeisha" });
+  const user = db.users.find(u => u.phone === req.body.phone);
+  if (!user) return res.status(401).json({ error: "Akaunti haijapatikana" });
+  db.otps = db.otps.filter(o => o !== otp);
+  saveDB(db);
   req.session.user = { id: user.id, name: user.name, phone: user.phone, role: user.role, status: user.status, wfcId: user.wfcId };
   res.json({ success: true, user: req.session.user });
 });
@@ -428,6 +448,90 @@ app.post("/api/notifications", requireAuth, (req, res) => {
   db.notifications.unshift({ id: Date.now().toString(), userId: req.body.userId || "all", title: req.body.title, body: req.body.body, createdAt: new Date().toISOString() });
   saveDB(db);
   res.json({ success: true });
+});
+
+app.post("/api/dispatch", requireAuth, async (req, res) => {
+  const db = loadDB();
+  const { channel, to, title, body } = req.body;
+  const message = `${title || "WFC"}\n${body || ""}`;
+  let status = "queued";
+  let detail = "Imehifadhiwa";
+  try {
+    if (channel === "sms" && db.settings.smsKey && db.settings.smsUsername) {
+      const r = await fetch("https://api.africastalking.com/version1/messaging", {
+        method: "POST",
+        headers: { apiKey: db.settings.smsKey, Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ username: db.settings.smsUsername, to, message })
+      });
+      detail = (await r.text()).slice(0, 280);
+      status = r.ok ? "sent" : "failed";
+    } else if (channel === "whatsapp" && db.settings.whatsappToken && db.settings.whatsappPhoneId) {
+      const r = await fetch(`https://graph.facebook.com/v21.0/${db.settings.whatsappPhoneId}/messages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${db.settings.whatsappToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ messaging_product: "whatsapp", to: String(to).replace(/\D/g, ""), type: "text", text: { body: message } })
+      });
+      detail = (await r.text()).slice(0, 280);
+      status = r.ok ? "sent" : "failed";
+    } else if (channel === "sms") {
+      detail = "Weka Africa's Talking username na API key.";
+    } else if (channel === "whatsapp") {
+      detail = "Fungua WhatsApp kwa mkono, au weka token.";
+    } else if (channel === "email") {
+      detail = "Barua pepe inafunguliwa kwenye kifaa.";
+    }
+  } catch (err) {
+    status = "failed";
+    detail = String(err.message || err).slice(0, 200);
+  }
+  if (!db.outbox) db.outbox = [];
+  db.outbox.unshift({ id: Date.now().toString(), channel, to, title, body, status, detail, createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true, status, detail });
+});
+
+app.get("/api/outbox", requireAuth, (req, res) => res.json(loadDB().outbox || []));
+
+app.post("/api/stk", requireAuth, async (req, res) => {
+  const db = loadDB();
+  const { phone, amount } = req.body;
+  if (!db.settings.momoConsumerKey || !db.settings.momoConsumerSecret) {
+    return res.json({ ok: false, detail: "Daraja haijaunganishwa. Lipa kwa namba ya WFC kisha weka namba ya muamala." });
+  }
+  const auth = Buffer.from(`${db.settings.momoConsumerKey}:${db.settings.momoConsumerSecret}`).toString("base64");
+  const tokenRes = await fetch("https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", { headers: { Authorization: `Basic ${auth}` } });
+  const text = await tokenRes.text();
+  res.json({ ok: tokenRes.ok, detail: tokenRes.ok ? `Token imepatikana. Ombi la STK kwa ${phone}, TSh ${amount}.` : text.slice(0, 280) });
+});
+
+app.post("/api/settings", requireAuth, (req, res) => {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Admin only" });
+  const db = loadDB();
+  const keys = ["smsUsername", "smsKey", "whatsappToken", "whatsappPhoneId", "emailFrom", "momoConsumerKey", "momoConsumerSecret", "momoShortcode"];
+  keys.forEach(k => { if (req.body[k] !== undefined) db.settings[k] = req.body[k]; });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+app.post("/api/toggle-2fa", requireAuth, (req, res) => {
+  const db = loadDB();
+  const u = db.users.find(x => x.id === req.session.user.id);
+  if (!u) return res.status(404).json({ error: "Haijapatikana" });
+  u.twoFactor = !u.twoFactor;
+  saveDB(db);
+  res.json({ twoFactor: !!u.twoFactor });
+});
+
+app.get("/api/analytics", requireAuth, (req, res) => {
+  const db = loadDB();
+  const regions = {};
+  db.users.filter(u => u.status === "ACTIVE").forEach(u => { regions[u.region || "Nyingine"] = (regions[u.region || "Nyingine"] || 0) + 1; });
+  const types = {};
+  db.payments.filter(p => p.status === "APPROVED").forEach(p => { types[p.type] = (types[p.type] || 0) + (p.amount || 0); });
+  res.json({
+    regions: Object.entries(regions).map(([name, value]) => ({ name, value })),
+    types: Object.entries(types).map(([name, value]) => ({ name, value }))
+  });
 });
 
 // Catch-all

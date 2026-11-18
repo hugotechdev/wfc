@@ -8,6 +8,20 @@ async function api(path, opts={}){
   return res.json();
 }
 
+function showOtp(phone, devCode){
+  app.innerHTML = `<div class="container">
+    <h1>Thibitisha OTP</h1>
+    <p class="subtitle">Msimbo wa tarakimu 6. Unaisha baada ya dakika 5.</p>
+    ${devCode ? `<div class="card">SMS haijaunganishwa. Msimbo wa majaribio: <strong>${devCode}</strong></div>` : ""}
+    <form id="f"><div class="form-group"><label>Msimbo</label><input name="code" required></div><button class="btn" type="submit">Thibitisha</button><div id="m"></div></form>
+  </div>`;
+  document.getElementById("f").onsubmit = async e => {
+    e.preventDefault();
+    const d = await api("/api/verify-otp", {method:"POST", body:{ phone, code: new FormData(e.target).get("code") }});
+    if(d.error) document.getElementById("m").innerHTML = `<div class="error">${d.error}</div>`; else showDash();
+  };
+}
+
 function showLogin(){
   app.innerHTML = `<div class="container">
     <div style="text-align:right"><button class="theme-toggle" onclick="toggleTheme()">◐</button></div>
@@ -23,7 +37,9 @@ function showLogin(){
   document.getElementById("r").onclick = e => { e.preventDefault(); showRegister(); };
   document.getElementById("f").onsubmit = async e => {
     e.preventDefault();
-    const d = await api("/api/login", {method:"POST", body:Object.fromEntries(new FormData(e.target))});
+    const body = Object.fromEntries(new FormData(e.target));
+    const d = await api("/api/login", {method:"POST", body});
+    if(d.needOtp) return showOtp(body.phone, d.devCode);
     if(d.error) document.getElementById("m").innerHTML = `<div class="error">${d.error}</div>`; else showDash();
   };
 }
@@ -80,6 +96,10 @@ async function showDash(){
       <a class="nav-item" data-p="documents">Nyaraka</a>
       <a class="nav-item" data-p="roles">Roles</a>
       <a class="nav-item" data-p="notifications">Taarifa</a>
+      <a class="nav-item" data-p="charts">Grafu</a>
+      <a class="nav-item" data-p="messages">Ujumbe</a>
+      <a class="nav-item" data-p="momo">Malipo ya simu</a>
+      <a class="nav-item" data-p="settings">Mipangilio</a>
       <a class="nav-item" onclick="logout()">Toka nje</a>
     </aside>
     <div class="main">
@@ -93,7 +113,7 @@ async function showDash(){
 
 async function load(p){
   const c = document.getElementById("c");
-  const titles = {home:"Dashboard",members:"Wanachama",payments:"Michango",events:"Matukio",announcements:"Matangazo",card:"Kitambulisho",family:"Familia",directory:"Directory",help:"Msaada",pending:"Inasubiri Idhini",attendance:"Mahudhurio",elections:"Uchaguzi",cases:"Kesi",saccos:"SACCOS",assets:"Mali",projects:"Miradi",penalties:"Faini",documents:"Nyaraka"};
+  const titles = {home:"Dashboard",members:"Wanachama",payments:"Michango",events:"Matukio",announcements:"Matangazo",card:"Kitambulisho",family:"Familia",directory:"Directory",help:"Msaada",pending:"Inasubiri Idhini",attendance:"Mahudhurio",elections:"Uchaguzi",cases:"Kesi",saccos:"SACCOS",assets:"Mali",projects:"Miradi",penalties:"Faini",documents:"Nyaraka",charts:"Grafu",messages:"Ujumbe",momo:"Malipo ya simu",settings:"Mipangilio"};
   document.getElementById("pt").textContent = titles[p] || p;
 
   if(p==="home"){
@@ -113,6 +133,7 @@ async function load(p){
   }
   if(p==="payments"){
     const list = await api("/api/payments");
+    window.__pays = list;
     c.innerHTML = `<div class="card"><h3>Wasilisha Malipo</h3><form id="pf" style="margin-top:10px">
       <div class="form-group"><label>Aina</label><select name="type"><option>Ada ya mwezi</option><option>Kiingilio</option><option>Dharura</option><option>Msiba</option></select></div>
       <div class="form-group"><label>Kiasi</label><input name="amount" type="number" required></div>
@@ -120,7 +141,7 @@ async function load(p){
       <button class="btn" type="submit">Wasilisha</button>
     </form></div>
     <div class="card"><h3>Historia</h3><table style="margin-top:8px"><thead><tr><th>Aina</th><th>Kiasi</th><th>Muamala</th><th>Hali</th><th></th></tr></thead><tbody>
-      ${list.map(x=>`<tr><td>${x.type}</td><td>TSh ${x.amount.toLocaleString()}</td><td>${x.transactionId}</td><td><span class="badge ${x.status==="APPROVED"?"badge-approved":"badge-pending"}">${x.status}</span></td><td>${x.status==="PENDING"?`<button class="btn btn-sm" onclick="approvePay('${x.id}')">Idhinisha</button>`:""}</td></tr>`).join("")}
+      ${list.map(x=>`<tr><td>${x.userName||""}</td><td>${x.type}</td><td>TSh ${x.amount.toLocaleString()}</td><td>${x.transactionId}</td><td><span class="badge ${x.status==="APPROVED"?"badge-approved":"badge-pending"}">${x.status==="APPROVED"?(x.receiptNo||"OK"):"Inasubiri"}</span></td><td>${x.status==="PENDING"?`<button class="btn btn-sm" onclick="approvePay('${x.id}')">Idhinisha</button>`:`<button class="btn btn-sm" onclick="downloadReceipt('${x.id}')">PDF</button>`}</td></tr>`).join("")}
     </tbody></table></div>`;
     document.getElementById("pf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/submit-payment",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); if(d.error) alert(d.error); else load("payments"); };
   }
@@ -131,11 +152,21 @@ async function load(p){
       <div class="form-group"><label>Kichwa</label><input name="title" required></div>
       <div class="form-group"><label>Eneo</label><input name="location"></div>
       <div class="form-group"><label>Bei ya Tiketi</label><input name="ticketPrice" type="number" value="0"></div>
-      <div class="form-group"><label>Poster URL</label><input name="poster"></div>
+      <div class="form-group"><label>Poster (picha)</label><input id="posterFile" type="file" accept="image/*"></div>
       <button class="btn" type="submit">Wasilisha</button>
     </form></div>
     <div class="card"><h3>Matukio</h3>${list.map(e=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${e.title}</strong> <span class="badge badge-pending">${e.type}</span><br><small>${e.location||""} · TSh ${(e.ticketPrice||0).toLocaleString()}</small></div>`).join("")||"<p>Hakuna</p>"}</div>`;
-    document.getElementById("ef").onsubmit = async e => { e.preventDefault(); await api("/api/events",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("events"); };
+    document.getElementById("ef").onsubmit = async e => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target));
+      const file = document.getElementById("posterFile").files[0];
+      if (file) {
+        if (file.size > 1200000) { alert("Picha ni kubwa. Tumia chini ya 1.2 MB."); return; }
+        body.poster = await new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(file); });
+      }
+      await api("/api/events",{method:"POST",body});
+      load("events");
+    };
   }
   if(p==="announcements"){
     const list = await api("/api/announcements");
@@ -233,13 +264,97 @@ async function load(p){
     <div class="card"><h3>Nyaraka</h3>${list.map(d=>`<div><a href="${d.url||"#"}" target="_blank">${d.title}</a></div>`).join("")||"<p>Hakuna</p>"}</div>`;
     document.getElementById("docf").onsubmit = async e => { e.preventDefault(); await api("/api/documents",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("documents"); };
   }
-}
+  if(p==="pending"){
     const m = await api("/api/members");
     const pen = m.filter(x=>x.status==="PENDING");
     c.innerHTML = `<div class="card"><h3>Inasubiri Idhini</h3><table style="margin-top:8px"><thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th></th></tr></thead><tbody>
       ${pen.map(x=>`<tr><td>${x.name}</td><td>${x.phone}</td><td>${x.region}</td><td><button class="btn btn-sm" onclick="approve('${x.id}')">Idhinisha</button></td></tr>`).join("")||"<tr><td colspan=4>Hakuna</td></tr>"}
     </tbody></table></div>`;
   }
+  if(p==="charts"){
+    const d = await api("/api/analytics");
+    const bar = rows => rows.map(r => `<div style="margin:8px 0"><div>${r.name}</div><div style="height:12px;background:var(--gold);width:${Math.max(8, Math.min(100, r.value))}%"></div><small>${r.value}</small></div>`).join("") || "<p>Hakuna data</p>";
+    c.innerHTML = `<div class="card"><h3>Wanachama kwa kanda</h3>${bar(d.regions||[])}</div><div class="card"><h3>Makusanyo (TSh)</h3>${bar((d.types||[]).map(t=>({name:t.name,value:t.value})))}</div>`;
+  }
+  if(p==="messages"){
+    const members = await api("/api/members");
+    const box = await api("/api/outbox");
+    c.innerHTML = `<div class="card"><h3>Tuma ujumbe</h3><form id="mf">
+      <div class="form-group"><label>Kituo</label><select name="channel"><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="email">Barua pepe</option></select></div>
+      <div class="form-group"><label>Mpokeaji</label><select name="to">${members.map(m=>`<option value="${m.phone}">${m.name} · ${m.phone}</option>`).join("")}</select></div>
+      <div class="form-group"><label>Kichwa</label><input name="title" required></div>
+      <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" required></textarea></div>
+      <button class="btn" type="submit">Tuma</button>
+    </form><p style="margin-top:8px;color:var(--muted)">Bila funguo, WhatsApp inafunguliwa kwenye simu na barua pepe inafungua programu yako.</p></div>
+    <div class="card"><h3>Kumbukumbu</h3>${(box||[]).map(n=>`<div style="padding:6px 0;border-bottom:1px solid var(--border)"><strong>${n.channel}</strong> → ${n.to} · ${n.status}<br>${n.body||""}<br><small>${n.detail||""}</small></div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("mf").onsubmit = async e => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target));
+      if(body.channel==="whatsapp"){
+        const phone = body.to.replace(/\D/g,"");
+        const intl = phone.startsWith("0") ? "255"+phone.slice(1) : phone;
+        window.open("https://wa.me/"+intl+"?text="+encodeURIComponent(body.body), "_blank", "noopener");
+      }
+      if(body.channel==="email") window.open("mailto:?subject="+encodeURIComponent(body.title)+"&body="+encodeURIComponent(body.body));
+      await api("/api/dispatch",{method:"POST",body});
+      load("messages");
+    };
+  }
+  if(p==="momo"){
+    c.innerHTML = `<div class="card"><h3>Omba STK</h3><form id="sk">
+      <div class="form-group"><label>Simu</label><input name="phone" required></div>
+      <div class="form-group"><label>Kiasi</label><input name="amount" type="number" required></div>
+      <button class="btn" type="submit">Omba</button>
+    </form><div id="skm"></div>
+    <p style="margin-top:8px">M-Pesa 0755 000 888 · Tigo 0715 000 888 · Airtel 0785 000 888 · CRDB 0150889944200</p></div>
+    <div class="card"><h3>Weka namba ya muamala</h3><form id="cf">
+      <div class="form-group"><label>Aina</label><select name="type"><option>Ada ya mwezi</option><option>Kiingilio</option><option>Dharura</option></select></div>
+      <div class="form-group"><label>Kiasi</label><input name="amount" type="number" required></div>
+      <div class="form-group"><label>Namba ya muamala</label><input name="transactionId" required></div>
+      <button class="btn" type="submit">Wasilisha kwa idhini</button>
+    </form></div>`;
+    document.getElementById("sk").onsubmit = async e => { e.preventDefault(); const d = await api("/api/stk",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); document.getElementById("skm").textContent = d.detail || ""; };
+    document.getElementById("cf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/submit-payment",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); if(d.error) alert(d.error); else load("payments"); };
+  }
+  if(p==="settings"){
+    const d = await api("/api/dashboard");
+    const s = d.settings || {};
+    c.innerHTML = `<div class="card"><h3>OTP</h3><button class="btn" id="tfa" type="button">Washa / zima OTP</button><p id="tfam" style="margin-top:8px"></p></div>
+    <div class="card"><h3>Funguo za huduma</h3><form id="sf">
+      <div class="form-group"><label>Africa's Talking username</label><input name="smsUsername" value="${s.smsUsername||""}"></div>
+      <div class="form-group"><label>SMS API key</label><input name="smsKey" value="${s.smsKey||""}"></div>
+      <div class="form-group"><label>WhatsApp token</label><input name="whatsappToken" value="${s.whatsappToken||""}"></div>
+      <div class="form-group"><label>WhatsApp Phone ID</label><input name="whatsappPhoneId" value="${s.whatsappPhoneId||""}"></div>
+      <div class="form-group"><label>M-Pesa consumer key</label><input name="momoConsumerKey" value="${s.momoConsumerKey||""}"></div>
+      <div class="form-group"><label>M-Pesa consumer secret</label><input name="momoConsumerSecret" value="${s.momoConsumerSecret||""}"></div>
+      <div class="form-group"><label>Shortcode</label><input name="momoShortcode" value="${s.momoShortcode||""}"></div>
+      <button class="btn" type="submit">Hifadhi</button>
+    </form></div>`;
+    document.getElementById("tfa").onclick = async () => { const r = await api("/api/toggle-2fa",{method:"POST",body:{}}); document.getElementById("tfam").textContent = r.twoFactor ? "OTP imewashwa." : "OTP imezimwa."; };
+    document.getElementById("sf").onsubmit = async e => { e.preventDefault(); const r = await api("/api/settings",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); alert(r.error || "Imehifadhiwa"); };
+  }
+}
+
+async function downloadReceipt(id){
+  const row = (window.__pays||[]).find(x => x.id === id);
+  if(!row) return;
+  const payload = JSON.stringify({ org:"WFC", receipt: row.receiptNo, name: row.userName, type: row.type, amount: row.amount, tx: row.transactionId });
+  const qr = await QRCode.toDataURL(payload, { margin: 1, width: 220 });
+  const doc = new jspdf.jsPDF();
+  doc.setFillColor(18, 17, 14);
+  doc.rect(0, 0, 210, 28, "F");
+  doc.setTextColor(196, 154, 70);
+  doc.setFontSize(16);
+  doc.text("WACHAGGA FAMILY COMMUNITY", 14, 12);
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(11);
+  doc.text("Risiti rasmi", 14, 20);
+  doc.setTextColor(22,20,15);
+  doc.setFontSize(12);
+  doc.text(row.receiptNo || "Risiti", 14, 42);
+  ["Jina: "+(row.userName||""), "Aina: "+row.type, "Kiasi: TSh "+Number(row.amount).toLocaleString(), "Muamala: "+row.transactionId].forEach((line,i)=>doc.text(line, 14, 54+i*8));
+  doc.addImage(qr, "PNG", 140, 36, 50, 50);
+  doc.save((row.receiptNo||"risiti")+".pdf");
 }
 
 async function approve(id){ const d = await api("/api/approve-member",{method:"POST",body:{userId:id}}); if(d.success){ alert("Imeidhinishwa: "+d.wfcId); load("pending"); } else alert(d.error||"Imeshindwa"); }
