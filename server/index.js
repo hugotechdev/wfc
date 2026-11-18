@@ -239,5 +239,197 @@ app.post("/api/tickets", (req, res) => {
   res.json({ success: true });
 });
 
+// ===== NEW MODULES =====
+
+// Debt calculation
+app.get("/api/my-debt", requireAuth, (req, res) => {
+  const db = loadDB();
+  const user = db.users.find(u => u.id === req.session.user.id);
+  if (!user || user.status !== "ACTIVE") return res.json({ debt: 0, breakdown: [] });
+  const monthly = db.settings.monthlyFee || 10000;
+  const monthsSince = Math.max(1, Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (30*24*60*60*1000)));
+  const expected = monthsSince * monthly;
+  const paid = db.payments.filter(p => p.userId === user.id && p.type === "Ada ya mwezi" && p.status === "APPROVED").reduce((s,p)=>s+(p.amount||0),0);
+  const debt = Math.max(0, expected - paid);
+  res.json({ debt, expected, paid, months: monthsSince });
+});
+
+// Attendance
+app.get("/api/attendance", requireAuth, (req, res) => res.json(loadDB().attendance || []));
+app.post("/api/attendance", requireAuth, (req, res) => {
+  const db = loadDB();
+  if (!db.attendance) db.attendance = [];
+  db.attendance.push({ id: Date.now().toString(), userId: req.session.user.id, userName: req.session.user.name, meeting: req.body.meeting || "Mkutano", date: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Election
+app.get("/api/elections", requireAuth, (req, res) => res.json(loadDB().elections || []));
+app.post("/api/elections", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  if (!db.elections) db.elections = [];
+  db.elections.push({ id: Date.now().toString(), position: req.body.position, candidates: [], votes: [], status: "OPEN", createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+app.post("/api/elections/nominate", requireAuth, (req, res) => {
+  const db = loadDB();
+  const e = (db.elections||[]).find(x => x.id === req.body.electionId);
+  if (!e) return res.status(404).json({ error: "Haijapatikana" });
+  e.candidates.push({ name: req.body.name, manifesto: req.body.manifesto || "" });
+  saveDB(db);
+  res.json({ success: true });
+});
+app.post("/api/elections/vote", requireAuth, (req, res) => {
+  const db = loadDB();
+  const e = (db.elections||[]).find(x => x.id === req.body.electionId);
+  if (!e) return res.status(404).json({ error: "Haijapatikana" });
+  if (e.votes.find(v => v.userId === req.session.user.id)) return res.status(400).json({ error: "Umeshapiga kura" });
+  e.votes.push({ userId: req.session.user.id, candidate: req.body.candidate });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Discipline
+app.get("/api/cases", requireAuth, (req, res) => res.json(loadDB().cases || []));
+app.post("/api/cases", requireAuth, (req, res) => {
+  const db = loadDB();
+  if (!db.cases) db.cases = [];
+  db.cases.push({ id: Date.now().toString(), ...req.body, status: "OPEN", createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// SACCOS
+app.get("/api/saccos", requireAuth, (req, res) => res.json(loadDB().saccos || { shares: [], savings: [], loans: [] }));
+app.post("/api/saccos/shares", requireAuth, (req, res) => {
+  const db = loadDB();
+  if (!db.saccos) db.saccos = { shares: [], savings: [], loans: [] };
+  db.saccos.shares.push({ id: Date.now().toString(), userId: req.session.user.id, amount: Number(req.body.amount), date: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Assets
+app.get("/api/assets", requireAuth, (req, res) => res.json(loadDB().assets || []));
+app.post("/api/assets", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  if (!db.assets) db.assets = [];
+  db.assets.push({ id: Date.now().toString(), ...req.body, createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Projects
+app.get("/api/projects", requireAuth, (req, res) => res.json(loadDB().projects || []));
+app.post("/api/projects", requireAuth, (req, res) => {
+  const db = loadDB();
+  if (!db.projects) db.projects = [];
+  db.projects.push({ id: Date.now().toString(), ...req.body, progress: 0, tasks: [], createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Penalties
+app.get("/api/penalties", requireAuth, (req, res) => res.json(loadDB().penalties || []));
+app.post("/api/penalties", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  if (!db.penalties) db.penalties = [];
+  db.penalties.push({ id: Date.now().toString(), ...req.body, createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Documents
+app.get("/api/documents", requireAuth, (req, res) => res.json(loadDB().documents || []));
+app.post("/api/documents", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  if (!db.documents) db.documents = [];
+  db.documents.push({ id: Date.now().toString(), ...req.body, createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Notifications
+app.get("/api/notifications", requireAuth, (req, res) => {
+  const db = loadDB();
+  const list = (db.notifications || []).filter(n => n.userId === req.session.user.id || n.userId === "all");
+  res.json(list.slice(0, 30));
+});
+
+// Backup
+app.get("/api/backup", requireAuth, (req, res) => {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Admin only" });
+  res.json(loadDB());
+});
+
+// PWA
+app.get("/manifest.json", (req, res) => res.json({
+  name: "WFC Portal", short_name: "WFC", start_url: "/", display: "standalone", background_color: "#111", theme_color: "#d4af37",
+  icons: [{ src: "/wfc-logo.jpg", sizes: "192x192", type: "image/jpeg" }]
+}));
+
+// Roles list
+app.get("/api/roles", requireAuth, (req, res) => {
+  res.json(["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL", "MEMBER"]);
+});
+
+app.post("/api/set-role", requireAuth, (req, res) => {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Admin only" });
+  const db = loadDB();
+  const u = db.users.find(x => x.id === req.body.userId);
+  if (!u) return res.status(404).json({ error: "Haijapatikana" });
+  u.role = req.body.role;
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Attendance report
+app.get("/api/attendance-report", requireAuth, (req, res) => {
+  const db = loadDB();
+  const list = db.attendance || [];
+  const byUser = {};
+  list.forEach(a => {
+    if (!byUser[a.userId]) byUser[a.userId] = { name: a.userName, count: 0 };
+    byUser[a.userId].count++;
+  });
+  res.json(Object.values(byUser));
+});
+
+// Election results
+app.get("/api/elections/:id/results", requireAuth, (req, res) => {
+  const db = loadDB();
+  const e = (db.elections || []).find(x => x.id === req.params.id);
+  if (!e) return res.status(404).json({ error: "Haijapatikana" });
+  const counts = {};
+  e.votes.forEach(v => { counts[v.candidate] = (counts[v.candidate] || 0) + 1; });
+  res.json({ position: e.position, results: counts, total: e.votes.length });
+});
+
+// SACCOS loans
+app.post("/api/saccos/loans", requireAuth, (req, res) => {
+  const db = loadDB();
+  if (!db.saccos) db.saccos = { shares: [], savings: [], loans: [] };
+  db.saccos.loans.push({ id: Date.now().toString(), userId: req.session.user.id, userName: req.session.user.name, amount: Number(req.body.amount), status: "PENDING", createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Notifications create
+app.post("/api/notifications", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  if (!db.notifications) db.notifications = [];
+  db.notifications.unshift({ id: Date.now().toString(), userId: req.body.userId || "all", title: req.body.title, body: req.body.body, createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Catch-all
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
 app.listen(PORT, () => console.log("WFC running on " + PORT));

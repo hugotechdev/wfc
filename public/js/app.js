@@ -70,6 +70,16 @@ async function showDash(){
       <a class="nav-item" data-p="directory">Directory</a>
       <a class="nav-item" data-p="help">Msaada</a>
       <a class="nav-item" data-p="pending">Inasubiri</a>
+      <a class="nav-item" data-p="attendance">Mahudhurio</a>
+      <a class="nav-item" data-p="elections">Uchaguzi</a>
+      <a class="nav-item" data-p="cases">Kesi</a>
+      <a class="nav-item" data-p="saccos">SACCOS</a>
+      <a class="nav-item" data-p="assets">Mali</a>
+      <a class="nav-item" data-p="projects">Miradi</a>
+      <a class="nav-item" data-p="penalties">Faini</a>
+      <a class="nav-item" data-p="documents">Nyaraka</a>
+      <a class="nav-item" data-p="roles">Roles</a>
+      <a class="nav-item" data-p="notifications">Taarifa</a>
       <a class="nav-item" onclick="logout()">Toka nje</a>
     </aside>
     <div class="main">
@@ -83,7 +93,7 @@ async function showDash(){
 
 async function load(p){
   const c = document.getElementById("c");
-  const titles = {home:"Dashboard",members:"Wanachama",payments:"Michango",events:"Matukio",announcements:"Matangazo",card:"Kitambulisho",family:"Familia",directory:"Directory",help:"Msaada",pending:"Inasubiri Idhini"};
+  const titles = {home:"Dashboard",members:"Wanachama",payments:"Michango",events:"Matukio",announcements:"Matangazo",card:"Kitambulisho",family:"Familia",directory:"Directory",help:"Msaada",pending:"Inasubiri Idhini",attendance:"Mahudhurio",elections:"Uchaguzi",cases:"Kesi",saccos:"SACCOS",assets:"Mali",projects:"Miradi",penalties:"Faini",documents:"Nyaraka"};
   document.getElementById("pt").textContent = titles[p] || p;
 
   if(p==="home"){
@@ -175,7 +185,55 @@ async function load(p){
     </form></div><div class="card"><h3>Tiketi</h3>${list.map(t=>`<div style="padding:6px 0;border-bottom:1px solid var(--border)"><strong>${t.subject}</strong><br><small>${t.status}</small></div>`).join("")||"<p>Hakuna</p>"}</div>`;
     document.getElementById("hf").onsubmit = async e => { e.preventDefault(); await api("/api/support",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("help"); };
   }
-  if(p==="pending"){
+  if(p==="attendance"){
+    const list = await api("/api/attendance");
+    c.innerHTML = `<div class="card"><h3>Andika Mahudhurio</h3><form id="af"><div class="form-group"><label>Mkutano</label><input name="meeting" value="Mkutano Mkuu"></div><button class="btn" type="submit">Nipo</button></form></div>
+    <div class="card"><h3>Historia</h3>${list.map(a=>`<div style="padding:6px 0;border-bottom:1px solid var(--border)">${a.userName} · ${a.meeting}</div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("af").onsubmit = async e => { e.preventDefault(); await api("/api/attendance",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("attendance"); };
+  }
+  if(p==="elections"){
+    const list = await api("/api/elections");
+    c.innerHTML = `<div class="card"><h3>Fungua Uchaguzi</h3><form id="ef"><div class="form-group"><label>Nafasi</label><input name="position" required></div><button class="btn" type="submit">Fungua</button></form></div>
+    <div class="card"><h3>Uchaguzi</h3>${list.map(e=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${e.position}</strong> · ${e.status} · Wagombea: ${e.candidates.length} · Kura: ${e.votes.length}</div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("ef").onsubmit = async e => { e.preventDefault(); await api("/api/elections",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("elections"); };
+  }
+  if(p==="cases"){
+    const list = await api("/api/cases");
+    c.innerHTML = `<div class="card"><h3>Fungua Kesi</h3><form id="cf"><div class="form-group"><label>Mada</label><input name="title" required></div><div class="form-group"><label>Maelezo</label><textarea name="description" rows="2"></textarea></div><button class="btn" type="submit">Wasilisha</button></form></div>
+    <div class="card"><h3>Kesi</h3>${list.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--border)"><strong>${x.title}</strong> · ${x.status}</div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("cf").onsubmit = async e => { e.preventDefault(); await api("/api/cases",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("cases"); };
+  }
+  if(p==="saccos"){
+    const d = await api("/api/saccos");
+    c.innerHTML = `<div class="card"><h3>Nunua Hisa</h3><form id="sf"><div class="form-group"><label>Kiasi</label><input name="amount" type="number" required></div><button class="btn" type="submit">Wasilisha</button></form></div>
+    <div class="card"><h3>Hisa</h3>${(d.shares||[]).map(s=>`<div>TSh ${s.amount.toLocaleString()}</div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("sf").onsubmit = async e => { e.preventDefault(); await api("/api/saccos/shares",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("saccos"); };
+  }
+  if(p==="assets"){
+    const list = await api("/api/assets");
+    c.innerHTML = `<div class="card"><h3>Ongeza Mali</h3><form id="asf"><div class="form-group"><label>Jina</label><input name="name" required></div><div class="form-group"><label>Thamani</label><input name="value" type="number"></div><div class="form-group"><label>Eneo</label><input name="location"></div><button class="btn" type="submit">Hifadhi</button></form></div>
+    <div class="card"><h3>Mali</h3>${list.map(a=>`<div style="padding:6px 0;border-bottom:1px solid var(--border)"><strong>${a.name}</strong> · TSh ${(a.value||0).toLocaleString()} · ${a.location||""}</div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("asf").onsubmit = async e => { e.preventDefault(); await api("/api/assets",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("assets"); };
+  }
+  if(p==="projects"){
+    const list = await api("/api/projects");
+    c.innerHTML = `<div class="card"><h3>Ongeza Mradi</h3><form id="prf"><div class="form-group"><label>Jina</label><input name="name" required></div><div class="form-group"><label>Maendeleo %</label><input name="progress" type="number" value="0"></div><button class="btn" type="submit">Hifadhi</button></form></div>
+    <div class="card"><h3>Miradi</h3>${list.map(p=>`<div style="padding:6px 0;border-bottom:1px solid var(--border)"><strong>${p.name}</strong> · ${p.progress||0}%</div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("prf").onsubmit = async e => { e.preventDefault(); await api("/api/projects",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("projects"); };
+  }
+  if(p==="penalties"){
+    const list = await api("/api/penalties");
+    c.innerHTML = `<div class="card"><h3>Ongeza Faini</h3><form id="penf"><div class="form-group"><label>Sababu</label><input name="reason" required></div><div class="form-group"><label>Kiasi</label><input name="amount" type="number" required></div><button class="btn" type="submit">Hifadhi</button></form></div>
+    <div class="card"><h3>Faini</h3>${list.map(x=>`<div>${x.reason} · TSh ${x.amount.toLocaleString()}</div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("penf").onsubmit = async e => { e.preventDefault(); await api("/api/penalties",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("penalties"); };
+  }
+  if(p==="documents"){
+    const list = await api("/api/documents");
+    c.innerHTML = `<div class="card"><h3>Ongeza Nyaraka</h3><form id="docf"><div class="form-group"><label>Jina</label><input name="title" required></div><div class="form-group"><label>URL</label><input name="url"></div><button class="btn" type="submit">Hifadhi</button></form></div>
+    <div class="card"><h3>Nyaraka</h3>${list.map(d=>`<div><a href="${d.url||"#"}" target="_blank">${d.title}</a></div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("docf").onsubmit = async e => { e.preventDefault(); await api("/api/documents",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("documents"); };
+  }
+}
     const m = await api("/api/members");
     const pen = m.filter(x=>x.status==="PENDING");
     c.innerHTML = `<div class="card"><h3>Inasubiri Idhini</h3><table style="margin-top:8px"><thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th></th></tr></thead><tbody>
