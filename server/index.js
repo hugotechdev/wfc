@@ -548,7 +548,7 @@ app.get("/api/backup", requireAuth, (req, res) => {
 
 // PWA
 app.get("/manifest.json", (req, res) => res.json({
-  name: "WFC Portal", short_name: "WFC", start_url: "/", display: "standalone", background_color: "#111", theme_color: "#d4af37",
+  name: "WFC Portal", short_name: "WFC", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#F97316",
   icons: [{ src: "/wfc-logo.jpg", sizes: "192x192", type: "image/jpeg" }]
 }));
 
