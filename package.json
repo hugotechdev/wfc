@@ -1,7 +1,7 @@
 {
   "name": "wfc-portal",
-  "version": "5.0.0",
-  "description": "Wachagga Family Community (WFC) Digital Office & Enterprise Portal",
+  "version": "6.0.0",
+  "description": "Wachagga Family Community (WFC) Enterprise Digital Portal",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js"
