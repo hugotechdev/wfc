@@ -1,42 +1,11 @@
-const CACHE_NAME = 'wfc-portal-v3-cache';
-const STATIC_ASSETS = [
-  '/',
-  '/app',
-  '/styles.css',
-  '/app.js',
-  '/manifest.json',
-  '/icon.svg'
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
-  self.skipWaiting();
+const CACHE = "wfc-portal-v6";
+const ASSETS = ["/", "/app", "/css/style.css", "/js/app.js", "/wfc-logo.jpg", "/offline.html"];
+self.addEventListener("install", e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {}));
 });
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-  event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return res;
-      })
-      .catch(() => caches.match(event.request))
+self.addEventListener("fetch", e => {
+  if (e.request.method !== "GET" || e.request.url.includes("/api/")) return;
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request).then(r => r || caches.match("/offline.html")))
   );
 });
