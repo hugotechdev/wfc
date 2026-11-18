@@ -2,77 +2,16 @@
 <html lang="sw">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kata Tiketi — WFC Portal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <div class="auth-page">
-    <div class="container auth-card">
-      <div class="auth-header">
-        <img src="/wfc-logo.jpg" class="logo" alt="WFC Logo">
-        <span class="kicker">WFC Ticketing</span>
-        <h1>Kata Tiketi</h1>
-      </div>
-
-      <div id="info" class="ticket-summary">
-        <div class="skeleton" style="height:64px"></div>
-      </div>
-
-      <form id="f" class="hidden">
-        <div class="form-group"><label>Jina Kamili</label><input name="name" placeholder="Andika jina lako" required></div>
-        <div class="form-row-2">
-          <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
-          <div class="form-group"><label>Idadi ya Tiketi</label><input name="qty" type="number" value="1" min="1" required></div>
-        </div>
-        <div class="payment-hint">
-          <strong>Lipa kupitia:</strong> M-Pesa <code>0755 000 888</code> · Tigo <code>0715 000 888</code> · Airtel <code>0785 000 888</code> · CRDB <code>0150889944200</code>
-        </div>
-        <div class="form-group"><label>Namba ya Muamala (Transaction ID)</label><input name="transactionId" placeholder="Mf. QK82J910LP" required></div>
-        <button class="btn" type="submit">Wasilisha Tiketi</button>
-        <div id="m"></div>
-      </form>
-
-      <p class="link"><a href="/">← Rudi kwenye ukurasa mkuu</a></p>
+    <div class="container">
+      <h1>Kata Tiketi</h1>
+      <p class="subtitle">Wachagga Family Community</p>
+      <p><a href="/">← Rudi mwanzo</a></p>
     </div>
   </div>
-
-  <script>
-    const id = location.pathname.split("/").pop();
-    fetch("/api/public/events").then(r=>r.json()).then(list=>{
-      const e = list.find(x=>x.id===id);
-      if(!e){
-        document.getElementById("info").innerHTML = `<div class="error">Tukio halijapatikana au limefungwa.</div>`;
-        return;
-      }
-      document.getElementById("info").innerHTML = `
-        <div class="ticket-event-box">
-          <span class="badge badge-pending">${e.type||"Tukio"}</span>
-          <h2>${e.title}</h2>
-          <p class="muted">${e.location||"Dar es Salaam / Moshi"}</p>
-          <div class="ticket-price-tag">TSh ${(e.ticketPrice||0).toLocaleString()} <span>/ tiketi</span></div>
-        </div>`;
-      document.getElementById("f").classList.remove("hidden");
-    });
-
-    document.getElementById("f").onsubmit = async e => {
-      e.preventDefault();
-      const body = Object.fromEntries(new FormData(e.target));
-      body.eventId = id;
-      const r = await fetch("/api/tickets",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(body)
-      });
-      const d = await r.json();
-      document.getElementById("m").innerHTML = d.success
-        ? `<div class="success">Tiketi imewasilishwa kikamilifu! Subiri uthibitisho.</div>`
-        : `<div class="error">${d.error||"Imeshindwa kuwasilisha"}</div>`;
-      if (d.success) e.target.reset();
-    };
-  </script>
 </body>
 </html>

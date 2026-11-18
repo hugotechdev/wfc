@@ -1,17 +1,8 @@
 {
-  "name": "Wachagga Family Community (WFC)",
-  "short_name": "WFC Portal",
-  "description": "Ofisi ya Kidijitali ya Wachagga Family Community — Usajili, Mifuko ya Fedha, Maker-Checker na Huduma za Jamii.",
+  "name": "WFC Portal",
+  "short_name": "WFC",
   "start_url": "/app",
   "display": "standalone",
-  "background_color": "#FAF8F5",
-  "theme_color": "#C59B27",
-  "icons": [
-    {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
+  "background_color": "#F8FAFC",
+  "theme_color": "#F97316"
 }

@@ -3,31 +3,229 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WFC Portal — Enterprise Workspace</title>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#F97316">
+  <title>Wachagga Family Community — Ofisi ya Kidijitali</title>
+  <meta name="description" content="Umoja wa Wachagga, Nguvu ya Familia. Tovuti na ofisi ya kidijitali ya WFC.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.0/dist/apexcharts.min.js"></script>
 </head>
-<body>
-  <div id="google_translate_element" aria-label="Badili lugha"></div>
-  <div id="app"></div>
+<body class="landing-body">
+  <header class="site-nav">
+    <a class="brand" href="#nyumbani">
+      <div class="brand-badge-img"><img src="/wfc-logo.jpg" alt="WFC"></div>
+      <div class="brand-wordmark">
+        <strong>WACHAGGA FAMILY</strong>
+        <span>Community Portal</span>
+      </div>
+    </a>
+    <button class="nav-toggle" id="navToggle" type="button" aria-label="Fungua menyu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <nav id="siteNav">
+      <a href="#kuhusu">Kuhusu</a>
+      <a href="#matangazo">Matangazo</a>
+      <a href="#matukio">Matukio</a>
+      <a href="#mawasiliano">Mawasiliano</a>
+      <a class="btn btn-sm" href="/app">Ingia Portal</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="nyumbani">
+    <div class="hero-copy">
+      <div class="kicker-pill"><span class="dot-live"></span> The Pride of Chagga · Digital Office</div>
+      <h1>Umoja wa Wachagga, <span>nguvu ya familia.</span></h1>
+      <p class="lead">Ofisi ya Wachagga Family Community mtandaoni. Wanachama, michango yenye risiti za QR, matukio na taarifa za jumuiya katika jukwaa moja la kisasa.</p>
+      <div class="cta">
+        <a class="btn" href="/app">Fungua akaunti</a>
+        <a class="btn ghost" href="#matukio">Tazama matukio</a>
+      </div>
+      <div class="metrics">
+        <div class="metric-chip"><strong id="mMembers">—</strong><span>Wanachama hai</span></div>
+        <div class="metric-chip"><strong id="mEvents">—</strong><span>Matukio hai</span></div>
+        <div class="metric-chip"><strong id="mOpen">24/7</strong><span>Ofisi ya mtandaoni</span></div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-showcase-card">
+        <div class="showcase-top">
+          <img src="/wfc-logo.jpg" alt="Wachagga Family Community">
+          <div>
+            <span class="badge badge-active">Imethibitishwa</span>
+            <h3>WFC Digital Suite</h3>
+            <p class="muted">Stand up · It's not over</p>
+          </div>
+        </div>
+        <div class="showcase-stats">
+          <div class="mini-stat">
+            <span>Malipo ya Haraka</span>
+            <strong>M-Pesa · Tigo · Airtel · CRDB</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Risiti & Kitambulisho</span>
+            <strong>QR Code Otomatiki</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="kuhusu">
+    <div class="about-grid">
+      <div class="reveal">
+        <div class="kicker">Kuhusu sisi</div>
+        <h2>Jumuiya inayokumbuka, inayosaidia, na inayokua pamoja.</h2>
+        <p class="section-lead">WFC ni muungano wa familia za Wachagga. Tunashikilia ada, misaada ya dharura, sherehe, SACCOS na kumbukumbu za uongozi kwa uwazi na usalama wa kudumu.</p>
+      </div>
+      <div class="values">
+        <article class="value reveal">
+          <div class="val-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <h3>Umoja wa Kanda</h3>
+            <p>Kanda, halmashauri na tawi vinawasiliana kwenye mfumo mmoja wenye utambulisho wa WFC ID.</p>
+          </div>
+        </article>
+        <article class="value reveal">
+          <div class="val-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <div>
+            <h3>Mshikamano wa Familia</h3>
+            <p>Msiba, ugonjwa na harusi vinafuatiliwa kwa utaratibu maalum na haraka.</p>
+          </div>
+        </article>
+        <article class="value reveal">
+          <div class="val-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div>
+            <h3>Uwazi wa Kifedha</h3>
+            <p>Michango ina risiti za PDF zenye QR, idhini ya mhazini, na historia inayosomeka muda wowote.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="matangazo">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Matangazo</div>
+        <h2>Habari zinazosonga.</h2>
+      </div>
+      <div class="slider-ui" id="dots"></div>
+    </div>
+    <div class="slider" id="slider"></div>
+  </section>
+
+  <section class="section" id="matukio">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Matukio</div>
+        <h2>Yajayo na yanayoendelea.</h2>
+      </div>
+    </div>
+    <div class="event-grid" id="events">
+      <div class="card"><div class="skeleton" style="height:180px"></div></div>
+      <div class="card"><div class="skeleton" style="height:180px"></div></div>
+      <div class="card"><div class="skeleton" style="height:180px"></div></div>
+    </div>
+  </section>
+
+  <section class="section" id="mawasiliano">
+    <div class="kicker">Mawasiliano</div>
+    <h2>Tuandikie moja kwa moja.</h2>
+    <div class="contact-grid">
+      <form id="contact" class="card reveal">
+        <div class="form-row-2">
+          <div class="form-group"><label>Jina Kamili</label><input name="name" placeholder="Mf. Amina Swai" required></div>
+          <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
+        </div>
+        <div class="form-group"><label>Barua pepe (hiari)</label><input name="email" type="email" placeholder="jina@mfano.co.tz"></div>
+        <div class="form-group"><label>Ujumbe wako</label><textarea name="message" rows="4" placeholder="Andika ujumbe au swali lako hapa..." required></textarea></div>
+        <button class="btn" type="submit">Tuma ujumbe</button>
+        <div id="contactMsg"></div>
+      </form>
+      <aside class="contact-card card reveal">
+        <span class="kicker">Makao Makuu</span>
+        <h3>Ofisi ya WFC</h3>
+        <div class="office-list">
+          <div class="office-item"><strong>Eneo:</strong> Dar es Salaam, Tanzania</div>
+          <div class="office-item"><strong>Simu ya Ofisi:</strong> 0755 000 888</div>
+          <div class="office-item"><strong>Njia za Malipo:</strong> M-Pesa (0755 000 888), Tigo Pesa (0715 000 888), Airtel Money (0785 000 888) na CRDB (0150889944200).</div>
+        </div>
+        <div style="margin-top:24px">
+          <a class="btn" href="/app">Ingia kwenye Portal</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>© Wachagga Family Community (WFC)</span>
+    <span>Umoja wa Wachagga, Nguvu ya Familia</span>
+  </footer>
+
   <script>
-    function googleTranslateElementInit() {
-      if (window.google && google.translate) {
-        new google.translate.TranslateElement({
-          pageLanguage: "sw",
-          includedLanguages: "en,sw"
-        }, "google_translate_element");
+    document.getElementById("navToggle").onclick = () => document.getElementById("siteNav").classList.toggle("open");
+    fetch("/api/public/stats").then(r=>r.json()).then(s=>{
+      document.getElementById("mMembers").textContent = s.members ?? "—";
+      document.getElementById("mEvents").textContent = s.events ?? "—";
+    }).catch(()=>{});
+
+    let slides = [], i = 0, timer;
+    function paint(){
+      const root = document.getElementById("slider");
+      const dots = document.getElementById("dots");
+      if(!slides.length){
+        root.innerHTML = '<div class="slide on"><div class="kicker">Taarifa</div><h3>Hakuna matangazo mapya kwa sasa</h3><p class="muted">Viongozi watayachapisha matangazo muhimu hapa.</p></div>';
+        return;
       }
+      root.innerHTML = slides.map((a,n)=>`
+        <article class="slide ${n===i?"on":""}">
+          <div class="slide-meta"><span class="badge badge-pending">${a.author||"Ofisi ya WFC"}</span></div>
+          <h3>${a.title}</h3>
+          <p>${a.body||""}</p>
+          ${a.link?`<div style="margin-top:20px"><a class="btn btn-sm" href="${a.link}">Fungua taarifa</a></div>`:""}
+        </article>`).join("");
+      dots.innerHTML = slides.map((_,n)=>`<button class="dot ${n===i?"on":""}" data-i="${n}" aria-label="Slaidi ${n+1}"></button>`).join("");
+      dots.querySelectorAll(".dot").forEach(b=>b.onclick=()=>{ i=+b.dataset.i; paint(); });
     }
+    function boot(list){
+      slides = list;
+      paint();
+      clearInterval(timer);
+      timer = setInterval(()=>{ if(slides.length<2) return; i=(i+1)%slides.length; paint(); }, 6000);
+    }
+    fetch("/api/public/announcements").then(r=>r.json()).then(boot).catch(()=>boot([]));
+
+    fetch("/api/public/events").then(r=>r.json()).then(list=>{
+      document.getElementById("events").innerHTML = list.length ? list.map(e=>`
+        <article class="ev">
+          <div class="poster">${e.poster?`<img src="${e.poster}" alt="${e.title}">`:`<div class="poster-placeholder"><span>WFC EVENT</span></div>`}</div>
+          <div class="b">
+            <div class="ev-top">
+              <span class="badge badge-pending">${e.type||"Tukio"}</span>
+              <span class="ev-price">TSh ${Number(e.ticketPrice||0).toLocaleString()}</span>
+            </div>
+            <h3>${e.title}</h3>
+            <p class="muted">${e.location||"Eneo litatangazwa"}</p>
+            <a class="btn btn-sm" href="/ticket/${e.id}">Kata tiketi</a>
+          </div>
+        </article>`).join("") : `<div class="empty-state"><p>Hakuna matukio yaliyotangazwa kwa sasa.</p></div>`;
+    });
+
+    document.getElementById("contact").onsubmit = async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target));
+      const r = await fetch("/api/contact", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+      const d = await r.json();
+      document.getElementById("contactMsg").innerHTML = d.success ? '<div class="success">Ujumbe umepokelewa. Tutawasiliana nawe.</div>' : '<div class="error">Imeshindwa kutuma. Jaribu tena.</div>';
+      if(d.success) e.target.reset();
+    };
   </script>
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-  <script src="/js/app.js"></script>
 </body>
 </html>
