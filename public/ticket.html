@@ -1,33 +1,82 @@
 <!DOCTYPE html>
 <html lang="sw">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Kata Tiketi</title><link rel="stylesheet" href="/css/style.css"></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kata Tiketi — WFC Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/jpeg" href="/wfc-logo.jpg">
+  <link rel="apple-touch-icon" href="/wfc-logo.jpg">
+</head>
 <body>
-  <div class="container" style="margin-top:40px">
-    <img src="/wfc-logo.jpg" class="logo"><h1>Kata Tiketi</h1>
-    <div id="info">Inapakia...</div>
-    <form id="f" class="hidden">
-      <div class="form-group"><label>Jina</label><input name="name" required></div>
-      <div class="form-group"><label>Simu</label><input name="phone" required></div>
-      <div class="form-group"><label>Idadi</label><input name="qty" type="number" value="1" min="1"></div>
-      <div class="form-group"><label>Namba ya Muamala</label><input name="transactionId" required></div>
-      <button class="btn" type="submit">Wasilisha</button><div id="m"></div>
-    </form>
-    <p class="link"><a href="/">Rudi</a></p>
+  <div class="auth-page">
+    <div class="container auth-card">
+      <div class="auth-header">
+        <img src="/wfc-logo.jpg" class="logo" alt="WFC Logo">
+        <span class="kicker">WFC Ticketing</span>
+        <h1>Kata Tiketi</h1>
+      </div>
+
+      <div id="info" class="ticket-summary">
+        <div class="skeleton" style="height:64px"></div>
+      </div>
+
+      <form id="f" class="hidden">
+        <div class="form-group"><label>Jina Kamili</label><input name="name" placeholder="Andika jina lako" required></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
+          <div class="form-group"><label>Idadi ya Tiketi</label><input name="qty" type="number" value="1" min="1" max="50" required></div>
+        </div>
+        <div class="payment-hint">
+          <strong>Lipa kupitia:</strong> M-Pesa <code>0755 000 888</code> · Tigo <code>0715 000 888</code> · Airtel <code>0785 000 888</code> · CRDB <code>0150889944200</code>
+        </div>
+        <div class="form-group"><label>Namba ya Muamala (Transaction ID)</label><input name="transactionId" placeholder="Mf. QK82J910LP" required></div>
+        <button class="btn" type="submit">Wasilisha Tiketi</button>
+        <div id="m"></div>
+      </form>
+
+      <p class="link"><a href="/">← Rudi kwenye ukurasa mkuu</a></p>
+    </div>
   </div>
+
   <script>
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
+    }
     const id = location.pathname.split("/").pop();
     fetch("/api/public/events").then(r=>r.json()).then(list=>{
       const e = list.find(x=>x.id===id);
-      if(!e){ document.getElementById("info").innerHTML="Haijapatikana"; return; }
-      document.getElementById("info").innerHTML = `<h2>${e.title}</h2><p>${e.location||""}</p><p style="font-weight:700;margin:8px 0">TSh ${(e.ticketPrice||0).toLocaleString()}</p>`;
+      if(!e){
+        document.getElementById("info").innerHTML = `<div class="error">Tukio halijapatikana au limefungwa.</div>`;
+        return;
+      }
+      document.getElementById("info").innerHTML = `
+        <div class="ticket-event-box">
+          <span class="badge badge-pending">${esc(e.type||"Tukio")}</span>
+          <h2>${esc(e.title)}</h2>
+          <p class="muted">${esc(e.location||"Dar es Salaam / Moshi")}</p>
+          <div class="ticket-price-tag">TSh ${(Number(e.ticketPrice)||0).toLocaleString()} <span>/ tiketi</span></div>
+        </div>`;
       document.getElementById("f").classList.remove("hidden");
     });
+
     document.getElementById("f").onsubmit = async e => {
       e.preventDefault();
-      const body = Object.fromEntries(new FormData(e.target)); body.eventId = id;
-      const r = await fetch("/api/tickets",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+      const body = Object.fromEntries(new FormData(e.target));
+      body.eventId = id;
+      const r = await fetch("/api/tickets",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(body)
+      });
       const d = await r.json();
-      document.getElementById("m").innerHTML = d.success ? `<div class="success">Imewasilishwa</div>` : `<div class="error">${d.error||"Imeshindwa"}</div>`;
+      document.getElementById("m").innerHTML = d.success
+        ? `<div class="success">Tiketi imewasilishwa kikamilifu! Subiri uthibitisho.</div>`
+        : `<div class="error">${esc(d.error||"Imeshindwa kuwasilisha")}</div>`;
+      if (d.success) e.target.reset();
     };
   </script>
 </body>
