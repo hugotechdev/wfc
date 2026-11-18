@@ -138,6 +138,14 @@ async function showDashboard() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           Inasubiri Idhini
         </a>
+        <a class="nav-item" data-page="events">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Matukio
+        </a>
+        <a class="nav-item" data-page="announcements">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Matangazo
+        </a>
         <a class="nav-item" onclick="logout()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Toka nje
@@ -166,7 +174,12 @@ async function showDashboard() {
 
 async function loadPage(page) {
   const content = document.getElementById("content");
-  document.getElementById("page-title").textContent = page === "home" ? "Dashboard" : page === "members" ? "Wanachama" : page === "payments" ? "Michango" : "Inasubiri Idhini";
+  document.getElementById("page-title").textContent = 
+    page === "home" ? "Dashboard" : 
+    page === "members" ? "Wanachama" : 
+    page === "payments" ? "Michango" : 
+    page === "events" ? "Matukio" :
+    page === "announcements" ? "Matangazo" : "Inasubiri Idhini";
 
   if (page === "home") {
     const d = await api("/api/dashboard");
@@ -237,20 +250,69 @@ async function loadPage(page) {
     };
   }
 
-  if (page === "pending") {
-    const members = await api("/api/members");
-    const pending = members.filter(m => m.status === "PENDING");
+  if (page === "events") {
+    const events = await api("/api/events");
     content.innerHTML = `
       <div class="card">
-        <h3>Wanachama Wanaosubiri Idhini</h3>
-        <table style="margin-top:12px">
-          <thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th>Hatua</th></tr></thead>
-          <tbody>
-            ${pending.map(m => `<tr><td>${m.name}</td><td>${m.phone}</td><td>${m.region}</td><td><button class="btn btn-sm" onclick="approve('${m.id}')">Idhinisha</button></td></tr>`).join("") || "<tr><td colspan='4'>Hakuna</td></tr>"}
-          </tbody>
-        </table>
+        <h3>Ripoti Tukio</h3>
+        <form id="event-form" style="margin-top:12px">
+          <div class="form-group"><label>Aina</label>
+            <select name="type"><option>Msiba</option><option>Harusi</option><option>Ugonjwa</option><option>Festival</option><option>Tour</option></select>
+          </div>
+          <div class="form-group"><label>Kichwa</label><input name="title" required></div>
+          <div class="form-group"><label>Maelezo</label><textarea name="description" rows="2"></textarea></div>
+          <div class="form-group"><label>Eneo</label><input name="location"></div>
+          <div class="form-group"><label>Bei ya Tiketi (TSh)</label><input name="ticketPrice" type="number" value="0"></div>
+          <div class="form-group"><label>Poster (URL au pakia baadaye)</label><input name="poster" placeholder="https://... au /uploads/poster.jpg"></div>
+          <button class="btn" type="submit">Wasilisha</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Matukio</h3>
+        ${events.map(e => `
+          <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+            <strong>${e.title}</strong> <span class="badge badge-pending">${e.type}</span>
+            <p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px">${e.location || ""} · Lengo: TSh ${(e.targetAmount||0).toLocaleString()}</p>
+          </div>
+        `).join("") || "<p>Hakuna matukio</p>"}
       </div>
     `;
+    document.getElementById("event-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      await api("/api/events", { method: "POST", body: Object.fromEntries(fd) });
+      loadPage("events");
+    };
+  }
+
+  if (page === "announcements") {
+    const anns = await api("/api/announcements");
+    content.innerHTML = `
+      <div class="card">
+        <h3>Tangazo Jipya</h3>
+        <form id="ann-form" style="margin-top:12px">
+          <div class="form-group"><label>Kichwa</label><input name="title" required></div>
+          <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" required></textarea></div>
+          <button class="btn" type="submit">Chapisha</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Matangazo</h3>
+        ${anns.map(a => `
+          <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+            <strong>${a.title}</strong>
+            <p style="font-size:0.85rem;margin-top:4px">${a.body}</p>
+            <small style="color:var(--text-muted)">${a.author} · ${new Date(a.createdAt).toLocaleDateString()}</small>
+          </div>
+        `).join("") || "<p>Hakuna matangazo</p>"}
+      </div>
+    `;
+    document.getElementById("ann-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const data = await api("/api/announcements", { method: "POST", body: Object.fromEntries(fd) });
+      if (data.error) alert(data.error); else loadPage("announcements");
+    };
   }
 }
 

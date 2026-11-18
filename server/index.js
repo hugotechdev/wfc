@@ -116,6 +116,20 @@ app.get("/api/me", (req, res) => {
   res.json({ user: req.session.user });
 });
 
+// ===== PUBLIC API (no login required) =====
+app.get("/api/public/events", (req, res) => {
+  const db = loadDB();
+  res.json((db.events || []).filter(e => e.public !== false));
+});
+
+app.get("/api/public/announcements", (req, res) => {
+  const db = loadDB();
+  res.json(db.announcements || []);
+});
+
+// Serve uploaded posters
+app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
+
 // ===== PROTECTED ROUTES =====
 app.get("/api/dashboard", requireAuth, (req, res) => {
   const db = loadDB();
@@ -190,6 +204,75 @@ app.post("/api/approve-payment", requireAuth, (req, res) => {
   payment.receiptNo = "RCP-" + Date.now().toString().slice(-6);
   saveDB(db);
   res.json({ success: true, receiptNo: payment.receiptNo });
+});
+
+// ===== EVENTS =====
+app.get("/api/events", requireAuth, (req, res) => {
+  const db = loadDB();
+  res.json(db.events || []);
+});
+
+app.post("/api/events", requireAuth, (req, res) => {
+  const { type, title, location, targetAmount, ticketPrice, poster, description } = req.body;
+  const db = loadDB();
+  if (!db.events) db.events = [];
+  db.events.push({
+    id: Date.now().toString(),
+    type, title, location, description: description || "",
+    targetAmount: Number(targetAmount) || 0,
+    ticketPrice: Number(ticketPrice) || 0,
+    poster: poster || "",
+    raisedAmount: 0,
+    status: "ACTIVE",
+    public: true,
+    reportedBy: req.session.user.name,
+    createdAt: new Date().toISOString()
+  });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// ===== ANNOUNCEMENTS =====
+app.get("/api/announcements", requireAuth, (req, res) => {
+  const db = loadDB();
+  res.json(db.announcements || []);
+});
+
+app.post("/api/announcements", requireAuth, (req, res) => {
+  if (!["ADMIN", "SECRETARY"].includes(req.session.user.role)) {
+    return res.status(403).json({ error: "Huna mamlaka" });
+  }
+  const { title, body } = req.body;
+  const db = loadDB();
+  if (!db.announcements) db.announcements = [];
+  db.announcements.unshift({
+    id: Date.now().toString(),
+    title, body,
+    author: req.session.user.name,
+    createdAt: new Date().toISOString()
+  });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+app.get("/ticket/:id", (req, res) => res.sendFile(path.join(__dirname, "../public/ticket.html")));
+
+// Simple ticket submission
+app.post("/api/tickets", (req, res) => {
+  const { eventId, name, phone, qty, transactionId } = req.body;
+  const db = loadDB();
+  if (!db.tickets) db.tickets = [];
+  if (db.tickets.find(t => t.transactionId === transactionId)) {
+    return res.status(400).json({ error: "Namba ya muamala tayari imetumika" });
+  }
+  db.tickets.push({
+    id: Date.now().toString(),
+    eventId, name, phone, qty: Number(qty) || 1, transactionId,
+    status: "PENDING",
+    createdAt: new Date().toISOString()
+  });
+  saveDB(db);
+  res.json({ success: true });
 });
 
 // Catch-all for frontend

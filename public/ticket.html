@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kata Tiketi | WFC</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container" style="margin-top:40px;">
+    <img src="/wfc-logo.jpg" class="logo">
+    <h1>Kata Tiketi</h1>
+    <div id="event-info">Inapakia...</div>
+    <form id="ticket-form" class="hidden">
+      <div class="form-group"><label>Jina</label><input name="name" required></div>
+      <div class="form-group"><label>Simu</label><input name="phone" required></div>
+      <div class="form-group"><label>Idadi</label><input name="qty" type="number" value="1" min="1"></div>
+      <div class="form-group"><label>Namba ya Muamala</label><input name="transactionId" required></div>
+      <button class="btn" type="submit">Wasilisha</button>
+      <div id="msg"></div>
+    </form>
+    <p class="link"><a href="/">Rudi Nyumbani</a></p>
+  </div>
+  <script>
+    const id = location.pathname.split("/").pop();
+    fetch("/api/public/events").then(r => r.json()).then(events => {
+      const e = events.find(x => x.id === id);
+      if (!e) { document.getElementById("event-info").innerHTML = "Tukio halijapatikana"; return; }
+      document.getElementById("event-info").innerHTML = `
+        <h2>${e.title}</h2>
+        <p>${e.location || ""}</p>
+        <p style="font-weight:700;margin:8px 0;">TSh ${(e.ticketPrice||0).toLocaleString()} kwa tiketi</p>
+      `;
+      document.getElementById("ticket-form").classList.remove("hidden");
+    });
+    document.getElementById("ticket-form").onsubmit = async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const data = Object.fromEntries(fd);
+      data.eventId = id;
+      const res = await fetch("/api/tickets", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(data) });
+      const json = await res.json();
+      document.getElementById("msg").innerHTML = json.success ? `<div class="success">Tiketi imewasilishwa. Subiri uthibitisho.</div>` : `<div class="error">${json.error||"Imeshindwa"}</div>`;
+    };
+  </script>
+</body>
+</html>
