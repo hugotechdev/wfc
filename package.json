@@ -1,18 +1,21 @@
 {
   "name": "wfc-portal",
-  "version": "6.0.0",
-  "description": "Wachagga Family Community (WFC) Digital Management Portal V6",
+  "version": "5.0.0",
+  "description": "Wachagga Family Community (WFC) Digital Office & Enterprise Portal",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node --watch server/index.js"
+    "start": "node server/index.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^10.0.0",
     "express": "^4.21.0",
+    "express-rate-limit": "^7.4.1",
     "express-session": "^1.18.0",
+    "helmet": "^8.0.0",
     "pg": "^8.13.1"
   }
 }

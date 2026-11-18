@@ -3,22 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WFC Portal V6 — Wachagga Family Community</title>
+  <title>WFC Portal — Enterprise Workspace</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#c6a15b">
+  <meta name="theme-color" content="#F97316">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.0/dist/apexcharts.min.js"></script>
+  <link rel="icon" type="image/jpeg" href="/wfc-logo.jpg">
+  <link rel="apple-touch-icon" href="/wfc-logo.jpg">
 </head>
 <body>
+  <div id="google_translate_element" aria-label="Badili lugha"></div>
   <div id="app"></div>
-  <div id="modalRoot" class="modal-backdrop" style="display:none"></div>
   <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    function googleTranslateElementInit() {
+      if (window.google && google.translate) {
+        new google.translate.TranslateElement({
+          pageLanguage: "sw",
+          includedLanguages: "en,sw"
+        }, "google_translate_element");
+      }
     }
   </script>
+  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>
