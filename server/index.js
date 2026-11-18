@@ -48,6 +48,7 @@ function saveDB(db) { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); 
 
 (function seedDemo() {
   const db = loadDB();
+  if (db.settings && db.settings.demoSeed === false) return;
   let changed = false;
   const ago = (days) => new Date(Date.now() - days * 86400000).toISOString();
   const people = [
