@@ -1,16 +1,13 @@
 {
-  "name": "wfc-portal-2026",
-  "version": "3.0.0",
-  "description": "Wachagga Family Community (WFC) Digital Office PWA — Split-Showcase Auth, 3-Step Registration, Forgot Password via Resend API, Segregated Fund Accounting, RBAC & Maker-Checker Approvals",
-  "main": "server.js",
+  "name": "wfc-portal",
+  "version": "1.0.0",
+  "description": "Wachagga Family Community Portal",
+  "main": "server/index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "start": "node server/index.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "express-session": "^1.18.0"
   }
 }

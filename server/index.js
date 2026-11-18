@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const express = require("express");
 const session = require("express-session");
 const path = require("path");
@@ -37,7 +38,7 @@ function saveDB(db) { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); 
   const db = loadDB();
   if (!db.users.find(u => u.phone === "0700000000")) {
     db.users.push({
-      id: "admin-001", name: "Mwenyekiti WFC", phone: "0700000000", region: "Dar es Salaam",
+      id: "admin-001", name: "Mwenyekiti WFC", phone: "0700000000", email: "admin@wfc.or.tz", region: "Dar es Salaam",
       password: "admin123", role: "ADMIN", status: "ACTIVE", wfcId: "WFC-ADMIN",
       family: { head: "Mwenyekiti WFC", spouse: "", children: [] },
       profession: "Kiongozi", createdAt: new Date().toISOString()
@@ -52,11 +53,11 @@ function saveDB(db) { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); 
   let changed = false;
   const ago = (days) => new Date(Date.now() - days * 86400000).toISOString();
   const people = [
-    { id: "demo-amina", name: "Amina Swai", phone: "0711000001", region: "Dar es Salaam", password: "demo123", role: "MEMBER", status: "ACTIVE", wfcId: "WFC-0145", profession: "Muuguzi", family: { head: "Amina Swai", spouse: "Godson Swai", children: ["Nuru", "Eli"] }, createdAt: ago(140) },
-    { id: "demo-john", name: "John Mushi", phone: "0711000002", region: "Moshi", password: "demo123", role: "TREASURER", status: "ACTIVE", wfcId: "WFC-0088", profession: "Mhasibu", family: { head: "John Mushi", spouse: "", children: [] }, createdAt: ago(400) },
-    { id: "demo-neema", name: "Neema Lyimo", phone: "0711000003", region: "Arusha", password: "demo123", role: "MEMBER", status: "PENDING", wfcId: null, profession: "", family: { head: "Neema Lyimo", spouse: "", children: [] }, createdAt: ago(3) },
-    { id: "demo-baraka", name: "Baraka Kimaro", phone: "0711000004", region: "Kilimanjaro", password: "demo123", role: "SECRETARY", status: "ACTIVE", wfcId: "WFC-0102", profession: "Mwalimu", family: { head: "Baraka Kimaro", spouse: "Aika", children: ["Imani"] }, createdAt: ago(220) },
-    { id: "demo-sarah", name: "Sarah Mrema", phone: "0711000005", region: "Tanga", password: "demo123", role: "MEMBER", status: "SUSPENDED", wfcId: "WFC-0119", profession: "Mfanyabiashara", family: { head: "Sarah Mrema", spouse: "", children: [] }, createdAt: ago(300) }
+    { id: "demo-amina", name: "Amina Swai", phone: "0711000001", email: "amina@wfc.or.tz", region: "Dar es Salaam", password: "demo123", role: "MEMBER", status: "ACTIVE", wfcId: "WFC-0145", profession: "Muuguzi", family: { head: "Amina Swai", spouse: "Godson Swai", children: ["Nuru", "Eli"] }, createdAt: ago(140) },
+    { id: "demo-john", name: "John Mushi", phone: "0711000002", email: "john@wfc.or.tz", region: "Moshi", password: "demo123", role: "TREASURER", status: "ACTIVE", wfcId: "WFC-0088", profession: "Mhasibu", family: { head: "John Mushi", spouse: "", children: [] }, createdAt: ago(400) },
+    { id: "demo-neema", name: "Neema Lyimo", phone: "0711000003", email: "neema@wfc.or.tz", region: "Arusha", password: "demo123", role: "MEMBER", status: "PENDING", wfcId: null, profession: "", family: { head: "Neema Lyimo", spouse: "", children: [] }, createdAt: ago(3) },
+    { id: "demo-baraka", name: "Baraka Kimaro", phone: "0711000004", email: "baraka@wfc.or.tz", region: "Kilimanjaro", password: "demo123", role: "SECRETARY", status: "ACTIVE", wfcId: "WFC-0102", profession: "Mwalimu", family: { head: "Baraka Kimaro", spouse: "Aika", children: ["Imani"] }, createdAt: ago(220) },
+    { id: "demo-sarah", name: "Sarah Mrema", phone: "0711000005", email: "sarah@wfc.or.tz", region: "Tanga", password: "demo123", role: "MEMBER", status: "SUSPENDED", wfcId: "WFC-0119", profession: "Mfanyabiashara", family: { head: "Sarah Mrema", spouse: "", children: [] }, createdAt: ago(300) }
   ];
   people.forEach((p) => {
     if (!db.users.find((u) => u.id === p.id || u.phone === p.phone)) {
@@ -146,24 +147,35 @@ app.get("/api/contacts", requireAuth, (req, res) => {
 });
 
 app.post("/api/register", (req, res) => {
-  const { name, phone, region, password, paymentProof } = req.body;
-  if (!name || !phone || !password) return res.status(400).json({ error: "Jaza taarifa zote" });
+  const { name, phone, email, region, password, paymentProof } = req.body;
+  if (!name || !phone || !password) return res.status(400).json({ error: "Jaza taarifa zote muhimu" });
+  if (String(password).length < 6) return res.status(400).json({ error: "Nenosiri liwe na angalau herufi 6" });
   const db = loadDB();
-  if (db.users.find(u => u.phone === phone)) return res.status(400).json({ error: "Namba tayari imesajiliwa" });
+  const cleanPhone = String(phone).trim();
+  const cleanEmail = String(email || "").trim().toLowerCase();
+  if (db.users.find(u => u.phone === cleanPhone)) return res.status(400).json({ error: "Namba ya simu tayari imesajiliwa" });
+  if (cleanEmail && db.users.find(u => (u.email || "").toLowerCase() === cleanEmail)) {
+    return res.status(400).json({ error: "Barua pepe tayari imesajiliwa" });
+  }
   db.users.push({
-    id: Date.now().toString(), name, phone, region: region || "Dar es Salaam", password,
+    id: Date.now().toString(), name: String(name).trim(), phone: cleanPhone, email: cleanEmail,
+    region: region || "Dar es Salaam", password,
     role: "MEMBER", status: "PENDING", paymentProof: paymentProof || "", wfcId: null,
     family: { head: name, spouse: "", children: [] }, profession: "", createdAt: new Date().toISOString()
   });
   saveDB(db);
-  res.json({ success: true, message: "Usajili umepokelewa. Subiri idhini." });
+  res.json({ success: true, message: "Usajili na malipo ya TSh 1,000 yamepokelewa. Subiri idhini ya viongozi." });
 });
 
 app.post("/api/login", (req, res) => {
-  const { phone, password } = req.body;
+  const identifier = String(req.body.identifier || req.body.phone || "").trim().toLowerCase();
+  const { password } = req.body;
   const db = loadDB();
-  const user = db.users.find(u => u.phone === phone && u.password === password);
-  if (!user) return res.status(401).json({ error: "Taarifa si sahihi" });
+  const user = db.users.find(u =>
+    (u.phone === identifier || (u.email && u.email.toLowerCase() === identifier)) &&
+    u.password === password
+  );
+  if (!user) return res.status(401).json({ error: "Namba ya simu, barua pepe au nenosiri si sahihi" });
   if (user.twoFactor) {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     db.otps = (db.otps || []).filter(o => o.exp > Date.now());
@@ -186,6 +198,85 @@ app.post("/api/verify-otp", (req, res) => {
   saveDB(db);
   req.session.user = { id: user.id, name: user.name, phone: user.phone, role: user.role, status: user.status, wfcId: user.wfcId };
   res.json({ success: true, user: req.session.user });
+});
+
+// Forgot & Reset Password (Resend API + Dev Preview Fallback)
+app.post("/api/forgot-password", async (req, res) => {
+  const identifier = String(req.body.identifier || "").trim().toLowerCase();
+  if (!identifier) return res.status(400).json({ error: "Weka barua pepe au namba ya simu iliyosajiliwa" });
+  const db = loadDB();
+  const user = db.users.find(u =>
+    (u.email && u.email.toLowerCase() === identifier) || u.phone === identifier
+  );
+  if (!user) {
+    return res.json({ success: true, message: "Kama akaunti ipo, kiungo cha kubadili nenosiri kimetumwa." });
+  }
+  const token = crypto.randomBytes(24).toString("hex");
+  db.resetTokens = (db.resetTokens || []).filter(t => t.exp > Date.now() && t.userId !== user.id);
+  db.resetTokens.push({ token, userId: user.id, exp: Date.now() + 30 * 60 * 1000 });
+  saveDB(db);
+
+  const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+  const host = req.get("host");
+  const resetUrl = `${proto}://${host}/app?resetToken=${token}`;
+  const resendKey = process.env.RESEND_API_KEY;
+  const emailFrom = process.env.EMAIL_FROM || db.settings.emailFrom || "WFC Portal <onboarding@resend.dev>";
+
+  if (resendKey && user.email) {
+    try {
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: emailFrom,
+          to: [user.email],
+          subject: "Badili Nenosiri Lako — WFC Portal",
+          html: `<div style="font-family:sans-serif;max-width:520px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:14px">
+            <h2 style="color:#F97316;margin-top:0">Wachagga Family Community</h2>
+            <p>Habari <strong>${user.name}</strong>,</p>
+            <p>Umefanya ombi la kubadili nenosiri la akaunti yako ya WFC Portal. Bonyeza kitufe hapa chini kuweka nenosiri jipya (kiungo kitaisha baada ya dakika 30):</p>
+            <p style="margin:24px 0"><a href="${resetUrl}" style="background:#F97316;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:bold">Weka Nenosiri Jipya</a></p>
+            <p style="font-size:12px;color:#6b7280">Kama hukuomba mabadiliko haya, puuza barua pepe hii.</p>
+          </div>`
+        })
+      });
+      if (r.ok) {
+        return res.json({ success: true, message: `Kiungo cha kubadili nenosiri kimetumwa kwenda ${user.email}.` });
+      }
+    } catch (e) {}
+  }
+
+  res.json({
+    success: true,
+    message: user.email
+      ? "Mfumo wa barua pepe haujaunganishwa (RESEND_API_KEY). Tumia kiungo cha majaribio hapa chini:"
+      : "Akaunti hii haina barua pepe iliyosajiliwa. Tumia kiungo cha majaribio hapa chini:",
+    previewUrl: resetUrl
+  });
+});
+
+app.get("/api/reset-password/:token", (req, res) => {
+  const db = loadDB();
+  const rec = (db.resetTokens || []).find(t => t.token === req.params.token && t.exp > Date.now());
+  if (!rec) return res.status(400).json({ valid: false, error: "Kiungo si sahihi au muda wake umeisha." });
+  const user = db.users.find(u => u.id === rec.userId);
+  res.json({ valid: true, name: user ? user.name : "" });
+});
+
+app.post("/api/reset-password", (req, res) => {
+  const { token, password } = req.body || {};
+  if (!token || !password || String(password).length < 6) {
+    return res.status(400).json({ error: "Nenosiri jipya liwe na angalau herufi 6" });
+  }
+  const db = loadDB();
+  const rec = (db.resetTokens || []).find(t => t.token === token && t.exp > Date.now());
+  if (!rec) return res.status(400).json({ error: "Kiungo si sahihi au muda wake umeisha." });
+  const user = db.users.find(u => u.id === rec.userId);
+  if (!user) return res.status(404).json({ error: "Akaunti haijapatikana" });
+  user.password = password;
+  db.resetTokens = (db.resetTokens || []).filter(t => t.token !== token);
+  saveDB(db);
+  res.json({ success: true, message: "Nenosiri limebadilishwa kikamilifu! Sasa unaweza kuingia." });
 });
 
 app.post("/api/logout", (req, res) => { req.session.destroy(); res.json({ success: true }); });
@@ -298,7 +389,7 @@ app.post("/api/manual-income", requireAuth, (req, res) => {
 app.get("/api/members", requireAuth, (req, res) => {
   const db = loadDB();
   res.json(db.users.map(u => ({
-    id: u.id, name: u.name, phone: u.phone, region: u.region, status: u.status, role: u.role, wfcId: u.wfcId, profession: u.profession
+    id: u.id, name: u.name, phone: u.phone, email: u.email || "", region: u.region, status: u.status, role: u.role, wfcId: u.wfcId, profession: u.profession
   })));
 });
 
@@ -416,8 +507,6 @@ app.post("/api/tickets", (req, res) => {
   saveDB(db);
   res.json({ success: true });
 });
-
-// ===== NEW MODULES =====
 
 // Debt calculation
 app.get("/api/my-debt", requireAuth, (req, res) => {
@@ -611,7 +700,8 @@ app.post("/api/notifications", requireAuth, (req, res) => {
 app.post("/api/dispatch", requireAuth, async (req, res) => {
   const db = loadDB();
   const { channel, to, title, body } = req.body;
-  const message = `${title || "WFC"}\n${body || ""}`;
+  const message = `${title || "WFC"}
+${body || ""}`;
   let status = "queued";
   let detail = "Imehifadhiwa";
   try {
