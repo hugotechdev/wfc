@@ -24,6 +24,7 @@
     </button>
     <nav id="siteNav">
       <a href="#kuhusu">Kuhusu</a>
+      <a href="#taratibu">Taratibu & Ada</a>
       <a href="#matangazo">Matangazo</a>
       <a href="#matukio">Matukio</a>
       <a href="#mawasiliano">Mawasiliano</a>
@@ -60,7 +61,7 @@
         <div class="showcase-stats">
           <div class="mini-stat">
             <span>Malipo ya Haraka</span>
-            <strong>M-Pesa · Tigo · Airtel · CRDB</strong>
+            <strong id="payNumbersBox">M-Pesa · Tigo · Airtel · CRDB</strong>
           </div>
           <div class="mini-stat">
             <span>Risiti & Kitambulisho</span>
@@ -73,13 +74,13 @@
 
   <section class="section" id="kuhusu">
     <div class="about-grid">
-      <div class="reveal">
+      <div>
         <div class="kicker">Kuhusu sisi</div>
         <h2>Jumuiya inayokumbuka, inayosaidia, na inayokua pamoja.</h2>
         <p class="section-lead">WFC ni muungano wa familia za Wachagga. Tunashikilia ada, misaada ya dharura, sherehe, SACCOS na kumbukumbu za uongozi kwa uwazi na usalama wa kudumu.</p>
       </div>
       <div class="values">
-        <article class="value reveal">
+        <article class="value">
           <div class="val-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
@@ -88,7 +89,7 @@
             <p>Kanda, halmashauri na tawi vinawasiliana kwenye mfumo mmoja wenye utambulisho wa WFC ID.</p>
           </div>
         </article>
-        <article class="value reveal">
+        <article class="value">
           <div class="val-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </div>
@@ -97,7 +98,7 @@
             <p>Msiba, ugonjwa na harusi vinafuatiliwa kwa utaratibu maalum na haraka.</p>
           </div>
         </article>
-        <article class="value reveal">
+        <article class="value">
           <div class="val-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
           </div>
@@ -106,6 +107,27 @@
             <p>Michango ina risiti za PDF zenye QR, idhini ya mhazini, na historia inayosomeka muda wowote.</p>
           </div>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="taratibu">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Taratibu na Viwango</div>
+        <h2>Ada, Michango na Kanuni za Jumuiya.</h2>
+      </div>
+    </div>
+    <div class="about-grid">
+      <div class="card">
+        <h3>Viwango Rasmi vya WFC</h3>
+        <div class="office-list" id="policyFeesBox">
+          <div class="office-item">Inapakia viwango rasmi...</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Utaratibu & Kanuni</h3>
+        <div id="policyRulesBox" style="white-space:pre-line;color:var(--text);margin-top:12px">Inapakia utaratibu...</div>
       </div>
     </div>
   </section>
@@ -139,7 +161,7 @@
     <div class="kicker">Mawasiliano</div>
     <h2>Tuandikie moja kwa moja.</h2>
     <div class="contact-grid">
-      <form id="contact" class="card reveal">
+      <form id="contact" class="card">
         <div class="form-row-2">
           <div class="form-group"><label>Jina Kamili</label><input name="name" placeholder="Mf. Amina Swai" required></div>
           <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
@@ -149,13 +171,13 @@
         <button class="btn" type="submit">Tuma ujumbe</button>
         <div id="contactMsg"></div>
       </form>
-      <aside class="contact-card card reveal">
+      <aside class="contact-card card">
         <span class="kicker">Makao Makuu</span>
         <h3>Ofisi ya WFC</h3>
         <div class="office-list">
           <div class="office-item"><strong>Eneo:</strong> Dar es Salaam, Tanzania</div>
           <div class="office-item"><strong>Simu ya Ofisi:</strong> 0755 000 888</div>
-          <div class="office-item"><strong>Njia za Malipo:</strong> M-Pesa (0755 000 888), Tigo Pesa (0715 000 888), Airtel Money (0785 000 888) na CRDB (0150889944200).</div>
+          <div class="office-item" id="officePayText"><strong>Njia za Malipo:</strong> M-Pesa (0755 000 888), Tigo Pesa (0715 000 888), Airtel Money (0785 000 888) na CRDB (0150889944200).</div>
         </div>
         <div style="margin-top:24px">
           <a class="btn" href="/app">Ingia kwenye Portal</a>
@@ -170,10 +192,34 @@
   </footer>
 
   <script>
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
+    }
+    function safeUrl(u) {
+      const s = String(u || "").trim();
+      return (s.startsWith("/") || s.startsWith("https://") || s.startsWith("http://")) ? esc(s) : "#";
+    }
+
     document.getElementById("navToggle").onclick = () => document.getElementById("siteNav").classList.toggle("open");
     fetch("/api/public/stats").then(r=>r.json()).then(s=>{
       document.getElementById("mMembers").textContent = s.members ?? "—";
       document.getElementById("mEvents").textContent = s.events ?? "—";
+    }).catch(()=>{});
+
+    fetch("/api/public/policy").then(r=>r.json()).then(p=>{
+      const money = n => "TSh " + Number(n || 0).toLocaleString();
+      document.getElementById("policyFeesBox").innerHTML = `
+        <div class="office-item"><strong>Ada ya Usajili:</strong> ${money(p.registrationFee)}</div>
+        <div class="office-item"><strong>Kiingilio:</strong> ${money(p.entryFee)}</div>
+        <div class="office-item"><strong>Ada ya Mwezi:</strong> ${money(p.monthlyFee)} (kabla ya tarehe ${esc(p.penaltyGraceDays || 5)})</div>
+        <div class="office-item"><strong>Mchango wa Dharura:</strong> ${money(p.emergencyFee)}</div>
+        <div class="office-item"><strong>Faini ya Kuchelewa:</strong> ${money(p.latePenalty)}</div>
+      `;
+      document.getElementById("policyRulesBox").textContent = p.rulesText || "Hakuna utaratibu uliochapishwa.";
+      const pn = p.paymentNumbers || {};
+      if (pn.mpesa) {
+        document.getElementById("officePayText").innerHTML = `<strong>Njia za Malipo:</strong> M-Pesa (${esc(pn.mpesa)}), Tigo Pesa (${esc(pn.tigo)}), Airtel Money (${esc(pn.airtel)}) na CRDB (${esc(pn.crdb)}).`;
+      }
     }).catch(()=>{});
 
     let slides = [], i = 0, timer;
@@ -186,10 +232,10 @@
       }
       root.innerHTML = slides.map((a,n)=>`
         <article class="slide ${n===i?"on":""}">
-          <div class="slide-meta"><span class="badge badge-pending">${a.author||"Ofisi ya WFC"}</span></div>
-          <h3>${a.title}</h3>
-          <p>${a.body||""}</p>
-          ${a.link?`<div style="margin-top:20px"><a class="btn btn-sm" href="${a.link}">Fungua taarifa</a></div>`:""}
+          <div class="slide-meta"><span class="badge badge-pending">${esc(a.author||"Ofisi ya WFC")}</span></div>
+          <h3>${esc(a.title)}</h3>
+          <p>${esc(a.body||"")}</p>
+          ${a.link?`<div style="margin-top:20px"><a class="btn btn-sm" href="${safeUrl(a.link)}">Fungua taarifa</a></div>`:""}
         </article>`).join("");
       dots.innerHTML = slides.map((_,n)=>`<button class="dot ${n===i?"on":""}" data-i="${n}" aria-label="Slaidi ${n+1}"></button>`).join("");
       dots.querySelectorAll(".dot").forEach(b=>b.onclick=()=>{ i=+b.dataset.i; paint(); });
@@ -205,15 +251,15 @@
     fetch("/api/public/events").then(r=>r.json()).then(list=>{
       document.getElementById("events").innerHTML = list.length ? list.map(e=>`
         <article class="ev">
-          <div class="poster">${e.poster?`<img src="${e.poster}" alt="${e.title}">`:`<div class="poster-placeholder"><span>WFC EVENT</span></div>`}</div>
+          <div class="poster">${e.poster && String(e.poster).startsWith("data:image/") ? `<img src="${esc(e.poster)}" alt="${esc(e.title)}">` : `<div class="poster-placeholder"><span>WFC EVENT</span></div>`}</div>
           <div class="b">
             <div class="ev-top">
-              <span class="badge badge-pending">${e.type||"Tukio"}</span>
+              <span class="badge badge-pending">${esc(e.type||"Tukio")}</span>
               <span class="ev-price">TSh ${Number(e.ticketPrice||0).toLocaleString()}</span>
             </div>
-            <h3>${e.title}</h3>
-            <p class="muted">${e.location||"Eneo litatangazwa"}</p>
-            <a class="btn btn-sm" href="/ticket/${e.id}">Kata tiketi</a>
+            <h3>${esc(e.title)}</h3>
+            <p class="muted">${esc(e.location||"Eneo litatangazwa")}</p>
+            <a class="btn btn-sm" href="/ticket/${esc(e.id)}">Kata tiketi</a>
           </div>
         </article>`).join("") : `<div class="empty-state"><p>Hakuna matukio yaliyotangazwa kwa sasa.</p></div>`;
     });
@@ -223,7 +269,7 @@
       const body = Object.fromEntries(new FormData(e.target));
       const r = await fetch("/api/contact", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
       const d = await r.json();
-      document.getElementById("contactMsg").innerHTML = d.success ? '<div class="success">Ujumbe umepokelewa. Tutawasiliana nawe.</div>' : '<div class="error">Imeshindwa kutuma. Jaribu tena.</div>';
+      document.getElementById("contactMsg").innerHTML = d.success ? '<div class="success">Ujumbe umepokelewa. Tutawasiliana nawe.</div>' : `<div class="error">${esc(d.error||"Imeshindwa kutuma. Jaribu tena.")}</div>`;
       if(d.success) e.target.reset();
     };
   </script>
