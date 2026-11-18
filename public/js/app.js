@@ -1,334 +1,191 @@
 const app = document.getElementById("app");
-
-// Theme
-function initTheme() {
-  const saved = localStorage.getItem("wfc-theme") || "light";
-  document.documentElement.setAttribute("data-theme", saved);
-}
-function toggleTheme() {
-  const current = document.documentElement.getAttribute("data-theme") || "light";
-  const next = current === "light" ? "dark" : "light";
-  document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("wfc-theme", next);
-}
+function initTheme(){ const t = localStorage.getItem("wfc-theme")||"light"; document.documentElement.setAttribute("data-theme", t); }
+function toggleTheme(){ const c = document.documentElement.getAttribute("data-theme")||"light"; const n = c==="light"?"dark":"light"; document.documentElement.setAttribute("data-theme", n); localStorage.setItem("wfc-theme", n); }
 initTheme();
 
-async function api(path, opts = {}) {
-  const res = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
-    ...opts,
-    body: opts.body ? JSON.stringify(opts.body) : undefined
-  });
+async function api(path, opts={}){
+  const res = await fetch(path, { headers:{"Content-Type":"application/json"}, ...opts, body: opts.body ? JSON.stringify(opts.body) : undefined });
   return res.json();
 }
 
-function showLogin() {
-  app.innerHTML = `
-    <div class="container">
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC">
-      <h1>WFC Portal</h1>
-      <p class="subtitle">Umoja wa Wachagga, Nguvu ya Familia</p>
-      <form id="login-form">
-        <div class="form-group">
-          <label>Namba ya Simu</label>
-          <input name="phone" required placeholder="07xxxxxxxx">
-        </div>
-        <div class="form-group">
-          <label>Nenosiri / PIN</label>
-          <input name="password" type="password" required>
-        </div>
-        <button class="btn" type="submit">Ingia</button>
-        <div id="msg"></div>
-      </form>
-      <p class="link">Huna akaunti? <a href="#" id="go-register">Jisajili</a></p>
-    </div>
-  `;
-  document.getElementById("go-register").onclick = (e) => { e.preventDefault(); showRegister(); };
-  document.getElementById("login-form").onsubmit = async (e) => {
+function showLogin(){
+  app.innerHTML = `<div class="container">
+    <div style="text-align:right"><button class="theme-toggle" onclick="toggleTheme()">◐</button></div>
+    <img src="/wfc-logo.jpg" class="logo">
+    <h1>WFC Portal</h1><p class="subtitle">Umoja wa Wachagga, Nguvu ya Familia</p>
+    <form id="f">
+      <div class="form-group"><label>Namba ya Simu</label><input name="phone" required></div>
+      <div class="form-group"><label>Nenosiri</label><input name="password" type="password" required></div>
+      <button class="btn" type="submit">Ingia</button><div id="m"></div>
+    </form>
+    <p class="link"><a href="#" id="r">Jisajili</a></p>
+  </div>`;
+  document.getElementById("r").onclick = e => { e.preventDefault(); showRegister(); };
+  document.getElementById("f").onsubmit = async e => {
     e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = await api("/api/login", { method: "POST", body: Object.fromEntries(fd) });
-    if (data.error) document.getElementById("msg").innerHTML = `<div class="error">${data.error}</div>`;
-    else showDashboard();
+    const d = await api("/api/login", {method:"POST", body:Object.fromEntries(new FormData(e.target))});
+    if(d.error) document.getElementById("m").innerHTML = `<div class="error">${d.error}</div>`; else showDash();
   };
 }
 
-function showRegister() {
-  app.innerHTML = `
-    <div class="container">
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC">
-      <h1>Usajili wa Mwanachama</h1>
-      <p class="subtitle">Ada ya Usajili: TSh 1,000</p>
-      <form id="reg-form">
-        <div class="form-group"><label>Jina Kamili</label><input name="name" required></div>
-        <div class="form-group"><label>Namba ya Simu</label><input name="phone" required></div>
-        <div class="form-group">
-          <label>Kanda</label>
-          <select name="region">
-            <option>Dar es Salaam</option><option>Arusha</option><option>Moshi</option>
-            <option>Kilimanjaro</option><option>Tanga</option><option>Mwanza</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Nenosiri / PIN</label><input name="password" type="password" required></div>
-        <div class="form-group">
-          <label>Uthibitisho wa Malipo (Namba ya Muamala au SMS)</label>
-          <textarea name="paymentProof" rows="3" placeholder="Weka namba ya muamala au andika SMS"></textarea>
-        </div>
-        <button class="btn" type="submit">Wasilisha Usajili</button>
-        <div id="msg"></div>
-      </form>
-      <p class="link"><a href="#" id="go-login">Rudi kwenye Kuingia</a></p>
-    </div>
-  `;
-  document.getElementById("go-login").onclick = (e) => { e.preventDefault(); showLogin(); };
-  document.getElementById("reg-form").onsubmit = async (e) => {
+function showRegister(){
+  app.innerHTML = `<div class="container">
+    <img src="/wfc-logo.jpg" class="logo"><h1>Usajili</h1><p class="subtitle">Ada ya Usajili: TSh 1,000</p>
+    <form id="f">
+      <div class="form-group"><label>Jina</label><input name="name" required></div>
+      <div class="form-group"><label>Simu</label><input name="phone" required></div>
+      <div class="form-group"><label>Kanda</label><select name="region"><option>Dar es Salaam</option><option>Arusha</option><option>Moshi</option><option>Kilimanjaro</option><option>Tanga</option><option>Mwanza</option></select></div>
+      <div class="form-group"><label>Nenosiri</label><input name="password" type="password" required></div>
+      <div class="form-group"><label>Uthibitisho wa Malipo</label><textarea name="paymentProof" rows="2"></textarea></div>
+      <button class="btn" type="submit">Wasilisha</button><div id="m"></div>
+    </form>
+    <p class="link"><a href="#" id="l">Rudi Kuingia</a></p>
+  </div>`;
+  document.getElementById("l").onclick = e => { e.preventDefault(); showLogin(); };
+  document.getElementById("f").onsubmit = async e => {
     e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = await api("/api/register", { method: "POST", body: Object.fromEntries(fd) });
-    if (data.error) document.getElementById("msg").innerHTML = `<div class="error">${data.error}</div>`;
-    else {
-      document.getElementById("msg").innerHTML = `<div class="success">${data.message}</div>`;
-      setTimeout(showLogin, 1500);
-    }
+    const d = await api("/api/register", {method:"POST", body:Object.fromEntries(new FormData(e.target))});
+    document.getElementById("m").innerHTML = d.error ? `<div class="error">${d.error}</div>` : `<div class="success">${d.message}</div>`;
+    if(d.success) setTimeout(showLogin, 1200);
   };
 }
 
-async function showDashboard() {
+async function showDash(){
   const me = await api("/api/me");
-  if (!me.user) return showLogin();
-  const dash = await api("/api/dashboard");
-
-  if (me.user.status === "PENDING") {
-    app.innerHTML = `
-      <div class="container">
-        <img src="/wfc-logo.jpg" class="logo">
-        <h1>Akaunti Yako Inasubiri Idhini</h1>
-        <p class="subtitle">Habari ${me.user.name}</p>
-        <div class="card">
-          <p>Usajili wako na malipo ya TSh 1,000 yamepokelewa.</p>
-          <p style="margin-top:12px">Viongozi wanathibitisha taarifa zako. Utapata ufikiaji kamili baada ya kuidhinishwa.</p>
-        </div>
-        <button class="btn btn-secondary" onclick="logout()">Toka nje</button>
-      </div>
-    `;
+  if(!me.user) return showLogin();
+  if(me.user.status === "PENDING"){
+    app.innerHTML = `<div class="container"><img src="/wfc-logo.jpg" class="logo"><h1>Inasubiri Idhini</h1><p class="subtitle">Habari ${me.user.name}</p><div class="card"><p>Usajili wako na malipo ya TSh 1,000 yamepokelewa. Subiri viongozi.</p></div><button class="btn" onclick="logout()">Toka nje</button></div>`;
     return;
   }
-
-  // Active user dashboard
-  app.innerHTML = `
-    <div class="layout">
-      <aside class="sidebar">
-        <div class="sidebar-logo">
-          <img src="/wfc-logo.jpg">
-          <p>WACHAGGA FAMILY COMMUNITY</p>
-        </div>
-        <a class="nav-item active" data-page="home">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          Dashboard
-        </a>
-        <a class="nav-item" data-page="members">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Wanachama
-        </a>
-        <a class="nav-item" data-page="payments">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Michango
-        </a>
-        <a class="nav-item" data-page="pending">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Inasubiri Idhini
-        </a>
-        <a class="nav-item" data-page="events">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Matukio
-        </a>
-        <a class="nav-item" data-page="announcements">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          Matangazo
-        </a>
-        <a class="nav-item" onclick="logout()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Toka nje
-        </a>
-      </aside>
-      <div class="main">
-        <div class="topbar">
-          <strong id="page-title">Dashboard</strong>
-          <div style="display:flex;align-items:center;gap:12px">
-            <button class="theme-toggle" onclick="toggleTheme()" title="Badilisha muonekano">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-            </button>
-            <span>${me.user.name} · ${me.user.role}</span>
-          </div>
-        </div>
-        <div class="content" id="content"></div>
-      </div>
+  app.innerHTML = `<div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><img src="/wfc-logo.jpg"><p>WACHAGGA FAMILY COMMUNITY</p></div>
+      <a class="nav-item active" data-p="home">Dashboard</a>
+      <a class="nav-item" data-p="members">Wanachama</a>
+      <a class="nav-item" data-p="payments">Michango</a>
+      <a class="nav-item" data-p="events">Matukio</a>
+      <a class="nav-item" data-p="announcements">Matangazo</a>
+      <a class="nav-item" data-p="card">Kitambulisho</a>
+      <a class="nav-item" data-p="family">Familia</a>
+      <a class="nav-item" data-p="directory">Directory</a>
+      <a class="nav-item" data-p="help">Msaada</a>
+      <a class="nav-item" data-p="pending">Inasubiri</a>
+      <a class="nav-item" onclick="logout()">Toka nje</a>
+    </aside>
+    <div class="main">
+      <div class="topbar"><strong id="pt">Dashboard</strong><div><button class="theme-toggle" onclick="toggleTheme()">◐</button> <span>${me.user.name} · ${me.user.role}</span></div></div>
+      <div class="content" id="c"></div>
     </div>
-  `;
-
-  document.querySelectorAll(".nav-item[data-page]").forEach(el => {
-    el.onclick = () => loadPage(el.dataset.page);
-  });
-  loadPage("home");
+  </div>`;
+  document.querySelectorAll(".nav-item[data-p]").forEach(el => el.onclick = () => load(el.dataset.p));
+  load("home");
 }
 
-async function loadPage(page) {
-  const content = document.getElementById("content");
-  document.getElementById("page-title").textContent = 
-    page === "home" ? "Dashboard" : 
-    page === "members" ? "Wanachama" : 
-    page === "payments" ? "Michango" : 
-    page === "events" ? "Matukio" :
-    page === "announcements" ? "Matangazo" : "Inasubiri Idhini";
+async function load(p){
+  const c = document.getElementById("c");
+  const titles = {home:"Dashboard",members:"Wanachama",payments:"Michango",events:"Matukio",announcements:"Matangazo",card:"Kitambulisho",family:"Familia",directory:"Directory",help:"Msaada",pending:"Inasubiri Idhini"};
+  document.getElementById("pt").textContent = titles[p] || p;
 
-  if (page === "home") {
+  if(p==="home"){
     const d = await api("/api/dashboard");
-    content.innerHTML = `
-      <div class="stats">
-        <div class="stat"><div>Wanachama Hai</div><div class="val">${d.stats.members}</div></div>
-        <div class="stat"><div>Inasubiri</div><div class="val">${d.stats.pending}</div></div>
-        <div class="stat"><div>Malipo</div><div class="val">${d.stats.payments}</div></div>
-      </div>
-      <div class="card">
-        <h3>Karibu ${d.user.name}</h3>
-        <p style="margin-top:8px;color:#666">WFC ID: ${d.user.wfcId || "Bado haijatengenezwa"} · Hali: ${d.user.status}</p>
-      </div>
-    `;
+    c.innerHTML = `<div class="stats">
+      <div class="stat"><div>Wanachama Hai</div><div class="val">${d.stats.members}</div></div>
+      <div class="stat"><div>Inasubiri</div><div class="val">${d.stats.pending}</div></div>
+      <div class="stat"><div>Malipo</div><div class="val">${d.stats.payments}</div></div>
+      <div class="stat"><div>Nimechangia</div><div class="val">TSh ${(d.myTotalPaid||0).toLocaleString()}</div></div>
+    </div><div class="card"><h3>Karibu ${d.user.name}</h3><p style="margin-top:6px;color:var(--muted)">WFC ID: ${d.user.wfcId||"—"} · Hali: ${d.user.status}</p></div>`;
   }
-
-  if (page === "members") {
-    const members = await api("/api/members");
-    content.innerHTML = `
-      <div class="card">
-        <table>
-          <thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th>Hali</th><th>Hatua</th></tr></thead>
-          <tbody>
-            ${members.map(m => `
-              <tr>
-                <td>${m.name}</td>
-                <td>${m.phone}</td>
-                <td>${m.region}</td>
-                <td><span class="badge ${m.status === "ACTIVE" ? "badge-active" : "badge-pending"}">${m.status === "ACTIVE" ? "Hai" : "Inasubiri"}</span></td>
-                <td>${m.status === "PENDING" ? `<button class="btn btn-sm" onclick="approve('${m.id}')">Idhinisha</button>` : ""}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-    `;
+  if(p==="members"){
+    const m = await api("/api/members");
+    c.innerHTML = `<div class="card"><table><thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th>Hali</th><th>Hatua</th></tr></thead><tbody>
+      ${m.map(x=>`<tr><td>${x.name}</td><td>${x.phone}</td><td>${x.region}</td><td><span class="badge ${x.status==="ACTIVE"?"badge-active":"badge-pending"}">${x.status==="ACTIVE"?"Hai":"Inasubiri"}</span></td><td>${x.status==="PENDING"?`<button class="btn btn-sm" onclick="approve('${x.id}')">Idhinisha</button>`:""}</td></tr>`).join("")}
+    </tbody></table></div>`;
   }
-
-  if (page === "payments") {
-    const payments = await api("/api/payments");
-    content.innerHTML = `
-      <div class="card">
-        <h3>Wasilisha Malipo</h3>
-        <form id="pay-form" style="margin-top:12px">
-          <div class="form-group"><label>Aina</label>
-            <select name="type"><option>Ada ya mwezi</option><option>Kiingilio</option><option>Dharura</option><option>Msiba</option></select>
-          </div>
-          <div class="form-group"><label>Kiasi (TSh)</label><input name="amount" type="number" required></div>
-          <div class="form-group"><label>Namba ya Muamala</label><input name="transactionId" required></div>
-          <button class="btn" type="submit">Wasilisha</button>
-        </form>
-      </div>
-      <div class="card">
-        <h3>Historia</h3>
-        <table style="margin-top:12px">
-          <thead><tr><th>Aina</th><th>Kiasi</th><th>Muamala</th><th>Hali</th></tr></thead>
-          <tbody>
-            ${payments.map(p => `<tr><td>${p.type}</td><td>TSh ${p.amount.toLocaleString()}</td><td>${p.transactionId}</td><td><span class="badge ${p.status === "APPROVED" ? "badge-approved" : "badge-pending"}">${p.status}</span></td></tr>`).join("")}
-          </tbody>
-        </table>
-      </div>
-    `;
-    document.getElementById("pay-form").onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const data = await api("/api/submit-payment", { method: "POST", body: Object.fromEntries(fd) });
-      if (data.error) alert(data.error); else loadPage("payments");
-    };
+  if(p==="payments"){
+    const list = await api("/api/payments");
+    c.innerHTML = `<div class="card"><h3>Wasilisha Malipo</h3><form id="pf" style="margin-top:10px">
+      <div class="form-group"><label>Aina</label><select name="type"><option>Ada ya mwezi</option><option>Kiingilio</option><option>Dharura</option><option>Msiba</option></select></div>
+      <div class="form-group"><label>Kiasi</label><input name="amount" type="number" required></div>
+      <div class="form-group"><label>Namba ya Muamala</label><input name="transactionId" required></div>
+      <button class="btn" type="submit">Wasilisha</button>
+    </form></div>
+    <div class="card"><h3>Historia</h3><table style="margin-top:8px"><thead><tr><th>Aina</th><th>Kiasi</th><th>Muamala</th><th>Hali</th><th></th></tr></thead><tbody>
+      ${list.map(x=>`<tr><td>${x.type}</td><td>TSh ${x.amount.toLocaleString()}</td><td>${x.transactionId}</td><td><span class="badge ${x.status==="APPROVED"?"badge-approved":"badge-pending"}">${x.status}</span></td><td>${x.status==="PENDING"?`<button class="btn btn-sm" onclick="approvePay('${x.id}')">Idhinisha</button>`:""}</td></tr>`).join("")}
+    </tbody></table></div>`;
+    document.getElementById("pf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/submit-payment",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); if(d.error) alert(d.error); else load("payments"); };
   }
-
-  if (page === "events") {
-    const events = await api("/api/events");
-    content.innerHTML = `
-      <div class="card">
-        <h3>Ripoti Tukio</h3>
-        <form id="event-form" style="margin-top:12px">
-          <div class="form-group"><label>Aina</label>
-            <select name="type"><option>Msiba</option><option>Harusi</option><option>Ugonjwa</option><option>Festival</option><option>Tour</option></select>
-          </div>
-          <div class="form-group"><label>Kichwa</label><input name="title" required></div>
-          <div class="form-group"><label>Maelezo</label><textarea name="description" rows="2"></textarea></div>
-          <div class="form-group"><label>Eneo</label><input name="location"></div>
-          <div class="form-group"><label>Bei ya Tiketi (TSh)</label><input name="ticketPrice" type="number" value="0"></div>
-          <div class="form-group"><label>Poster (URL au pakia baadaye)</label><input name="poster" placeholder="https://... au /uploads/poster.jpg"></div>
-          <button class="btn" type="submit">Wasilisha</button>
-        </form>
-      </div>
-      <div class="card">
-        <h3>Matukio</h3>
-        ${events.map(e => `
-          <div style="padding:12px 0;border-bottom:1px solid var(--border)">
-            <strong>${e.title}</strong> <span class="badge badge-pending">${e.type}</span>
-            <p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px">${e.location || ""} · Lengo: TSh ${(e.targetAmount||0).toLocaleString()}</p>
-          </div>
-        `).join("") || "<p>Hakuna matukio</p>"}
-      </div>
-    `;
-    document.getElementById("event-form").onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      await api("/api/events", { method: "POST", body: Object.fromEntries(fd) });
-      loadPage("events");
-    };
+  if(p==="events"){
+    const list = await api("/api/events");
+    c.innerHTML = `<div class="card"><h3>Ongeza Tukio</h3><form id="ef" style="margin-top:10px">
+      <div class="form-group"><label>Aina</label><select name="type"><option>Msiba</option><option>Harusi</option><option>Festival</option><option>Tour</option></select></div>
+      <div class="form-group"><label>Kichwa</label><input name="title" required></div>
+      <div class="form-group"><label>Eneo</label><input name="location"></div>
+      <div class="form-group"><label>Bei ya Tiketi</label><input name="ticketPrice" type="number" value="0"></div>
+      <div class="form-group"><label>Poster URL</label><input name="poster"></div>
+      <button class="btn" type="submit">Wasilisha</button>
+    </form></div>
+    <div class="card"><h3>Matukio</h3>${list.map(e=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${e.title}</strong> <span class="badge badge-pending">${e.type}</span><br><small>${e.location||""} · TSh ${(e.ticketPrice||0).toLocaleString()}</small></div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("ef").onsubmit = async e => { e.preventDefault(); await api("/api/events",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("events"); };
   }
-
-  if (page === "announcements") {
-    const anns = await api("/api/announcements");
-    content.innerHTML = `
-      <div class="card">
-        <h3>Tangazo Jipya</h3>
-        <form id="ann-form" style="margin-top:12px">
-          <div class="form-group"><label>Kichwa</label><input name="title" required></div>
-          <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" required></textarea></div>
-          <button class="btn" type="submit">Chapisha</button>
-        </form>
-      </div>
-      <div class="card">
-        <h3>Matangazo</h3>
-        ${anns.map(a => `
-          <div style="padding:12px 0;border-bottom:1px solid var(--border)">
-            <strong>${a.title}</strong>
-            <p style="font-size:0.85rem;margin-top:4px">${a.body}</p>
-            <small style="color:var(--text-muted)">${a.author} · ${new Date(a.createdAt).toLocaleDateString()}</small>
-          </div>
-        `).join("") || "<p>Hakuna matangazo</p>"}
-      </div>
-    `;
-    document.getElementById("ann-form").onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const data = await api("/api/announcements", { method: "POST", body: Object.fromEntries(fd) });
-      if (data.error) alert(data.error); else loadPage("announcements");
-    };
+  if(p==="announcements"){
+    const list = await api("/api/announcements");
+    c.innerHTML = `<div class="card"><h3>Tangazo Jipya</h3><form id="af" style="margin-top:10px">
+      <div class="form-group"><label>Kichwa</label><input name="title" required></div>
+      <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" required></textarea></div>
+      <button class="btn" type="submit">Chapisha</button>
+    </form></div>
+    <div class="card"><h3>Matangazo</h3>${list.map(a=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>${a.title}</strong><p style="margin-top:4px">${a.body}</p><small>${a.author}</small></div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("af").onsubmit = async e => { e.preventDefault(); const d = await api("/api/announcements",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); if(d.error) alert(d.error); else load("announcements"); };
+  }
+  if(p==="card"){
+    const d = await api("/api/dashboard");
+    c.innerHTML = `<div class="card" style="max-width:380px;text-align:center;border:2px solid var(--gold)">
+      <img src="/wfc-logo.jpg" style="width:70px;height:70px;border-radius:50%;margin:0 auto 10px">
+      <h2 style="color:var(--gold-dark)">WFC MEMBERSHIP CARD</h2>
+      <p style="margin:12px 0;font-size:1.05rem"><strong>${d.user.name}</strong></p>
+      <p>WFC ID: <strong>${d.user.wfcId||"—"}</strong></p>
+      <p>Kanda: ${d.user.region||"—"}</p>
+      <p>Hali: <span class="badge badge-active">${d.user.status}</span></p>
+      <div style="margin:16px auto;width:100px;height:100px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center">QR</div>
+      <button class="btn" onclick="window.print()">Print / Pakua</button>
+    </div>`;
+  }
+  if(p==="family"){
+    const f = await api("/api/family");
+    c.innerHTML = `<div class="card"><h3>Familia</h3><form id="ff" style="margin-top:10px">
+      <div class="form-group"><label>Mwenyekiti</label><input name="head" value="${f.head||""}"></div>
+      <div class="form-group"><label>Mke/Mume</label><input name="spouse" value="${f.spouse||""}"></div>
+      <div class="form-group"><label>Watoto (koma)</label><input name="children" value="${(f.children||[]).join(", ")}"></div>
+      <button class="btn" type="submit">Hifadhi</button>
+    </form></div>`;
+    document.getElementById("ff").onsubmit = async e => { e.preventDefault(); const o = Object.fromEntries(new FormData(e.target)); o.children = o.children.split(",").map(s=>s.trim()).filter(Boolean); await api("/api/family",{method:"POST",body:o}); alert("Imehifadhiwa"); };
+  }
+  if(p==="directory"){
+    const list = await api("/api/directory");
+    c.innerHTML = `<div class="card"><h3>Directory</h3><form id="df" style="margin:10px 0"><div class="form-group"><label>Taaluma yako</label><input name="profession"></div><button class="btn btn-sm" type="submit">Hifadhi</button></form>
+      <table><thead><tr><th>Jina</th><th>Taaluma</th><th>Kanda</th></tr></thead><tbody>${list.map(x=>`<tr><td>${x.name}</td><td>${x.profession}</td><td>${x.region}</td></tr>`).join("")||"<tr><td colspan=3>Hakuna</td></tr>"}</tbody></table></div>`;
+    document.getElementById("df").onsubmit = async e => { e.preventDefault(); await api("/api/my-profession",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("directory"); };
+  }
+  if(p==="help"){
+    const list = await api("/api/support");
+    c.innerHTML = `<div class="card"><h3>Omba Msaada</h3><form id="hf" style="margin-top:10px">
+      <div class="form-group"><label>Mada</label><input name="subject" required></div>
+      <div class="form-group"><label>Ujumbe</label><textarea name="message" rows="3" required></textarea></div>
+      <button class="btn" type="submit">Wasilisha</button>
+    </form></div><div class="card"><h3>Tiketi</h3>${list.map(t=>`<div style="padding:6px 0;border-bottom:1px solid var(--border)"><strong>${t.subject}</strong><br><small>${t.status}</small></div>`).join("")||"<p>Hakuna</p>"}</div>`;
+    document.getElementById("hf").onsubmit = async e => { e.preventDefault(); await api("/api/support",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("help"); };
+  }
+  if(p==="pending"){
+    const m = await api("/api/members");
+    const pen = m.filter(x=>x.status==="PENDING");
+    c.innerHTML = `<div class="card"><h3>Inasubiri Idhini</h3><table style="margin-top:8px"><thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th></th></tr></thead><tbody>
+      ${pen.map(x=>`<tr><td>${x.name}</td><td>${x.phone}</td><td>${x.region}</td><td><button class="btn btn-sm" onclick="approve('${x.id}')">Idhinisha</button></td></tr>`).join("")||"<tr><td colspan=4>Hakuna</td></tr>"}
+    </tbody></table></div>`;
   }
 }
 
-async function approve(id) {
-  const data = await api("/api/approve-member", { method: "POST", body: { userId: id } });
-  if (data.success) { alert("Imeidhinishwa. WFC ID: " + data.wfcId); loadPage("pending"); }
-  else alert(data.error || "Imeshindwa");
-}
+async function approve(id){ const d = await api("/api/approve-member",{method:"POST",body:{userId:id}}); if(d.success){ alert("Imeidhinishwa: "+d.wfcId); load("pending"); } else alert(d.error||"Imeshindwa"); }
+async function approvePay(id){ const d = await api("/api/approve-payment",{method:"POST",body:{paymentId:id}}); if(d.success){ alert("Imeidhinishwa. Risiti: "+d.receiptNo); load("payments"); } else alert(d.error||"Imeshindwa"); }
+async function logout(){ await api("/api/logout",{method:"POST"}); showLogin(); }
 
-async function logout() {
-  await api("/api/logout", { method: "POST" });
-  showLogin();
-}
-
-// Init
-(async () => {
-  const me = await api("/api/me");
-  if (me.user) showDashboard(); else showLogin();
-})();
+(async()=>{ const me = await api("/api/me"); if(me.user) showDash(); else showLogin(); })();

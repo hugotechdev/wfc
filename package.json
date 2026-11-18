@@ -1,14 +1,8 @@
 {
   "name": "wfc-portal",
-  "version": "2.0.0",
-  "description": "Wachagga Family Community - Complete Online Management System",
+  "version": "3.0.0",
   "main": "server/index.js",
-  "scripts": {
-    "start": "node server/index.js"
-  },
+  "scripts": { "start": "node server/index.js" },
   "engines": { "node": ">=18" },
-  "dependencies": {
-    "express": "^4.21.0",
-    "express-session": "^1.18.0"
-  }
+  "dependencies": { "express": "^4.21.0", "express-session": "^1.18.0" }
 }

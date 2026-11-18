@@ -1,79 +1,42 @@
 <!DOCTYPE html>
 <html lang="sw">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WFC | Wachagga Family Community</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    .hero { text-align: center; padding: 60px 20px; background: var(--card); border-bottom: 1px solid var(--border); }
-    .hero img { width: 120px; height: 120px; border-radius: 50%; }
-    .hero h1 { margin: 16px 0 8px; }
-    .nav-public { display: flex; justify-content: center; gap: 24px; padding: 16px; background: var(--card); border-bottom: 1px solid var(--border); }
-    .nav-public a { color: var(--text); text-decoration: none; font-weight: 500; }
-    .section { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
-    .event-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .event-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-    .event-card img { width: 100%; height: 160px; object-fit: cover; background: #eee; }
-    .event-card .body { padding: 16px; }
-    .btn-outline { display: inline-block; padding: 10px 20px; border: 1px solid var(--gold); color: var(--gold-dark); border-radius: 8px; text-decoration: none; font-weight: 600; }
+    .hero{text-align:center;padding:60px 20px;background:var(--card);border-bottom:1px solid var(--border)}
+    .hero img{width:120px;height:120px;border-radius:50%}
+    .section{max-width:1000px;margin:0 auto;padding:40px 20px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+    .ev{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .ev .b{padding:16px}
   </style>
 </head>
 <body>
   <div class="hero">
     <img src="/wfc-logo.jpg" alt="WFC">
     <h1>Wachagga Family Community</h1>
-    <p>Umoja wa Wachagga, Nguvu ya Familia · Stand up, It's not over</p>
-    <div style="margin-top: 20px;">
-      <a href="/login" class="btn" style="width:auto;padding:12px 28px;margin-right:8px;">Ingia</a>
-      <a href="/register" class="btn-outline">Jisajili</a>
+    <p>Umoja wa Wachagga, Nguvu ya Familia</p>
+    <div style="margin-top:20px">
+      <a href="/app" class="btn" style="width:auto;padding:12px 28px">Ingia / Jisajili</a>
     </div>
   </div>
-
-  <div class="nav-public">
-    <a href="#events">Matukio</a>
-    <a href="#announcements">Matangazo</a>
-    <a href="/login">Wanachama</a>
-  </div>
-
-  <div class="section" id="events">
-    <h2 style="margin-bottom:20px;">Matukio</h2>
-    <div class="event-grid" id="events-list">Inapakia...</div>
-  </div>
-
-  <div class="section" id="announcements">
-    <h2 style="margin-bottom:20px;">Matangazo</h2>
-    <div id="ann-list">Inapakia...</div>
-  </div>
-
+  <div class="section"><h2>Matukio</h2><div class="grid" id="ev">Inapakia...</div></div>
+  <div class="section"><h2>Matangazo</h2><div id="an">Inapakia...</div></div>
   <script>
-    fetch("/api/public/events").then(r => r.json()).then(events => {
-      const el = document.getElementById("events-list");
-      if (!events.length) { el.innerHTML = "<p>Hakuna matukio kwa sasa.</p>"; return; }
-      el.innerHTML = events.map(e => `
-        <div class="event-card">
-          ${e.poster ? `<img src="${e.poster}" alt="">` : `<div style="height:160px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#999;">Hakuna Poster</div>`}
-          <div class="body">
-            <span class="badge badge-pending">${e.type || "Tukio"}</span>
-            <h3 style="margin:8px 0 4px;">${e.title}</h3>
-            <p style="font-size:0.85rem;color:var(--text-muted);">${e.location || ""}</p>
-            <p style="margin-top:8px;font-weight:600;">TSh ${(e.ticketPrice || 0).toLocaleString()}</p>
-            <a href="/ticket/${e.id}" class="btn" style="width:auto;margin-top:12px;padding:8px 16px;font-size:0.85rem;">Kata Tiketi</a>
-          </div>
-        </div>
-      `).join("");
+    fetch("/api/public/events").then(r=>r.json()).then(list=>{
+      document.getElementById("ev").innerHTML = list.length ? list.map(e=>`
+        <div class="ev"><div class="b">
+          <span class="badge badge-pending">${e.type||"Tukio"}</span>
+          <h3 style="margin:8px 0">${e.title}</h3>
+          <p style="font-size:.85rem;color:var(--text-muted)">${e.location||""}</p>
+          <p style="font-weight:700;margin-top:8px">TSh ${(e.ticketPrice||0).toLocaleString()}</p>
+          <a href="/ticket/${e.id}" class="btn" style="width:auto;margin-top:10px;padding:8px 16px;font-size:.85rem">Kata Tiketi</a>
+        </div></div>`).join("") : "<p>Hakuna matukio</p>";
     });
-
-    fetch("/api/public/announcements").then(r => r.json()).then(anns => {
-      const el = document.getElementById("ann-list");
-      if (!anns.length) { el.innerHTML = "<p>Hakuna matangazo.</p>"; return; }
-      el.innerHTML = anns.map(a => `
-        <div class="card" style="margin-bottom:12px;">
-          <strong>${a.title}</strong>
-          <p style="margin-top:6px;font-size:0.9rem;">${a.body}</p>
-          <small style="color:var(--text-muted);">${a.author || ""}</small>
-        </div>
-      `).join("");
+    fetch("/api/public/announcements").then(r=>r.json()).then(list=>{
+      document.getElementById("an").innerHTML = list.length ? list.map(a=>`<div class="card"><strong>${a.title}</strong><p style="margin-top:6px">${a.body}</p></div>`).join("") : "<p>Hakuna matangazo</p>";
     });
   </script>
 </body>
