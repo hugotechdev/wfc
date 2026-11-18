@@ -1,1375 +1,710 @@
 const express = require("express");
 const session = require("express-session");
-const pgSession = require("connect-pg-simple")(session);
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
-const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
 const path = require("path");
-const { initDB, getDB, saveDB, pool, hasPg } = require("./db");
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const isProd = process.env.NODE_ENV === "production";
+const DATA_DIR = path.join(__dirname, "../data");
+const DATA_FILE = path.join(DATA_DIR, "db.json");
 
-app.set("trust proxy", 1);
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false
-  })
-);
-
-app.use(express.json({ limit: "3mb" }));
-app.use(express.urlencoded({ extended: true, limit: "3mb" }));
-app.use(express.static(path.join(__dirname, "../public")));
-
-const sessionSecret =
-  process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
-
-const sessionConfig = {
-  secret: sessionSecret,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: isProd,
-    maxAge: 7 * 24 * 60 * 60 * 1000
+const defaultDB = {
+  users: [],
+  payments: [],
+  events: [],
+  tickets: [],
+  announcements: [],
+  supportTickets: [],
+  attendance: [],
+  settings: {
+    registrationFee: 1000,
+    entryFee: 50000,
+    monthlyFee: 10000,
+    emergencyFee: 60000,
+    latePenalty: 2000,
+    paymentNumbers: { mpesa: "0755 000 888", tigo: "0715 000 888", airtel: "0785 000 888", crdb: "0150889944200" }
   }
 };
 
-if (hasPg && pool) {
-  sessionConfig.store = new pgSession({
-    pool,
-    tableName: "wfc_user_sessions",
-    createTableIfMissing: true
+if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify(defaultDB, null, 2));
+
+function loadDB() { return JSON.parse(fs.readFileSync(DATA_FILE, "utf8")); }
+function saveDB(db) { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); }
+
+(function ensureAdmin() {
+  const db = loadDB();
+  if (!db.users.find(u => u.phone === "0700000000")) {
+    db.users.push({
+      id: "admin-001", name: "Mwenyekiti WFC", phone: "0700000000", region: "Dar es Salaam",
+      password: "admin123", role: "ADMIN", status: "ACTIVE", wfcId: "WFC-ADMIN",
+      family: { head: "Mwenyekiti WFC", spouse: "", children: [] },
+      profession: "Kiongozi", createdAt: new Date().toISOString()
+    });
+    saveDB(db);
+  }
+})();
+
+(function seedDemo() {
+  const db = loadDB();
+  if (db.settings && db.settings.demoSeed === false) return;
+  let changed = false;
+  const ago = (days) => new Date(Date.now() - days * 86400000).toISOString();
+  const people = [
+    { id: "demo-amina", name: "Amina Swai", phone: "0711000001", region: "Dar es Salaam", password: "demo123", role: "MEMBER", status: "ACTIVE", wfcId: "WFC-0145", profession: "Muuguzi", family: { head: "Amina Swai", spouse: "Godson Swai", children: ["Nuru", "Eli"] }, createdAt: ago(140) },
+    { id: "demo-john", name: "John Mushi", phone: "0711000002", region: "Moshi", password: "demo123", role: "TREASURER", status: "ACTIVE", wfcId: "WFC-0088", profession: "Mhasibu", family: { head: "John Mushi", spouse: "", children: [] }, createdAt: ago(400) },
+    { id: "demo-neema", name: "Neema Lyimo", phone: "0711000003", region: "Arusha", password: "demo123", role: "MEMBER", status: "PENDING", wfcId: null, profession: "", family: { head: "Neema Lyimo", spouse: "", children: [] }, createdAt: ago(3) },
+    { id: "demo-baraka", name: "Baraka Kimaro", phone: "0711000004", region: "Kilimanjaro", password: "demo123", role: "SECRETARY", status: "ACTIVE", wfcId: "WFC-0102", profession: "Mwalimu", family: { head: "Baraka Kimaro", spouse: "Aika", children: ["Imani"] }, createdAt: ago(220) },
+    { id: "demo-sarah", name: "Sarah Mrema", phone: "0711000005", region: "Tanga", password: "demo123", role: "MEMBER", status: "SUSPENDED", wfcId: "WFC-0119", profession: "Mfanyabiashara", family: { head: "Sarah Mrema", spouse: "", children: [] }, createdAt: ago(300) }
+  ];
+  people.forEach((p) => {
+    if (!db.users.find((u) => u.id === p.id || u.phone === p.phone)) {
+      db.users.push({ ...p, demo: true, paymentProof: "DEMO" });
+      changed = true;
+    }
   });
-}
+  const extras = {
+    payments: [
+      { id: "demo-pay-1", userId: "demo-amina", userName: "Amina Swai", type: "Ada ya mwezi", amount: 10000, transactionId: "DEMO-MP-1001", status: "APPROVED", receiptNo: "RCP-DEMO1", createdAt: ago(12) },
+      { id: "demo-pay-2", userId: "demo-john", userName: "John Mushi", type: "Dharura", amount: 60000, transactionId: "DEMO-MP-1002", status: "APPROVED", receiptNo: "RCP-DEMO2", createdAt: ago(30) },
+      { id: "demo-pay-3", userId: "demo-baraka", userName: "Baraka Kimaro", type: "Ada ya mwezi", amount: 10000, transactionId: "DEMO-MP-1003", status: "PENDING", createdAt: ago(1) }
+    ],
+    expenses: [
+      { id: "demo-exp-1", title: "Kukodi ukumbi", amount: 25000, category: "Matukio", note: "Mkutano mkuu", createdAt: ago(20), demo: true },
+      { id: "demo-exp-2", title: "Msaada wa msiba", amount: 50000, category: "Misaada", note: "Familia ya Mushi", createdAt: ago(45), demo: true }
+    ],
+    manualIncome: [
+      { id: "demo-inc-1", title: "Mchango wa mgeni", amount: 15000, source: "Mgeni", note: "Festival", createdAt: ago(10), demo: true }
+    ],
+    events: [
+      { id: "demo-ev-1", type: "Harusi", title: "Harusi ya Familia Swai", location: "Kibo Hall, Moshi", ticketPrice: 20000, poster: "", public: true, status: "ACTIVE", raisedAmount: 0, reportedBy: "Ofisi", createdAt: ago(4) },
+      { id: "demo-ev-2", type: "Festival", title: "WFC Festival ya Mwaka", location: "Mnazi Mmoja, Dar es Salaam", ticketPrice: 10000, poster: "", public: true, status: "ACTIVE", raisedAmount: 0, reportedBy: "Ofisi", createdAt: ago(8) }
+    ],
+    announcements: [
+      { id: "demo-an-1", title: "Mkutano mkuu mwezi huu", body: "Wanachama wote hai wanakutana kujadili ada na miradi. Weka tiketi yako mapema.", link: "/#matukio", author: "Katibu", createdAt: ago(1) },
+      { id: "demo-an-2", title: "Ada ya mwezi inakamilika", body: "TSh 10,000 kwa kila mwanachama hai. Wasilisha namba ya muamala ndani ya portal.", link: "/app", author: "Mhazini", createdAt: ago(2) },
+      { id: "demo-an-3", title: "Jiunge na directory ya taaluma", body: "Weka kazi yako ili wanachama waweze kukutana kwa msaada wa kitaalamu.", link: "/app", author: "Ofisi", createdAt: ago(6) }
+    ]
+  };
+  Object.entries(extras).forEach(([key, rows]) => {
+    if (!db[key]) db[key] = [];
+    rows.forEach((row) => {
+      if (!db[key].find((x) => x.id === row.id)) {
+        db[key].push({ ...row, demo: true });
+        changed = true;
+      }
+    });
+  });
+  if (!db.contacts) db.contacts = [];
+  if (changed) saveDB(db);
+})();
 
-app.use(session(sessionConfig));
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 25,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Majaribio mengi mno. Subiri dakika 15 kisha jaribu tena." }
-});
-
-const publicFormLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 40,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Maombi mengi mno. Jaribu tena baadaye." }
-});
-
-function cleanStr(val, max = 500) {
-  if (val === undefined || val === null) return "";
-  return String(val).trim().slice(0, max);
-}
-
-function cleanPhone(val) {
-  return cleanStr(val, 25).replace(/\s+/g, "");
-}
-
-function sanitizeUser(u) {
-  if (!u) return null;
-  const { password, ...safe } = u;
-  return safe;
-}
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "../public")));
+app.use(session({ secret: process.env.SESSION_SECRET || "wfc-secret", resave: false, saveUninitialized: false }));
 
 function requireAuth(req, res, next) {
   if (!req.session.user) return res.status(401).json({ error: "Login required" });
-  const db = getDB();
-  const fresh = db.users.find((u) => u.id === req.session.user.id);
-  if (!fresh) {
-    req.session.destroy(() => {});
-    return res.status(401).json({ error: "Akaunti haipatikani" });
-  }
-  if (fresh.status === "SUSPENDED") {
-    req.session.destroy(() => {});
-    return res.status(403).json({ error: "Akaunti yako imesimamishwa na uongozi." });
-  }
-  req.session.user = {
-    id: fresh.id,
-    name: fresh.name,
-    phone: fresh.phone,
-    role: fresh.role,
-    status: fresh.status,
-    wfcId: fresh.wfcId
-  };
   next();
 }
+function isLeader(role) { return ["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL"].includes(role); }
 
-function isLeader(role) {
-  return ["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL"].includes(role);
-}
-
-function isFinanceLeader(role) {
-  return ["ADMIN", "TREASURER", "CHAIRPERSON"].includes(role);
-}
-
-function isAdmin(role) {
-  return role === "ADMIN";
-}
-
-// ==================== PUBLIC ROUTES ====================
-
+// Public
 app.get("/", (req, res) => {
   if (req.session.user) return res.redirect("/app");
   res.sendFile(path.join(__dirname, "../public/landing.html"));
 });
-
-app.get("/app", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
-});
-
-app.get("/ticket/:id", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/ticket.html"));
-});
+app.get("/app", (req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
+app.get("/ticket/:id", (req, res) => res.sendFile(path.join(__dirname, "../public/ticket.html")));
 
 app.get("/api/public/events", (req, res) => {
-  const db = getDB();
-  res.json((db.events || []).filter((e) => e.public !== false && e.status !== "CLOSED"));
+  const db = loadDB();
+  res.json((db.events || []).filter(e => e.public !== false));
 });
-
-app.get("/api/public/announcements", (req, res) => {
-  res.json(getDB().announcements || []);
-});
-
+app.get("/api/public/announcements", (req, res) => res.json(loadDB().announcements || []));
 app.get("/api/public/stats", (req, res) => {
-  const db = getDB();
+  const db = loadDB();
   res.json({
-    members: db.users.filter((u) => u.status === "ACTIVE").length,
-    events: (db.events || []).filter((e) => e.public !== false).length
+    members: db.users.filter(u => u.status === "ACTIVE").length,
+    events: (db.events || []).filter(e => e.public !== false).length
   });
 });
-
-app.get("/api/public/policy", (req, res) => {
-  const s = getDB().settings || {};
-  res.json({
-    registrationFee: s.registrationFee || 1000,
-    entryFee: s.entryFee || 50000,
-    monthlyFee: s.monthlyFee || 10000,
-    emergencyFee: s.emergencyFee || 60000,
-    latePenalty: s.latePenalty || 2000,
-    penaltyGraceDays: s.penaltyGraceDays || 5,
-    rulesText: s.rulesText || "",
-    paymentNumbers: s.paymentNumbers || {}
-  });
-});
-
-app.post("/api/contact", publicFormLimiter, async (req, res) => {
-  const name = cleanStr(req.body && req.body.name, 120);
-  const phone = cleanPhone(req.body && req.body.phone);
-  const email = cleanStr(req.body && req.body.email, 120);
-  const message = cleanStr(req.body && req.body.message, 1500);
-  if (!name || !phone || !message) {
-    return res.status(400).json({ error: "Jaza taarifa zote zinazohitajika" });
-  }
-  const db = getDB();
+app.post("/api/contact", (req, res) => {
+  const { name, phone, message } = req.body || {};
+  if (!name || !phone || !message) return res.status(400).json({ error: "Jaza taarifa" });
+  const db = loadDB();
   if (!db.contacts) db.contacts = [];
-  db.contacts.unshift({
-    id: Date.now().toString(),
-    name,
-    phone,
-    email,
-    message,
-    status: "UNREAD",
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.contacts.unshift({ id: Date.now().toString(), name, phone, email: req.body.email || "", message, createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
-
 app.get("/api/contacts", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  res.json(getDB().contacts || []);
+  res.json(loadDB().contacts || []);
 });
 
-app.post("/api/tickets", publicFormLimiter, async (req, res) => {
-  const eventId = cleanStr(req.body && req.body.eventId, 60);
-  const name = cleanStr(req.body && req.body.name, 120);
-  const phone = cleanPhone(req.body && req.body.phone);
-  const qty = Math.max(1, Math.min(50, Number(req.body && req.body.qty) || 1));
-  const transactionId = cleanStr(req.body && req.body.transactionId, 80).toUpperCase();
-
-  if (!eventId || !name || !phone || !transactionId) {
-    return res.status(400).json({ error: "Jaza taarifa zote za tiketi" });
-  }
-
-  const db = getDB();
-  const ev = (db.events || []).find((e) => e.id === eventId);
-  if (!ev) return res.status(404).json({ error: "Tukio halijapatikana" });
-
-  if (!db.tickets) db.tickets = [];
-  if (db.tickets.find((t) => String(t.transactionId).toUpperCase() === transactionId)) {
-    return res.status(400).json({ error: "Namba ya muamala tayari imetumika" });
-  }
-
-  db.tickets.unshift({
-    id: Date.now().toString(),
-    eventId,
-    eventTitle: ev.title,
-    name,
-    phone,
-    qty,
-    totalAmount: qty * (Number(ev.ticketPrice) || 0),
-    transactionId,
-    status: "PENDING",
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
-  res.json({ success: true });
-});
-
-app.get("/api/tickets", requireAuth, (req, res) => {
-  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  res.json(getDB().tickets || []);
-});
-
-app.post("/api/tickets/approve", requireAuth, async (req, res) => {
-  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
-  const t = (db.tickets || []).find((x) => x.id === cleanStr(req.body.ticketId, 60));
-  if (!t) return res.status(404).json({ error: "Tiketi haijapatikana" });
-  t.status = "APPROVED";
-  t.approvedBy = req.session.user.name;
-  t.approvedAt = new Date().toISOString();
-  await saveDB(db);
-  res.json({ success: true });
-});
-
-// ==================== AUTH ROUTES ====================
-
-app.post("/api/register", authLimiter, async (req, res) => {
-  const name = cleanStr(req.body && req.body.name, 120);
-  const phone = cleanPhone(req.body && req.body.phone);
-  const region = cleanStr(req.body && req.body.region, 60) || "Dar es Salaam";
-  const password = String((req.body && req.body.password) || "");
-  const paymentProof = cleanStr(req.body && req.body.paymentProof, 300);
-
-  if (!name || !phone || password.length < 6) {
-    return res.status(400).json({ error: "Jaza taarifa zote (nenosiri angalau herufi 6)" });
-  }
-
-  const db = getDB();
-  if (db.users.find((u) => cleanPhone(u.phone) === phone)) {
-    return res.status(400).json({ error: "Namba hii ya simu tayari imesajiliwa" });
-  }
-
-  const passwordHash = await bcrypt.hash(password, 10);
+app.post("/api/register", (req, res) => {
+  const { name, phone, region, password, paymentProof } = req.body;
+  if (!name || !phone || !password) return res.status(400).json({ error: "Jaza taarifa zote" });
+  const db = loadDB();
+  if (db.users.find(u => u.phone === phone)) return res.status(400).json({ error: "Namba tayari imesajiliwa" });
   db.users.push({
-    id: Date.now().toString(),
-    name,
-    phone,
-    region,
-    password: passwordHash,
-    role: "MEMBER",
-    status: "PENDING",
-    paymentProof,
-    wfcId: null,
-    family: { head: name, spouse: "", children: [] },
-    profession: "",
-    createdAt: new Date().toISOString()
+    id: Date.now().toString(), name, phone, region: region || "Dar es Salaam", password,
+    role: "MEMBER", status: "PENDING", paymentProof: paymentProof || "", wfcId: null,
+    family: { head: name, spouse: "", children: [] }, profession: "", createdAt: new Date().toISOString()
   });
-  await saveDB(db);
-  res.json({ success: true, message: "Usajili umepokelewa. Subiri idhini ya uongozi." });
+  saveDB(db);
+  res.json({ success: true, message: "Usajili umepokelewa. Subiri idhini." });
 });
 
-app.post("/api/login", authLimiter, async (req, res) => {
-  const phone = cleanPhone(req.body && req.body.phone);
-  const password = String((req.body && req.body.password) || "");
-  const db = getDB();
-  const user = db.users.find((u) => cleanPhone(u.phone) === phone);
-  if (!user) return res.status(401).json({ error: "Taarifa za kuingia si sahihi" });
-
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) return res.status(401).json({ error: "Taarifa za kuingia si sahihi" });
-
-  if (user.status === "SUSPENDED") {
-    return res.status(403).json({ error: "Akaunti yako imesimamishwa. Wasiliana na uongozi." });
-  }
-
+app.post("/api/login", (req, res) => {
+  const { phone, password } = req.body;
+  const db = loadDB();
+  const user = db.users.find(u => u.phone === phone && u.password === password);
+  if (!user) return res.status(401).json({ error: "Taarifa si sahihi" });
   if (user.twoFactor) {
-    const code = String(crypto.randomInt(100000, 1000000));
-    db.otps = (db.otps || []).filter((o) => o.exp > Date.now() && o.phone !== user.phone);
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    db.otps = (db.otps || []).filter(o => o.exp > Date.now());
     db.otps.push({ phone: user.phone, code, exp: Date.now() + 5 * 60 * 1000 });
-    await saveDB(db);
-    const smsOn = Boolean(db.settings.smsKey && db.settings.smsUsername);
-    return res.json({ needOtp: true, devCode: smsOn || isProd ? null : code });
+    saveDB(db);
+    const smsOn = !!(db.settings.smsKey && db.settings.smsUsername);
+    return res.json({ needOtp: true, devCode: smsOn ? null : code });
   }
-
-  req.session.user = {
-    id: user.id,
-    name: user.name,
-    phone: user.phone,
-    role: user.role,
-    status: user.status,
-    wfcId: user.wfcId
-  };
+  req.session.user = { id: user.id, name: user.name, phone: user.phone, role: user.role, status: user.status, wfcId: user.wfcId };
   res.json({ success: true, user: req.session.user });
 });
 
-app.post("/api/verify-otp", authLimiter, async (req, res) => {
-  const phone = cleanPhone(req.body && req.body.phone);
-  const code = cleanStr(req.body && req.body.code, 10);
-  const db = getDB();
-  const otp = (db.otps || []).find(
-    (o) => cleanPhone(o.phone) === phone && o.code === code && o.exp > Date.now()
-  );
-  if (!otp) return res.status(401).json({ error: "Msimbo wa OTP si sahihi au umeisha muda" });
-
-  const user = db.users.find((u) => cleanPhone(u.phone) === phone);
+app.post("/api/verify-otp", (req, res) => {
+  const db = loadDB();
+  const otp = (db.otps || []).find(o => o.phone === req.body.phone && o.code === String(req.body.code || "").trim() && o.exp > Date.now());
+  if (!otp) return res.status(401).json({ error: "Msimbo si sahihi au umeisha" });
+  const user = db.users.find(u => u.phone === req.body.phone);
   if (!user) return res.status(401).json({ error: "Akaunti haijapatikana" });
-
-  db.otps = db.otps.filter((o) => o !== otp);
-  await saveDB(db);
-
-  req.session.user = {
-    id: user.id,
-    name: user.name,
-    phone: user.phone,
-    role: user.role,
-    status: user.status,
-    wfcId: user.wfcId
-  };
+  db.otps = db.otps.filter(o => o !== otp);
+  saveDB(db);
+  req.session.user = { id: user.id, name: user.name, phone: user.phone, role: user.role, status: user.status, wfcId: user.wfcId };
   res.json({ success: true, user: req.session.user });
 });
 
-app.post("/api/logout", (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
-});
+app.post("/api/logout", (req, res) => { req.session.destroy(); res.json({ success: true }); });
+app.get("/api/me", (req, res) => res.json({ user: req.session.user || null }));
 
-app.get("/api/me", (req, res) => {
-  if (!req.session.user) return res.json({ user: null, isProd });
-  const db = getDB();
-  const fresh = db.users.find((u) => u.id === req.session.user.id);
-  if (!fresh || fresh.status === "SUSPENDED") {
-    req.session.destroy(() => {});
-    return res.json({ user: null, isProd });
-  }
-  req.session.user = {
-    id: fresh.id,
-    name: fresh.name,
-    phone: fresh.phone,
-    role: fresh.role,
-    status: fresh.status,
-    wfcId: fresh.wfcId
-  };
-  res.json({ user: req.session.user, isProd });
+// Dashboard
+app.get("/api/dashboard", requireAuth, (req, res) => {
+  const db = loadDB();
+  const user = db.users.find(u => u.id === req.session.user.id);
+  const myPayments = db.payments.filter(p => p.userId === user.id && p.status === "APPROVED");
+  const totalPaid = myPayments.reduce((s, p) => s + (p.amount || 0), 0);
+  res.json({
+    user,
+    stats: {
+      members: db.users.filter(u => u.status === "ACTIVE").length,
+      pending: db.users.filter(u => u.status === "PENDING").length,
+      payments: db.payments.length,
+      events: (db.events || []).length
+    },
+    myTotalPaid: totalPaid,
+    recent: db.payments.slice(-6).reverse(),
+    upcoming: (db.events || []).slice(0, 4),
+    notices: (db.announcements || []).slice(0, 3),
+    regions: Object.entries(db.users.filter(u => u.status === "ACTIVE").reduce((m, u) => { m[u.region || "Nyingine"] = (m[u.region || "Nyingine"] || 0) + 1; return m; }, {})).map(([name, value]) => ({ name, value })),
+    settings: req.session.user.role === "ADMIN" ? db.settings : {
+      registrationFee: db.settings.registrationFee,
+      monthlyFee: db.settings.monthlyFee,
+      paymentNumbers: db.settings.paymentNumbers
+    },
+    finance: isLeader(req.session.user.role) ? computeFinance(db) : null
+  });
 });
-
-// ==================== DASHBOARD & ANALYTICS ====================
 
 function computeFinance(db) {
-  const approved = (db.payments || []).filter((p) => p.status === "APPROVED");
-  const incomeFromPayments = approved.reduce((s, p) => s + (Number(p.amount) || 0), 0);
-  const manual = (db.manualIncome || []).reduce((s, i) => s + (Number(i.amount) || 0), 0);
-  const expenses = (db.expenses || []).reduce((s, e) => s + (Number(e.amount) || 0), 0);
-  const monthly = Number(db.settings.monthlyFee) || 10000;
-  const active = (db.users || []).filter((u) => u.status === "ACTIVE");
-
+  const approved = (db.payments || []).filter(p => p.status === "APPROVED");
+  const incomeFromPayments = approved.reduce((s, p) => s + (p.amount || 0), 0);
+  const manual = (db.manualIncome || []).reduce((s, i) => s + (i.amount || 0), 0);
+  const expenses = (db.expenses || []).reduce((s, e) => s + (e.amount || 0), 0);
+  const monthly = db.settings.monthlyFee || 10000;
+  const active = (db.users || []).filter(u => u.status === "ACTIVE");
   let totalDebt = 0;
   let debtors = 0;
-  active.forEach((u) => {
-    const months = Math.max(
-      1,
-      Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000))
-    );
+  active.forEach(u => {
+    const months = Math.max(1, Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (30*24*60*60*1000)));
     const expected = months * monthly;
-    const paid = approved
-      .filter((p) => p.userId === u.id && p.type === "Ada ya mwezi")
-      .reduce((s, p) => s + (Number(p.amount) || 0), 0);
+    const paid = approved.filter(p => p.userId === u.id && p.type === "Ada ya mwezi").reduce((s, p) => s + (p.amount || 0), 0);
     const debt = Math.max(0, expected - paid);
-    if (debt > 0) {
-      totalDebt += debt;
-      debtors++;
-    }
+    if (debt > 0) { totalDebt += debt; debtors++; }
   });
-
-  const unpaidPenalties = (db.penalties || [])
-    .filter((p) => p.status !== "PAID")
-    .reduce((s, p) => s + (Number(p.amount) || 0), 0);
-
   return {
     mapato: incomeFromPayments + manual,
     matumizi: expenses,
     balance: incomeFromPayments + manual - expenses,
     totalDebt,
     debtors,
-    unpaidPenalties,
     incomeFromPayments,
     manualIncome: manual
   };
 }
 
-app.get("/api/dashboard", requireAuth, (req, res) => {
-  const db = getDB();
-  const user = db.users.find((u) => u.id === req.session.user.id);
-  const leader = isLeader(req.session.user.role);
-
-  const myPayments = db.payments.filter((p) => p.userId === user.id && p.status === "APPROVED");
-  const totalPaid = myPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
-  const visiblePayments = leader
-    ? db.payments
-    : db.payments.filter((p) => p.userId === user.id);
-
-  const safeSettings = isAdmin(req.session.user.role)
-    ? db.settings
-    : {
-        registrationFee: db.settings.registrationFee,
-        entryFee: db.settings.entryFee,
-        monthlyFee: db.settings.monthlyFee,
-        emergencyFee: db.settings.emergencyFee,
-        latePenalty: db.settings.latePenalty,
-        penaltyGraceDays: db.settings.penaltyGraceDays,
-        rulesText: db.settings.rulesText,
-        paymentNumbers: db.settings.paymentNumbers
-      };
-
-  res.json({
-    user: sanitizeUser(user),
-    stats: {
-      members: db.users.filter((u) => u.status === "ACTIVE").length,
-      pending: db.users.filter((u) => u.status === "PENDING").length,
-      payments: visiblePayments.length,
-      events: (db.events || []).length
-    },
-    myTotalPaid: totalPaid,
-    recent: visiblePayments.slice(-6).reverse(),
-    upcoming: (db.events || []).slice(0, 4),
-    notices: (db.announcements || []).slice(0, 3),
-    regions: Object.entries(
-      db.users
-        .filter((u) => u.status === "ACTIVE")
-        .reduce((m, u) => {
-          m[u.region || "Nyingine"] = (m[u.region || "Nyingine"] || 0) + 1;
-          return m;
-        }, {})
-    ).map(([name, value]) => ({ name, value })),
-    settings: safeSettings,
-    finance: leader ? computeFinance(db) : null
-  });
-});
-
-// ==================== ADMIN RULES, FEES & PENALTIES ====================
-
-app.get("/api/policy", requireAuth, (req, res) => {
-  const s = getDB().settings || {};
-  res.json({
-    registrationFee: s.registrationFee || 1000,
-    entryFee: s.entryFee || 50000,
-    monthlyFee: s.monthlyFee || 10000,
-    emergencyFee: s.emergencyFee || 60000,
-    latePenalty: s.latePenalty || 2000,
-    penaltyGraceDays: s.penaltyGraceDays || 5,
-    autoPenaltyEnabled: Boolean(s.autoPenaltyEnabled),
-    rulesText: s.rulesText || "",
-    paymentNumbers: s.paymentNumbers || {}
-  });
-});
-
-app.post("/api/admin/policy", requireAuth, async (req, res) => {
-  if (!isAdmin(req.session.user.role)) {
-    return res.status(403).json({ error: "Admin pekee anaweza kubadilisha utaratibu na viwango vya ada/faini." });
-  }
-  const db = getDB();
-  const b = req.body || {};
-
-  if (b.registrationFee !== undefined) db.settings.registrationFee = Math.max(0, Number(b.registrationFee) || 0);
-  if (b.entryFee !== undefined) db.settings.entryFee = Math.max(0, Number(b.entryFee) || 0);
-  if (b.monthlyFee !== undefined) db.settings.monthlyFee = Math.max(0, Number(b.monthlyFee) || 0);
-  if (b.emergencyFee !== undefined) db.settings.emergencyFee = Math.max(0, Number(b.emergencyFee) || 0);
-  if (b.latePenalty !== undefined) db.settings.latePenalty = Math.max(0, Number(b.latePenalty) || 0);
-  if (b.penaltyGraceDays !== undefined) db.settings.penaltyGraceDays = Math.max(1, Math.min(31, Number(b.penaltyGraceDays) || 5));
-  if (b.autoPenaltyEnabled !== undefined) db.settings.autoPenaltyEnabled = Boolean(b.autoPenaltyEnabled);
-  if (b.rulesText !== undefined) db.settings.rulesText = cleanStr(b.rulesText, 5000);
-
-  if (b.paymentNumbers && typeof b.paymentNumbers === "object") {
-    db.settings.paymentNumbers = {
-      mpesa: cleanStr(b.paymentNumbers.mpesa, 40) || db.settings.paymentNumbers.mpesa,
-      tigo: cleanStr(b.paymentNumbers.tigo, 40) || db.settings.paymentNumbers.tigo,
-      airtel: cleanStr(b.paymentNumbers.airtel, 40) || db.settings.paymentNumbers.airtel,
-      crdb: cleanStr(b.paymentNumbers.crdb, 40) || db.settings.paymentNumbers.crdb
-    };
-  }
-
-  db.settings.policyUpdatedAt = new Date().toISOString();
-  db.settings.policyUpdatedBy = req.session.user.name;
-  await saveDB(db);
-  res.json({ success: true });
-});
-
-app.get("/api/penalties", requireAuth, (req, res) => {
-  const db = getDB();
-  const list = db.penalties || [];
-  if (isLeader(req.session.user.role)) return res.json(list);
-  res.json(list.filter((p) => p.userId === req.session.user.id || !p.userId));
-});
-
-app.post("/api/penalties", requireAuth, async (req, res) => {
-  if (!isAdmin(req.session.user.role)) {
-    return res.status(403).json({ error: "Admin pekee anaweza kuweka faini kwa wanachama." });
-  }
-  const db = getDB();
-  if (!db.penalties) db.penalties = [];
-
-  const userId = cleanStr(req.body.userId, 60);
-  const member = userId ? db.users.find((u) => u.id === userId) : null;
-  const reason = cleanStr(req.body.reason, 250);
-  const amount = Math.max(0, Number(req.body.amount) || Number(db.settings.latePenalty) || 0);
-
-  if (!reason || amount <= 0) {
-    return res.status(400).json({ error: "Weka sababu na kiasi sahihi cha faini." });
-  }
-
-  db.penalties.unshift({
-    id: Date.now().toString(),
-    userId: member ? member.id : null,
-    userName: member ? member.name : "Jumla / Mwanachama",
-    wfcId: member ? member.wfcId : "—",
-    reason,
-    amount,
-    status: "UNPAID",
-    issuedBy: req.session.user.name,
-    createdAt: new Date().toISOString()
-  });
-
-  if (member) {
-    if (!db.notifications) db.notifications = [];
-    db.notifications.unshift({
-      id: (Date.now() + 1).toString(),
-      userId: member.id,
-      title: "Notisi ya Faini — WFC",
-      body: `Umeandikiwa faini ya TSh ${amount.toLocaleString()} kwa sababu: ${reason}.`,
-      createdAt: new Date().toISOString()
-    });
-  }
-
-  await saveDB(db);
-  res.json({ success: true });
-});
-
-app.post("/api/penalties/pay", requireAuth, async (req, res) => {
-  if (!isAdmin(req.session.user.role) && !isFinanceLeader(req.session.user.role)) {
-    return res.status(403).json({ error: "Huna mamlaka ya kuthibitisha malipo ya faini." });
-  }
-  const db = getDB();
-  const pen = (db.penalties || []).find((x) => x.id === cleanStr(req.body.penaltyId, 60));
-  if (!pen) return res.status(404).json({ error: "Faini haijapatikana" });
-  pen.status = "PAID";
-  pen.paidAt = new Date().toISOString();
-  pen.clearedBy = req.session.user.name;
-  await saveDB(db);
-  res.json({ success: true });
-});
-
-app.post("/api/penalties/apply-late-batch", requireAuth, async (req, res) => {
-  if (!isAdmin(req.session.user.role)) {
-    return res.status(403).json({ error: "Admin pekee anaweza kutoza faini za kuchelewa ada." });
-  }
-  const db = getDB();
-  if (!db.penalties) db.penalties = [];
-  const monthly = Number(db.settings.monthlyFee) || 10000;
-  const fineAmt = Number(db.settings.latePenalty) || 2000;
-  const monthTag = new Date().toISOString().slice(0, 7);
-  const approved = (db.payments || []).filter((p) => p.status === "APPROVED" && p.type === "Ada ya mwezi");
-
-  let count = 0;
-  (db.users || [])
-    .filter((u) => u.status === "ACTIVE" && u.role !== "ADMIN")
-    .forEach((u) => {
-      const months = Math.max(
-        1,
-        Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000))
-      );
-      const expected = months * monthly;
-      const paid = approved
-        .filter((p) => p.userId === u.id)
-        .reduce((s, p) => s + (Number(p.amount) || 0), 0);
-      const debt = Math.max(0, expected - paid);
-      const alreadyCharged = db.penalties.find(
-        (x) => x.userId === u.id && x.batchMonth === monthTag
-      );
-
-      if (debt > 0 && !alreadyCharged) {
-        db.penalties.unshift({
-          id: `${Date.now()}-${u.id}`,
-          userId: u.id,
-          userName: u.name,
-          wfcId: u.wfcId || "—",
-          reason: `Kuchelewa kulipa ada ya mwezi (${monthTag})`,
-          amount: fineAmt,
-          status: "UNPAID",
-          batchMonth: monthTag,
-          issuedBy: req.session.user.name,
-          createdAt: new Date().toISOString()
-        });
-        count++;
-      }
-    });
-
-  await saveDB(db);
-  res.json({ success: true, count });
-});
-
-// ==================== ACCOUNTING ====================
-
 app.get("/api/accounting/summary", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  res.json(computeFinance(getDB()));
+  const db = loadDB();
+  res.json(computeFinance(db));
 });
 
 app.get("/api/accounting/debts", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
-  const monthly = Number(db.settings.monthlyFee) || 10000;
-  const approved = (db.payments || []).filter(
-    (p) => p.status === "APPROVED" && p.type === "Ada ya mwezi"
-  );
-  const list = (db.users || [])
-    .filter((u) => u.status === "ACTIVE")
-    .map((u) => {
-      const months = Math.max(
-        1,
-        Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000))
-      );
-      const expected = months * monthly;
-      const paid = approved
-        .filter((p) => p.userId === u.id)
-        .reduce((s, p) => s + (Number(p.amount) || 0), 0);
-      return {
-        id: u.id,
-        name: u.name,
-        region: u.region,
-        wfcId: u.wfcId,
-        expected,
-        paid,
-        debt: Math.max(0, expected - paid),
-        months
-      };
-    })
-    .filter((x) => x.debt > 0);
+  const db = loadDB();
+  const monthly = db.settings.monthlyFee || 10000;
+  const approved = (db.payments || []).filter(p => p.status === "APPROVED" && p.type === "Ada ya mwezi");
+  const list = (db.users || []).filter(u => u.status === "ACTIVE").map(u => {
+    const months = Math.max(1, Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (30*24*60*60*1000)));
+    const expected = months * monthly;
+    const paid = approved.filter(p => p.userId === u.id).reduce((s, p) => s + (p.amount || 0), 0);
+    return { id: u.id, name: u.name, region: u.region, wfcId: u.wfcId, expected, paid, debt: Math.max(0, expected - paid), months };
+  }).filter(x => x.debt > 0);
   res.json(list);
 });
 
 app.get("/api/expenses", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  res.json(getDB().expenses || []);
+  res.json(loadDB().expenses || []);
 });
 
-app.post("/api/expenses", requireAuth, async (req, res) => {
-  if (!isFinanceLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
+app.post("/api/expenses", requireAuth, (req, res) => {
+  if (!["ADMIN", "TREASURER", "CHAIRPERSON"].includes(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
   if (!db.expenses) db.expenses = [];
-  db.expenses.unshift({
-    id: Date.now().toString(),
-    title: cleanStr(req.body.title, 150),
-    amount: Math.max(0, Number(req.body.amount) || 0),
-    category: cleanStr(req.body.category, 60) || "Nyingine",
-    note: cleanStr(req.body.note, 300),
-    createdBy: req.session.user.name,
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.expenses.unshift({ id: Date.now().toString(), title: req.body.title, amount: Number(req.body.amount) || 0, category: req.body.category || "Nyingine", note: req.body.note || "", createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
 app.get("/api/manual-income", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  res.json(getDB().manualIncome || []);
+  res.json(loadDB().manualIncome || []);
 });
 
-app.post("/api/manual-income", requireAuth, async (req, res) => {
-  if (!isFinanceLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
+app.post("/api/manual-income", requireAuth, (req, res) => {
+  if (!["ADMIN", "TREASURER", "CHAIRPERSON"].includes(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
   if (!db.manualIncome) db.manualIncome = [];
-  db.manualIncome.unshift({
-    id: Date.now().toString(),
-    title: cleanStr(req.body.title, 150),
-    amount: Math.max(0, Number(req.body.amount) || 0),
-    source: cleanStr(req.body.source, 100) || "Nyingine",
-    note: cleanStr(req.body.note, 300),
-    createdBy: req.session.user.name,
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.manualIncome.unshift({ id: Date.now().toString(), title: req.body.title, amount: Number(req.body.amount) || 0, source: req.body.source || "Nyingine", note: req.body.note || "", createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
-// ==================== MEMBERS & RBAC ====================
-
+// Members
 app.get("/api/members", requireAuth, (req, res) => {
-  const db = getDB();
-  res.json(
-    db.users.map((u) => ({
-      id: u.id,
-      name: u.name,
-      phone: u.phone,
-      region: u.region,
-      status: u.status,
-      role: u.role,
-      wfcId: u.wfcId,
-      profession: u.profession,
-      paymentProof: isLeader(req.session.user.role) ? u.paymentProof : undefined
-    }))
-  );
+  const db = loadDB();
+  res.json(db.users.map(u => ({
+    id: u.id, name: u.name, phone: u.phone, region: u.region, status: u.status, role: u.role, wfcId: u.wfcId, profession: u.profession
+  })));
 });
 
-app.post("/api/approve-member", requireAuth, async (req, res) => {
+app.post("/api/approve-member", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
-  const user = db.users.find((u) => u.id === cleanStr(req.body.userId, 60));
-  if (!user) return res.status(404).json({ error: "Mwanachama hajapatikana" });
+  const db = loadDB();
+  const user = db.users.find(u => u.id === req.body.userId);
+  if (!user) return res.status(404).json({ error: "Hajapatikana" });
   user.status = "ACTIVE";
-  if (!user.wfcId) {
-    user.wfcId = "WFC-" + String(db.users.filter((u) => u.wfcId).length + 1).padStart(4, "0");
-  }
-  await saveDB(db);
+  if (!user.wfcId) user.wfcId = "WFC-" + String(db.users.filter(u => u.wfcId).length + 1).padStart(4, "0");
+  saveDB(db);
   res.json({ success: true, wfcId: user.wfcId });
 });
 
-app.post("/api/suspend-member", requireAuth, async (req, res) => {
-  if (!isAdmin(req.session.user.role)) return res.status(403).json({ error: "Admin pekee anaweza kusimamisha mwanachama" });
-  const db = getDB();
-  const user = db.users.find((u) => u.id === cleanStr(req.body.userId, 60));
-  if (!user) return res.status(404).json({ error: "Mwanachama hajapatikana" });
-  if (user.id === req.session.user.id) return res.status(400).json({ error: "Huwezi kujisimamisha mwenyewe" });
-  user.status = user.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
-  await saveDB(db);
-  res.json({ success: true, status: user.status });
-});
+// Payments
+app.get("/api/payments", requireAuth, (req, res) => res.json(loadDB().payments));
 
-app.post("/api/remove-member", requireAuth, async (req, res) => {
-  if (!isAdmin(req.session.user.role)) return res.status(403).json({ error: "Admin pekee anaweza kuondoa mwanachama" });
-  const db = getDB();
-  const targetId = cleanStr(req.body.userId, 60);
-  if (targetId === req.session.user.id) return res.status(400).json({ error: "Huwezi kujiondoa mwenyewe" });
-  const before = db.users.length;
-  db.users = db.users.filter((u) => u.id !== targetId);
-  if (db.users.length === before) return res.status(404).json({ error: "Mwanachama hajapatikana" });
-  await saveDB(db);
-  res.json({ success: true });
-});
-
-// ==================== PAYMENTS ====================
-
-app.get("/api/payments", requireAuth, (req, res) => {
-  const db = getDB();
-  if (isLeader(req.session.user.role)) return res.json(db.payments);
-  res.json(db.payments.filter((p) => p.userId === req.session.user.id));
-});
-
-app.post("/api/submit-payment", requireAuth, async (req, res) => {
-  const type = cleanStr(req.body.type, 80);
-  const amount = Math.max(0, Number(req.body.amount) || 0);
-  const transactionId = cleanStr(req.body.transactionId, 80).toUpperCase();
-
-  if (!type || amount <= 0 || !transactionId) {
-    return res.status(400).json({ error: "Jaza aina, kiasi sahihi na namba ya muamala" });
-  }
-
-  const db = getDB();
-  if (db.payments.find((p) => String(p.transactionId).toUpperCase() === transactionId)) {
-    return res.status(400).json({ error: "Namba ya muamala tayari imetumika" });
-  }
-
-  db.payments.unshift({
-    id: Date.now().toString(),
-    userId: req.session.user.id,
-    userName: req.session.user.name,
-    type,
-    amount,
-    transactionId,
-    status: "PENDING",
-    createdAt: new Date().toISOString()
+app.post("/api/submit-payment", requireAuth, (req, res) => {
+  const { type, amount, transactionId } = req.body;
+  const db = loadDB();
+  if (db.payments.find(p => p.transactionId === transactionId)) return res.status(400).json({ error: "Namba ya muamala tayari imetumika" });
+  db.payments.push({
+    id: Date.now().toString(), userId: req.session.user.id, userName: req.session.user.name,
+    type, amount: Number(amount), transactionId, status: "PENDING", createdAt: new Date().toISOString()
   });
-  await saveDB(db);
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.post("/api/approve-payment", requireAuth, async (req, res) => {
-  if (!isFinanceLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
-  const p = db.payments.find((x) => x.id === cleanStr(req.body.paymentId, 60));
-  if (!p) return res.status(404).json({ error: "Muamala haujapatikana" });
+app.post("/api/approve-payment", requireAuth, (req, res) => {
+  if (!["ADMIN", "TREASURER", "CHAIRPERSON"].includes(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  const p = db.payments.find(x => x.id === req.body.paymentId);
+  if (!p) return res.status(404).json({ error: "Haijapatikana" });
   p.status = "APPROVED";
-  p.approvedBy = req.session.user.name;
   p.approvedAt = new Date().toISOString();
-  p.receiptNo = p.receiptNo || "RCP-" + Date.now().toString().slice(-6);
-  await saveDB(db);
+  p.receiptNo = "RCP-" + Date.now().toString().slice(-6);
+  saveDB(db);
   res.json({ success: true, receiptNo: p.receiptNo });
 });
 
-// ==================== EVENTS & ANNOUNCEMENTS ====================
-
-app.get("/api/events", requireAuth, (req, res) => res.json(getDB().events || []));
-
-app.post("/api/events", requireAuth, async (req, res) => {
-  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Viongozi pekee wanaweza kuongeza tukio" });
-  const db = getDB();
+// Events
+app.get("/api/events", requireAuth, (req, res) => res.json(loadDB().events || []));
+app.post("/api/events", requireAuth, (req, res) => {
+  const db = loadDB();
   if (!db.events) db.events = [];
-  const poster = typeof req.body.poster === "string" && req.body.poster.startsWith("data:image/")
-    ? req.body.poster.slice(0, 1700000)
-    : "";
-  db.events.unshift({
-    id: Date.now().toString(),
-    type: cleanStr(req.body.type, 50) || "Tukio",
-    title: cleanStr(req.body.title, 150),
-    location: cleanStr(req.body.location, 150),
-    ticketPrice: Math.max(0, Number(req.body.ticketPrice) || 0),
-    poster,
-    raisedAmount: 0,
-    status: "ACTIVE",
-    public: true,
-    reportedBy: req.session.user.name,
-    createdAt: new Date().toISOString()
+  db.events.push({
+    id: Date.now().toString(), ...req.body,
+    ticketPrice: Number(req.body.ticketPrice) || 0,
+    raisedAmount: 0, status: "ACTIVE", public: true,
+    reportedBy: req.session.user.name, createdAt: new Date().toISOString()
   });
-  await saveDB(db);
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.get("/api/announcements", requireAuth, (req, res) => res.json(getDB().announcements || []));
-
-app.post("/api/announcements", requireAuth, async (req, res) => {
+// Announcements
+app.get("/api/announcements", requireAuth, (req, res) => res.json(loadDB().announcements || []));
+app.post("/api/announcements", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
+  const db = loadDB();
   if (!db.announcements) db.announcements = [];
-  const rawLink = cleanStr(req.body.link, 300);
-  const safeLink =
-    rawLink && (rawLink.startsWith("/") || rawLink.startsWith("https://") || rawLink.startsWith("http://"))
-      ? rawLink
-      : "";
-  db.announcements.unshift({
-    id: Date.now().toString(),
-    title: cleanStr(req.body.title, 160),
-    body: cleanStr(req.body.body, 2000),
-    link: safeLink,
-    author: req.session.user.name,
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.announcements.unshift({ id: Date.now().toString(), ...req.body, author: req.session.user.name, createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
-// ==================== MEMBER MODULES ====================
-
+// Family
 app.get("/api/family", requireAuth, (req, res) => {
-  const u = getDB().users.find((x) => x.id === req.session.user.id);
-  res.json((u && u.family) || {});
+  const db = loadDB();
+  const u = db.users.find(x => x.id === req.session.user.id);
+  res.json(u.family || {});
 });
-
-app.post("/api/family", requireAuth, async (req, res) => {
-  const db = getDB();
-  const u = db.users.find((x) => x.id === req.session.user.id);
-  u.family = {
-    head: cleanStr(req.body.head, 120),
-    spouse: cleanStr(req.body.spouse, 120),
-    children: Array.isArray(req.body.children)
-      ? req.body.children.map((c) => cleanStr(c, 80)).filter(Boolean).slice(0, 20)
-      : []
-  };
-  await saveDB(db);
+app.post("/api/family", requireAuth, (req, res) => {
+  const db = loadDB();
+  const u = db.users.find(x => x.id === req.session.user.id);
+  u.family = req.body;
+  saveDB(db);
   res.json({ success: true });
 });
 
+// Directory
 app.get("/api/directory", requireAuth, (req, res) => {
-  const db = getDB();
-  res.json(
-    db.users
-      .filter((u) => u.status === "ACTIVE" && u.profession)
-      .map((u) => ({ name: u.name, profession: u.profession, region: u.region, phone: u.phone }))
-  );
+  const db = loadDB();
+  res.json(db.users.filter(u => u.status === "ACTIVE" && u.profession).map(u => ({ name: u.name, profession: u.profession, region: u.region })));
 });
-
-app.post("/api/my-profession", requireAuth, async (req, res) => {
-  const db = getDB();
-  const u = db.users.find((x) => x.id === req.session.user.id);
-  u.profession = cleanStr(req.body.profession, 120);
-  await saveDB(db);
+app.post("/api/my-profession", requireAuth, (req, res) => {
+  const db = loadDB();
+  const u = db.users.find(x => x.id === req.session.user.id);
+  u.profession = req.body.profession;
+  saveDB(db);
   res.json({ success: true });
 });
 
+// Help
 app.get("/api/support", requireAuth, (req, res) => {
-  const db = getDB();
-  const list = (db.supportTickets || []).filter(
-    (t) => t.userId === req.session.user.id || isLeader(req.session.user.role)
-  );
+  const db = loadDB();
+  const list = (db.supportTickets || []).filter(t => t.userId === req.session.user.id || isLeader(req.session.user.role));
   res.json(list);
 });
-
-app.post("/api/support", requireAuth, async (req, res) => {
-  const db = getDB();
+app.post("/api/support", requireAuth, (req, res) => {
+  const db = loadDB();
   if (!db.supportTickets) db.supportTickets = [];
-  db.supportTickets.unshift({
-    id: Date.now().toString(),
-    userId: req.session.user.id,
-    userName: req.session.user.name,
-    subject: cleanStr(req.body.subject, 160),
-    message: cleanStr(req.body.message, 2000),
-    status: "OPEN",
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.supportTickets.push({ id: Date.now().toString(), userId: req.session.user.id, userName: req.session.user.name, ...req.body, status: "OPEN", createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
+// Tickets
+app.post("/api/tickets", (req, res) => {
+  const db = loadDB();
+  if (!db.tickets) db.tickets = [];
+  if (db.tickets.find(t => t.transactionId === req.body.transactionId)) return res.status(400).json({ error: "Namba tayari imetumika" });
+  db.tickets.push({ id: Date.now().toString(), ...req.body, status: "PENDING", createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// ===== NEW MODULES =====
+
+// Debt calculation
 app.get("/api/my-debt", requireAuth, (req, res) => {
-  const db = getDB();
-  const user = db.users.find((u) => u.id === req.session.user.id);
-  if (!user || user.status !== "ACTIVE") return res.json({ debt: 0, expected: 0, paid: 0, months: 0 });
-  const monthly = Number(db.settings.monthlyFee) || 10000;
-  const monthsSince = Math.max(
-    1,
-    Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000))
-  );
+  const db = loadDB();
+  const user = db.users.find(u => u.id === req.session.user.id);
+  if (!user || user.status !== "ACTIVE") return res.json({ debt: 0, breakdown: [] });
+  const monthly = db.settings.monthlyFee || 10000;
+  const monthsSince = Math.max(1, Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (30*24*60*60*1000)));
   const expected = monthsSince * monthly;
-  const paid = db.payments
-    .filter((p) => p.userId === user.id && p.type === "Ada ya mwezi" && p.status === "APPROVED")
-    .reduce((s, p) => s + (Number(p.amount) || 0), 0);
-  res.json({ debt: Math.max(0, expected - paid), expected, paid, months: monthsSince });
+  const paid = db.payments.filter(p => p.userId === user.id && p.type === "Ada ya mwezi" && p.status === "APPROVED").reduce((s,p)=>s+(p.amount||0),0);
+  const debt = Math.max(0, expected - paid);
+  res.json({ debt, expected, paid, months: monthsSince });
 });
 
-// ==================== GOVERNANCE, SACCOS, ASSETS & PROJECTS ====================
-
-app.get("/api/attendance", requireAuth, (req, res) => res.json(getDB().attendance || []));
-app.post("/api/attendance", requireAuth, async (req, res) => {
-  const db = getDB();
+// Attendance
+app.get("/api/attendance", requireAuth, (req, res) => res.json(loadDB().attendance || []));
+app.post("/api/attendance", requireAuth, (req, res) => {
+  const db = loadDB();
   if (!db.attendance) db.attendance = [];
-  db.attendance.unshift({
-    id: Date.now().toString(),
-    userId: req.session.user.id,
-    userName: req.session.user.name,
-    meeting: cleanStr(req.body.meeting, 140) || "Mkutano",
-    date: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.attendance.push({ id: Date.now().toString(), userId: req.session.user.id, userName: req.session.user.name, meeting: req.body.meeting || "Mkutano", date: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.get("/api/elections", requireAuth, (req, res) => {
-  const db = getDB();
-  res.json(
-    (db.elections || []).map((e) => ({
-      ...e,
-      hasVoted: (e.votes || []).some((v) => v.userId === req.session.user.id)
-    }))
-  );
-});
-
-app.post("/api/elections", requireAuth, async (req, res) => {
+// Election
+app.get("/api/elections", requireAuth, (req, res) => res.json(loadDB().elections || []));
+app.post("/api/elections", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
+  const db = loadDB();
   if (!db.elections) db.elections = [];
-  db.elections.unshift({
-    id: Date.now().toString(),
-    position: cleanStr(req.body.position, 140),
-    candidates: [],
-    votes: [],
-    status: "OPEN",
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.elections.push({ id: Date.now().toString(), position: req.body.position, candidates: [], votes: [], status: "OPEN", createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+app.post("/api/elections/nominate", requireAuth, (req, res) => {
+  const db = loadDB();
+  const e = (db.elections||[]).find(x => x.id === req.body.electionId);
+  if (!e) return res.status(404).json({ error: "Haijapatikana" });
+  e.candidates.push({ name: req.body.name, manifesto: req.body.manifesto || "" });
+  saveDB(db);
+  res.json({ success: true });
+});
+app.post("/api/elections/vote", requireAuth, (req, res) => {
+  const db = loadDB();
+  const e = (db.elections||[]).find(x => x.id === req.body.electionId);
+  if (!e) return res.status(404).json({ error: "Haijapatikana" });
+  if (e.votes.find(v => v.userId === req.session.user.id)) return res.status(400).json({ error: "Umeshapiga kura" });
+  e.votes.push({ userId: req.session.user.id, candidate: req.body.candidate });
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.post("/api/elections/nominate", requireAuth, async (req, res) => {
-  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Viongozi pekee wanaweza kuongeza mgombea" });
-  const db = getDB();
-  const e = (db.elections || []).find((x) => x.id === cleanStr(req.body.electionId, 60));
-  if (!e) return res.status(404).json({ error: "Uchaguzi haujapatikana" });
-  const name = cleanStr(req.body.name, 120);
-  if (!name) return res.status(400).json({ error: "Weka jina la mgombea" });
-  e.candidates.push({ name, manifesto: cleanStr(req.body.manifesto, 400) });
-  await saveDB(db);
-  res.json({ success: true });
-});
-
-app.post("/api/elections/vote", requireAuth, async (req, res) => {
-  const db = getDB();
-  const e = (db.elections || []).find((x) => x.id === cleanStr(req.body.electionId, 60));
-  if (!e) return res.status(404).json({ error: "Uchaguzi haujapatikana" });
-  if (e.votes.find((v) => v.userId === req.session.user.id)) {
-    return res.status(400).json({ error: "Tayari umeshapiga kura kwenye nafasi hii" });
-  }
-  const candidate = cleanStr(req.body.candidate, 120);
-  if (!e.candidates.find((c) => c.name === candidate)) {
-    return res.status(400).json({ error: "Mgombea si sahihi" });
-  }
-  e.votes.push({ userId: req.session.user.id, candidate, votedAt: new Date().toISOString() });
-  await saveDB(db);
-  res.json({ success: true });
-});
-
-app.get("/api/cases", requireAuth, (req, res) => res.json(getDB().cases || []));
-app.post("/api/cases", requireAuth, async (req, res) => {
-  const db = getDB();
+// Discipline
+app.get("/api/cases", requireAuth, (req, res) => res.json(loadDB().cases || []));
+app.post("/api/cases", requireAuth, (req, res) => {
+  const db = loadDB();
   if (!db.cases) db.cases = [];
-  db.cases.unshift({
-    id: Date.now().toString(),
-    userId: req.session.user.id,
-    reportedBy: req.session.user.name,
-    title: cleanStr(req.body.title, 160),
-    description: cleanStr(req.body.description, 2000),
-    status: "OPEN",
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.cases.push({ id: Date.now().toString(), ...req.body, status: "OPEN", createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.get("/api/saccos", requireAuth, (req, res) => {
-  const db = getDB();
-  const saccos = db.saccos || { shares: [], savings: [], loans: [] };
-  if (isLeader(req.session.user.role)) return res.json(saccos);
-  res.json({
-    shares: (saccos.shares || []).filter((s) => s.userId === req.session.user.id),
-    savings: (saccos.savings || []).filter((s) => s.userId === req.session.user.id),
-    loans: (saccos.loans || []).filter((l) => l.userId === req.session.user.id)
-  });
-});
-
-app.post("/api/saccos/shares", requireAuth, async (req, res) => {
-  const db = getDB();
+// SACCOS
+app.get("/api/saccos", requireAuth, (req, res) => res.json(loadDB().saccos || { shares: [], savings: [], loans: [] }));
+app.post("/api/saccos/shares", requireAuth, (req, res) => {
+  const db = loadDB();
   if (!db.saccos) db.saccos = { shares: [], savings: [], loans: [] };
-  const amount = Math.max(0, Number(req.body.amount) || 0);
-  if (amount <= 0) return res.status(400).json({ error: "Weka kiasi sahihi" });
-  db.saccos.shares.unshift({
-    id: Date.now().toString(),
-    userId: req.session.user.id,
-    userName: req.session.user.name,
-    amount,
-    date: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.saccos.shares.push({ id: Date.now().toString(), userId: req.session.user.id, amount: Number(req.body.amount), date: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.post("/api/saccos/loans", requireAuth, async (req, res) => {
-  const db = getDB();
-  if (!db.saccos) db.saccos = { shares: [], savings: [], loans: [] };
-  const amount = Math.max(0, Number(req.body.amount) || 0);
-  if (amount <= 0) return res.status(400).json({ error: "Weka kiasi sahihi cha mkopo" });
-  db.saccos.loans.unshift({
-    id: Date.now().toString(),
-    userId: req.session.user.id,
-    userName: req.session.user.name,
-    amount,
-    purpose: cleanStr(req.body.purpose, 250),
-    status: "PENDING",
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
-  res.json({ success: true });
-});
-
-app.get("/api/assets", requireAuth, (req, res) => res.json(getDB().assets || []));
-app.post("/api/assets", requireAuth, async (req, res) => {
+// Assets
+app.get("/api/assets", requireAuth, (req, res) => res.json(loadDB().assets || []));
+app.post("/api/assets", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
+  const db = loadDB();
   if (!db.assets) db.assets = [];
-  db.assets.unshift({
-    id: Date.now().toString(),
-    name: cleanStr(req.body.name, 150),
-    value: Math.max(0, Number(req.body.value) || 0),
-    location: cleanStr(req.body.location, 150),
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.assets.push({ id: Date.now().toString(), ...req.body, createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.get("/api/projects", requireAuth, (req, res) => res.json(getDB().projects || []));
-app.post("/api/projects", requireAuth, async (req, res) => {
-  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Viongozi pekee wanaweza kuongeza mradi" });
-  const db = getDB();
+// Projects
+app.get("/api/projects", requireAuth, (req, res) => res.json(loadDB().projects || []));
+app.post("/api/projects", requireAuth, (req, res) => {
+  const db = loadDB();
   if (!db.projects) db.projects = [];
-  db.projects.unshift({
-    id: Date.now().toString(),
-    name: cleanStr(req.body.name, 150),
-    progress: Math.max(0, Math.min(100, Number(req.body.progress) || 0)),
-    tasks: [],
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.projects.push({ id: Date.now().toString(), ...req.body, progress: 0, tasks: [], createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.get("/api/documents", requireAuth, (req, res) => res.json(getDB().documents || []));
-app.post("/api/documents", requireAuth, async (req, res) => {
+// Penalties
+app.get("/api/penalties", requireAuth, (req, res) => res.json(loadDB().penalties || []));
+app.post("/api/penalties", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
+  const db = loadDB();
+  if (!db.penalties) db.penalties = [];
+  db.penalties.push({ id: Date.now().toString(), ...req.body, createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Documents
+app.get("/api/documents", requireAuth, (req, res) => res.json(loadDB().documents || []));
+app.post("/api/documents", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
   if (!db.documents) db.documents = [];
-  const rawUrl = cleanStr(req.body.url, 400);
-  const safeUrl =
-    rawUrl && (rawUrl.startsWith("https://") || rawUrl.startsWith("http://") || rawUrl.startsWith("/"))
-      ? rawUrl
-      : "#";
-  db.documents.unshift({
-    id: Date.now().toString(),
-    title: cleanStr(req.body.title, 160),
-    url: safeUrl,
-    summary: cleanStr(req.body.summary, 400),
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.documents.push({ id: Date.now().toString(), ...req.body, createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
+// Notifications
 app.get("/api/notifications", requireAuth, (req, res) => {
-  const db = getDB();
-  const list = (db.notifications || []).filter(
-    (n) => n.userId === req.session.user.id || n.userId === "all"
-  );
-  res.json(list.slice(0, 40));
+  const db = loadDB();
+  const list = (db.notifications || []).filter(n => n.userId === req.session.user.id || n.userId === "all");
+  res.json(list.slice(0, 30));
 });
 
-app.post("/api/notifications", requireAuth, async (req, res) => {
-  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
-  if (!db.notifications) db.notifications = [];
-  db.notifications.unshift({
-    id: Date.now().toString(),
-    userId: cleanStr(req.body.userId, 60) || "all",
-    title: cleanStr(req.body.title, 160),
-    body: cleanStr(req.body.body, 1500),
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
-  res.json({ success: true });
+// Backup
+app.get("/api/backup", requireAuth, (req, res) => {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Admin only" });
+  res.json(loadDB());
 });
 
+// PWA
+app.get("/manifest.json", (req, res) => res.json({
+  name: "WFC Portal", short_name: "WFC", start_url: "/", display: "standalone", background_color: "#111", theme_color: "#d4af37",
+  icons: [{ src: "/wfc-logo.jpg", sizes: "192x192", type: "image/jpeg" }]
+}));
+
+// Roles list
 app.get("/api/roles", requireAuth, (req, res) => {
   res.json(["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL", "MEMBER"]);
 });
 
-app.post("/api/set-role", requireAuth, async (req, res) => {
-  if (!isAdmin(req.session.user.role)) return res.status(403).json({ error: "Admin only" });
-  const db = getDB();
-  const u = db.users.find((x) => x.id === cleanStr(req.body.userId, 60));
-  if (!u) return res.status(404).json({ error: "Hajapatikana" });
-  const allowed = ["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL", "MEMBER"];
-  if (!allowed.includes(req.body.role)) return res.status(400).json({ error: "Jukumu si sahihi" });
+app.post("/api/set-role", requireAuth, (req, res) => {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Admin only" });
+  const db = loadDB();
+  const u = db.users.find(x => x.id === req.body.userId);
+  if (!u) return res.status(404).json({ error: "Haijapatikana" });
   u.role = req.body.role;
-  await saveDB(db);
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Attendance report
+app.get("/api/attendance-report", requireAuth, (req, res) => {
+  const db = loadDB();
+  const list = db.attendance || [];
+  const byUser = {};
+  list.forEach(a => {
+    if (!byUser[a.userId]) byUser[a.userId] = { name: a.userName, count: 0 };
+    byUser[a.userId].count++;
+  });
+  res.json(Object.values(byUser));
+});
+
+// Election results
+app.get("/api/elections/:id/results", requireAuth, (req, res) => {
+  const db = loadDB();
+  const e = (db.elections || []).find(x => x.id === req.params.id);
+  if (!e) return res.status(404).json({ error: "Haijapatikana" });
+  const counts = {};
+  e.votes.forEach(v => { counts[v.candidate] = (counts[v.candidate] || 0) + 1; });
+  res.json({ position: e.position, results: counts, total: e.votes.length });
+});
+
+// SACCOS loans
+app.post("/api/saccos/loans", requireAuth, (req, res) => {
+  const db = loadDB();
+  if (!db.saccos) db.saccos = { shares: [], savings: [], loans: [] };
+  db.saccos.loans.push({ id: Date.now().toString(), userId: req.session.user.id, userName: req.session.user.name, amount: Number(req.body.amount), status: "PENDING", createdAt: new Date().toISOString() });
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// Notifications create
+app.post("/api/notifications", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const db = loadDB();
+  if (!db.notifications) db.notifications = [];
+  db.notifications.unshift({ id: Date.now().toString(), userId: req.body.userId || "all", title: req.body.title, body: req.body.body, createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true });
 });
 
 app.post("/api/dispatch", requireAuth, async (req, res) => {
-  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  const db = getDB();
-  const channel = cleanStr(req.body.channel, 20);
-  const to = cleanStr(req.body.to, 80);
-  const title = cleanStr(req.body.title, 160);
-  const body = cleanStr(req.body.body, 1500);
+  const db = loadDB();
+  const { channel, to, title, body } = req.body;
   const message = `${title || "WFC"}\n${body || ""}`;
   let status = "queued";
   let detail = "Imehifadhiwa";
-
   try {
     if (channel === "sms" && db.settings.smsKey && db.settings.smsUsername) {
       const r = await fetch("https://api.africastalking.com/version1/messaging", {
         method: "POST",
-        headers: {
-          apiKey: db.settings.smsKey,
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
+        headers: { apiKey: db.settings.smsKey, Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ username: db.settings.smsUsername, to, message })
       });
       detail = (await r.text()).slice(0, 280);
       status = r.ok ? "sent" : "failed";
     } else if (channel === "whatsapp" && db.settings.whatsappToken && db.settings.whatsappPhoneId) {
-      const r = await fetch(
-        `https://graph.facebook.com/v21.0/${db.settings.whatsappPhoneId}/messages`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${db.settings.whatsappToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            to: String(to).replace(/\D/g, ""),
-            type: "text",
-            text: { body: message }
-          })
-        }
-      );
+      const r = await fetch(`https://graph.facebook.com/v21.0/${db.settings.whatsappPhoneId}/messages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${db.settings.whatsappToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ messaging_product: "whatsapp", to: String(to).replace(/\D/g, ""), type: "text", text: { body: message } })
+      });
       detail = (await r.text()).slice(0, 280);
       status = r.ok ? "sent" : "failed";
     } else if (channel === "sms") {
-      detail = "Weka Africa's Talking username na API key kwenye Mipangilio.";
+      detail = "Weka Africa's Talking username na API key.";
     } else if (channel === "whatsapp") {
-      detail = "Imefunguliwa kupitia WhatsApp Web/App.";
+      detail = "Fungua WhatsApp kwa mkono, au weka token.";
     } else if (channel === "email") {
-      detail = "Imefunguliwa kwenye programu ya barua pepe.";
+      detail = "Barua pepe inafunguliwa kwenye kifaa.";
     }
   } catch (err) {
     status = "failed";
     detail = String(err.message || err).slice(0, 200);
   }
-
   if (!db.outbox) db.outbox = [];
-  db.outbox.unshift({
-    id: Date.now().toString(),
-    channel,
-    to,
-    title,
-    body,
-    status,
-    detail,
-    createdAt: new Date().toISOString()
-  });
-  await saveDB(db);
+  db.outbox.unshift({ id: Date.now().toString(), channel, to, title, body, status, detail, createdAt: new Date().toISOString() });
+  saveDB(db);
   res.json({ success: true, status, detail });
 });
 
-app.get("/api/outbox", requireAuth, (req, res) => {
-  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
-  res.json(getDB().outbox || []);
-});
+app.get("/api/outbox", requireAuth, (req, res) => res.json(loadDB().outbox || []));
 
 app.post("/api/stk", requireAuth, async (req, res) => {
-  const db = getDB();
-  const phone = cleanPhone(req.body.phone);
-  const amount = Math.max(0, Number(req.body.amount) || 0);
+  const db = loadDB();
+  const { phone, amount } = req.body;
   if (!db.settings.momoConsumerKey || !db.settings.momoConsumerSecret) {
-    return res.json({
-      ok: false,
-      detail: "Daraja haijaunganishwa. Lipa kwa namba ya WFC kisha weka namba ya muamala."
-    });
+    return res.json({ ok: false, detail: "Daraja haijaunganishwa. Lipa kwa namba ya WFC kisha weka namba ya muamala." });
   }
-  const auth = Buffer.from(
-    `${db.settings.momoConsumerKey}:${db.settings.momoConsumerSecret}`
-  ).toString("base64");
-  const tokenRes = await fetch(
-    "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
-    { headers: { Authorization: `Basic ${auth}` } }
-  );
+  const auth = Buffer.from(`${db.settings.momoConsumerKey}:${db.settings.momoConsumerSecret}`).toString("base64");
+  const tokenRes = await fetch("https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", { headers: { Authorization: `Basic ${auth}` } });
   const text = await tokenRes.text();
-  res.json({
-    ok: tokenRes.ok,
-    detail: tokenRes.ok
-      ? `Token imepatikana. Ombi la STK kwa ${phone}, TSh ${amount}.`
-      : text.slice(0, 280)
-  });
+  res.json({ ok: tokenRes.ok, detail: tokenRes.ok ? `Token imepatikana. Ombi la STK kwa ${phone}, TSh ${amount}.` : text.slice(0, 280) });
 });
 
-app.post("/api/settings", requireAuth, async (req, res) => {
-  if (!isAdmin(req.session.user.role)) return res.status(403).json({ error: "Admin only" });
-  const db = getDB();
-  const keys = [
-    "smsUsername",
-    "smsKey",
-    "whatsappToken",
-    "whatsappPhoneId",
-    "emailFrom",
-    "momoConsumerKey",
-    "momoConsumerSecret",
-    "momoShortcode"
-  ];
-  keys.forEach((k) => {
-    if (req.body[k] !== undefined) db.settings[k] = cleanStr(req.body[k], 300);
-  });
-  await saveDB(db);
+app.post("/api/settings", requireAuth, (req, res) => {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Admin only" });
+  const db = loadDB();
+  const keys = ["smsUsername", "smsKey", "whatsappToken", "whatsappPhoneId", "emailFrom", "momoConsumerKey", "momoConsumerSecret", "momoShortcode"];
+  keys.forEach(k => { if (req.body[k] !== undefined) db.settings[k] = req.body[k]; });
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.post("/api/toggle-2fa", requireAuth, async (req, res) => {
-  const db = getDB();
-  const u = db.users.find((x) => x.id === req.session.user.id);
+app.post("/api/toggle-2fa", requireAuth, (req, res) => {
+  const db = loadDB();
+  const u = db.users.find(x => x.id === req.session.user.id);
   if (!u) return res.status(404).json({ error: "Haijapatikana" });
   u.twoFactor = !u.twoFactor;
-  await saveDB(db);
-  res.json({ twoFactor: Boolean(u.twoFactor) });
-});
-
-app.post("/api/change-password", requireAuth, async (req, res) => {
-  const currentPassword = String((req.body && req.body.currentPassword) || "");
-  const newPassword = String((req.body && req.body.newPassword) || "");
-  if (newPassword.length < 6) {
-    return res.status(400).json({ error: "Nenosiri jipya liwe na angalau herufi 6" });
-  }
-  const db = getDB();
-  const u = db.users.find((x) => x.id === req.session.user.id);
-  if (!u) return res.status(404).json({ error: "Akaunti haijapatikana" });
-  const ok = await bcrypt.compare(currentPassword, u.password);
-  if (!ok) return res.status(401).json({ error: "Nenosiri la sasa si sahihi" });
-  u.password = await bcrypt.hash(newPassword, 10);
-  await saveDB(db);
-  res.json({ success: true });
+  saveDB(db);
+  res.json({ twoFactor: !!u.twoFactor });
 });
 
 app.get("/api/analytics", requireAuth, (req, res) => {
-  const db = getDB();
+  const db = loadDB();
   const regions = {};
-  db.users
-    .filter((u) => u.status === "ACTIVE")
-    .forEach((u) => {
-      regions[u.region || "Nyingine"] = (regions[u.region || "Nyingine"] || 0) + 1;
-    });
+  db.users.filter(u => u.status === "ACTIVE").forEach(u => { regions[u.region || "Nyingine"] = (regions[u.region || "Nyingine"] || 0) + 1; });
   const types = {};
-  db.payments
-    .filter((p) => p.status === "APPROVED")
-    .forEach((p) => {
-      types[p.type] = (types[p.type] || 0) + (Number(p.amount) || 0);
-    });
+  db.payments.filter(p => p.status === "APPROVED").forEach(p => { types[p.type] = (types[p.type] || 0) + (p.amount || 0); });
   res.json({
     regions: Object.entries(regions).map(([name, value]) => ({ name, value })),
     types: Object.entries(types).map(([name, value]) => ({ name, value }))
   });
 });
 
-app.get("/api/backup", requireAuth, (req, res) => {
-  if (!isAdmin(req.session.user.role)) return res.status(403).json({ error: "Admin only" });
-  const db = getDB();
-  const safeBackup = {
-    ...db,
-    users: db.users.map(sanitizeUser)
-  };
-  res.setHeader("Content-Disposition", `attachment; filename="wfc-backup-${Date.now()}.json"`);
-  res.json(safeBackup);
-});
-
-app.post("/api/demo/clear", requireAuth, async (req, res) => {
-  if (!isAdmin(req.session.user.role)) return res.status(403).json({ error: "Admin only" });
-  const db = getDB();
-  const demoIds = new Set(db.users.filter((u) => u.demo).map((u) => u.id));
-  db.users = db.users.filter((u) => !u.demo);
-  ["payments", "events", "announcements", "tickets", "attendance", "expenses", "manualIncome"].forEach((k) => {
-    if (Array.isArray(db[k])) {
-      db[k] = db[k].filter((x) => !x.demo && !demoIds.has(x.userId));
-    }
+app.post("/api/demo/clear", requireAuth, (req, res) => {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Admin only" });
+  const db = loadDB();
+  const demoIds = new Set(db.users.filter(u => u.demo).map(u => u.id));
+  db.users = db.users.filter(u => !u.demo);
+  ["payments", "events", "announcements", "tickets", "attendance"].forEach(k => {
+    if (Array.isArray(db[k])) db[k] = db[k].filter(x => !x.demo && !demoIds.has(x.userId));
   });
   db.settings.demoSeed = false;
-  await saveDB(db);
+  saveDB(db);
   res.json({ success: true });
 });
 
-app.get("/manifest.json", (req, res) =>
-  res.json({
-    name: "WFC Portal",
-    short_name: "WFC",
-    start_url: "/",
-    display: "standalone",
-    background_color: "#F8FAFC",
-    theme_color: "#F97316",
-    icons: [{ src: "/wfc-logo.jpg", sizes: "192x192", type: "image/jpeg" }]
-  })
-);
-
+// Catch-all
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
-
-initDB()
-  .then(() => {
-    app.listen(PORT, () => console.log("WFC Portal v4.0 running on port " + PORT));
-  })
-  .catch((err) => {
-    console.error("Fatal DB startup error:", err);
-    process.exit(1);
-  });
+app.listen(PORT, () => console.log("WFC running on " + PORT));
