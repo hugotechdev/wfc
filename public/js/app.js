@@ -360,7 +360,6 @@ async function load(p){
     <div class="card"><h3>Ongeza Nyaraka</h3><form id="docf"><div class="form-group"><label>Jina</label><input name="title" required></div><div class="form-group"><label>Maelezo mafupi</label><input name="summary"></div><div class="form-group"><label>URL</label><input name="url"></div><button class="btn" type="submit">Hifadhi</button></form></div>`;
     document.getElementById("docf").onsubmit = async e => { e.preventDefault(); await api("/api/documents",{method:"POST",body:Object.fromEntries(new FormData(e.target))}); load("documents"); };
   }
-  }
   if(p==="pending"){
     const m = await api("/api/members");
     const pen = m.filter(x=>x.status==="PENDING");
