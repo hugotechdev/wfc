@@ -37,6 +37,27 @@ if (!fs.existsSync(DATA_FILE)) {
 function loadDB() { return JSON.parse(fs.readFileSync(DATA_FILE, "utf8")); }
 function saveDB(db) { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); }
 
+// Ensure default Admin exists
+(function ensureAdmin() {
+  const db = loadDB();
+  const adminPhone = "0700000000";
+  if (!db.users.find(u => u.phone === adminPhone)) {
+    db.users.push({
+      id: "admin-001",
+      name: "Mwenyekiti WFC",
+      phone: adminPhone,
+      region: "Dar es Salaam",
+      password: "admin123",
+      role: "ADMIN",
+      status: "ACTIVE",
+      wfcId: "WFC-ADMIN",
+      createdAt: new Date().toISOString()
+    });
+    saveDB(db);
+    console.log("Default Admin created: 0700000000 / admin123");
+  }
+})();
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "../public")));
