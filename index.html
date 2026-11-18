@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WFC Portal V6 — Wachagga Family Community</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="app-shell">
+  <!-- Mobile Backdrop -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+
+  <!-- 1. SIDEBAR REDESIGN -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-identity">
+        <div class="brand-crest">WFC</div>
+        <div class="brand-text">
+          <h1>WFC Portal <span style="color:#fbbf24;">V6</span></h1>
+          <span data-i18n="portal_subtitle">Jumuiya ya Wanafamilia wa Wachaga</span>
+        </div>
+      </div>
+      <button class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Close Sidebar">✕</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label" data-i18n="nav_main">MENYU KUU</div>
+      <a class="nav-item active" data-view="dashboard" onclick="navigateTo('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        <span data-i18n="nav_dashboard">Dashibodi</span>
+      </a>
+      <a class="nav-item" data-view="members" onclick="navigateTo('members')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span data-i18n="nav_members">Usimamizi wa Wanachama</span>
+      </a>
+      <a class="nav-item" data-view="history" onclick="navigateTo('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span data-i18n="nav_history">Historia ya Mwanachama</span>
+      </a>
+      <a class="nav-item" data-view="contributions" onclick="navigateTo('contributions')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span data-i18n="nav_contributions">Michango & Fedha</span>
+      </a>
+      <a class="nav-item" data-view="events" onclick="navigateTo('events')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span data-i18n="nav_events">Matukio & Mikutano</span>
+      </a>
+      <a class="nav-item" data-view="leadership" onclick="navigateTo('leadership')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span data-i18n="nav_leadership">Uongozi</span>
+      </a>
+
+      <div class="nav-section-label" data-i18n="nav_records">KUMBUKUMBU & RIPOTI</div>
+      <a class="nav-item" data-view="documents" onclick="navigateTo('documents')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span data-i18n="nav_documents">Nyaraka za Wanachama</span>
+      </a>
+      <a class="nav-item" data-view="reports" onclick="navigateTo('reports')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span data-i18n="nav_reports">Ripoti za Mfumo</span>
+      </a>
+      <a class="nav-item" data-view="notifications" onclick="navigateTo('notifications')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span data-i18n="nav_notifications">Arifa (Notifications)</span>
+        <span id="sidebarNotifBadge" class="nav-badge">3</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-version-card">
+        <span>WFC Portal Enterprise</span>
+        <strong style="color:#fbbf24;">v6.0</strong>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <div class="main-wrapper">
+    <!-- TOP HEADER -->
+    <header class="top-header">
+      <div class="header-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="page-header-info">
+          <h2 id="headerPageTitle" data-i18n="nav_dashboard">Dashibodi</h2>
+          <p>Wachagga Family Community — Unified Management System</p>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- 2. Dedicated Language Switcher (English / Kiswahili) -->
+        <div class="lang-switcher" role="group" aria-label="Language Switcher">
+          <button class="lang-btn active" data-lang="sw" onclick="setLanguage('sw')">🇹🇿 Kiswahili</button>
+          <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧 English</button>
+        </div>
+
+        <!-- 8. Notification Bell in Header -->
+        <div class="header-icon-wrap">
+          <button class="notif-bell-btn" onclick="toggleDropdown('notifDropdown')" aria-label="Notifications">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="headerNotifBadge" class="notif-count-badge">3</span>
+          </button>
+          <div id="notifDropdown" class="dropdown-panel notif-dropdown">
+            <div class="dropdown-header">
+              <h4>Arifa (Notifications)</h4>
+              <button class="btn btn-sm btn-outline" onclick="markAllNotificationsRead()" data-i18n="mark_all_read">Soma Zote</button>
+            </div>
+            <div id="headerNotifList" class="notif-mini-list"></div>
+            <div style="padding:10px;text-align:center;background:#f8fafc;">
+              <button class="btn btn-sm btn-primary" style="width:100%;" onclick="navigateTo('notifications');toggleDropdown('notifDropdown');" data-i18n="view_all_notifs">Angalia Arifa Zote</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. User Profile Dropdown & Direct Logout Button -->
+        <div class="user-controls">
+          <div class="profile-wrap" style="position:relative;">
+            <button class="profile-trigger" onclick="toggleDropdown('profileDropdown')">
+              <div class="user-avatar">WM</div>
+              <div class="user-meta">
+                <span class="user-name">Wilfred Mushi</span>
+                <span class="user-role">Mwenyekiti Mkuu</span>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="profileDropdown" class="dropdown-panel">
+              <button class="dropdown-item" onclick="openProfileModal('profile')">👤 <span data-i18n="my_profile">My Profile</span></button>
+              <button class="dropdown-item" onclick="openProfileModal('settings')">⚙️ <span data-i18n="settings">Settings</span></button>
+              <button class="dropdown-item" onclick="openProfileModal('password')">🔑 <span data-i18n="change_password">Change Password</span></button>
+              <button class="dropdown-item danger" onclick="handleLogout()">🚪 <span data-i18n="logout">Logout</span></button>
+            </div>
+          </div>
+
+          <button class="header-logout-btn" onclick="handleLogout()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span data-i18n="logout">Logout</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT BODY -->
+    <main class="content-body">
+
+      <!-- 9. DASHBOARD VIEW -->
+      <section id="view-dashboard" class="view-section active">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label" data-i18n="kpi_total_members">Jumla ya Wanachama</div>
+              <div class="kpi-value" id="kpiTotalMembers">0</div>
+              <div class="kpi-sub">+12% kutoka robo iliyopita</div>
+            </div>
+            <div class="kpi-icon" style="background:#ecfdf5;color:#064e3b;">👥</div>
+          </div>
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label" data-i18n="kpi_active_members">Wanachama Hai (Active)</div>
+              <div class="kpi-value" id="kpiActiveMembers">0</div>
+              <div class="kpi-sub">Wanaolipa ada kwa wakati</div>
+            </div>
+            <div class="kpi-icon" style="background:#d1fae5;color:#059669;">✅</div>
+          </div>
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label" data-i18n="kpi_new_month">Wapya Mwezi Huu</div>
+              <div class="kpi-value" id="kpiNewMembers">0</div>
+              <div class="kpi-sub">Novemba 2026</div>
+            </div>
+            <div class="kpi-icon" style="background:#e0f2fe;color:#0284c7;">🆕</div>
+          </div>
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label" data-i18n="kpi_total_contrib">Jumla ya Michango</div>
+              <div class="kpi-value" id="kpiTotalContrib" style="font-size:20px;">TZS 0</div>
+              <div class="kpi-sub">M-Pesa, CRDB & Snippe</div>
+            </div>
+            <div class="kpi-icon" style="background:#fef3c7;color:#d97706;">💰</div>
+          </div>
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label" data-i18n="kpi_upcoming_events">Matukio Yajayo</div>
+              <div class="kpi-value" id="kpiUpcomingEvents">0</div>
+              <div class="kpi-sub">Mkutano Mkuu Desemba</div>
+            </div>
+            <div class="kpi-icon" style="background:#f3e8ff;color:#7c3aed;">📅</div>
+          </div>
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label" data-i18n="kpi_pending_approvals">Wanaosubiri Idhini</div>
+              <div class="kpi-value" id="kpiPendingApprovals">0</div>
+              <div class="kpi-sub" style="color:#d97706;">Uhakiki wa ukoo</div>
+            </div>
+            <div class="kpi-icon" style="background:#fee2e2;color:#dc2626;">⏳</div>
+          </div>
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label" data-i18n="kpi_notif_summary">Muhtasari wa Arifa</div>
+              <div class="kpi-value" id="kpiNotifSummary" style="font-size:18px;">0 / 0</div>
+              <div class="kpi-sub"><a href="#" onclick="navigateTo('notifications');return false;" style="color:#064e3b;">Fungua Arifa →</a></div>
+            </div>
+            <div class="kpi-icon" style="background:#f1f5f9;color:#0f172a;">🔔</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card col-span-4">
+            <h3 class="card-title" style="margin-bottom:14px;" data-i18n="chart_growth">Ukuaji wa Wanachama (2026)</h3>
+            <canvas id="growthChart" height="210"></canvas>
+          </div>
+          <div class="chart-card col-span-4">
+            <h3 class="card-title" style="margin-bottom:14px;" data-i18n="chart_contrib">Makusanyo ya Michango kwa Mwezi (TZS)</h3>
+            <canvas id="contribChart" height="210"></canvas>
+          </div>
+          <div class="chart-card col-span-4">
+            <h3 class="card-title" style="margin-bottom:14px;" data-i18n="chart_region">Wanachama kwa Mikoa</h3>
+            <canvas id="regionChart" height="210"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Wanachama Waliosajiliwa Hivi Karibuni</h3>
+            <button class="btn btn-primary btn-sm" onclick="openRegisterModal()">+ <span data-i18n="register_member">Sajili Mwanachama Mpya</span></button>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr><th>Mwanachama</th><th>Ukoo & Asili</th><th>Mkoa</th><th>Hali</th><th>Kitendo</th></tr>
+              </thead>
+              <tbody id="dashboardRecentMembers"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 & 10. MEMBER MANAGEMENT VIEW -->
+      <section id="view-members" class="view-section">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="nav_members">Usimamizi wa Wanachama</h3>
+            <button class="btn btn-primary" onclick="openRegisterModal()">+ <span data-i18n="register_member">Sajili Mwanachama Mpya</span></button>
+          </div>
+          <div class="card-body">
+            <!-- Quick Filter Pills -->
+            <div class="filter-pills">
+              <button class="filter-pill active" data-filter="all" onclick="setMemberFilter('all', this)" data-i18n="filter_all">Wote</button>
+              <button class="filter-pill" data-filter="active" onclick="setMemberFilter('active', this)" data-i18n="filter_active">Wanachama Hai</button>
+              <button class="filter-pill" data-filter="inactive" onclick="setMemberFilter('inactive', this)" data-i18n="filter_inactive">Wasio Hai (Inactive)</button>
+              <button class="filter-pill" data-filter="leaders" onclick="setMemberFilter('leaders', this)" data-i18n="filter_leaders">Viongozi</button>
+              <button class="filter-pill" data-filter="new" onclick="setMemberFilter('new', this)" data-i18n="filter_new">Wanachama Wapya</button>
+            </div>
+
+            <!-- Advanced Search -->
+            <div class="advanced-search-grid">
+              <input type="text" id="searchName" class="form-control" placeholder="Tafuta Jina (Name)..." oninput="renderMembersTable()">
+              <input type="text" id="searchMemNo" class="form-control" placeholder="Membership Number..." oninput="renderMembersTable()">
+              <input type="text" id="searchPhone" class="form-control" placeholder="Phone Number..." oninput="renderMembersTable()">
+              <input type="text" id="searchMkoa" class="form-control" placeholder="Mkoa..." oninput="renderMembersTable()">
+              <input type="text" id="searchWilaya" class="form-control" placeholder="Wilaya..." oninput="renderMembersTable()">
+              <input type="text" id="searchUkoo" class="form-control" placeholder="Ukoo (Clan)..." oninput="renderMembersTable()">
+              <select id="searchStatus" class="form-control" onchange="renderMembersTable()">
+                <option value="">Membership Status (All)</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Pending">Pending</option>
+              </select>
+              <button class="btn btn-outline" onclick="resetMemberSearch()">Futa Vichujio</button>
+            </div>
+
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Jina Kamili</th>
+                    <th>Membership No</th>
+                    <th>Ukoo & Eneo la Asili</th>
+                    <th>Mkoa & Wilaya</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Kitendo</th>
+                  </tr>
+                </thead>
+                <tbody id="membersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. MEMBER HISTORY MODULE -->
+      <section id="view-history" class="view-section">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="nav_history">Historia ya Mwanachama (Member History)</h3>
+            <div style="min-width:290px;">
+              <select id="historyMemberSelect" class="form-control" onchange="renderMemberHistoryModule()"></select>
+            </div>
+          </div>
+          <div class="card-body" id="memberHistoryContainer"></div>
+        </div>
+      </section>
+
+      <!-- CONTRIBUTIONS VIEW -->
+      <section id="view-contributions" class="view-section">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="nav_contributions">Michango & Fedha</h3>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr><th>Risiti</th><th>Mwanachama</th><th>Aina ya Mchango</th><th>Kiasi</th><th>Salio</th><th>Tarehe</th><th>Hali</th><th>Kitendo</th></tr>
+              </thead>
+              <tbody id="contributionsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- EVENTS VIEW -->
+      <section id="view-events" class="view-section">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="nav_events">Matukio & Mikutano</h3>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr><th>Jina la Tukio</th><th>Tarehe</th><th>Mahali</th><th>Mahudhurio</th><th>Hali</th><th>Kitendo</th></tr>
+              </thead>
+              <tbody id="eventsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- LEADERSHIP VIEW -->
+      <section id="view-leadership" class="view-section">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="nav_leadership">Uongozi wa WFC</h3>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr><th>Kiongozi</th><th>Wadhifa</th><th>Ukoo</th><th>Muhula</th><th>Hali</th><th>Kitendo</th></tr>
+              </thead>
+              <tbody id="leadershipTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11. DOCUMENTS MODULE -->
+      <section id="view-documents" class="view-section">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="nav_documents">Nyaraka za Wanachama (Documents Module)</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <select id="docCategoryFilter" class="form-control" onchange="renderDocuments()">
+                <option value="ALL">Aina Zote za Nyaraka</option>
+                <option value="National ID">National ID</option>
+                <option value="Birth Certificate">Birth Certificate</option>
+                <option value="Passport Photo">Passport Photo</option>
+                <option value="Membership Forms">Membership Forms</option>
+                <option value="Other Documents">Other Documents</option>
+              </select>
+              <button class="btn btn-primary" onclick="openUploadDocModal()">+ <span data-i18n="upload_doc">Pakia Nyaraka Mpya</span></button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr><th>Mwanachama</th><th>Aina ya Nyaraka</th><th>Jina la Faili</th><th>Hali</th><th>Vitendo (View / Download / Replace / Delete)</th></tr>
+              </thead>
+              <tbody id="documentsTableBody"></tbody>
+            </table>
+          </div>
+          <input type="file" id="hiddenReplaceInput" style="display:none;" onchange="handleReplaceFileSelected(this)">
+        </div>
+      </section>
+
+      <!-- 7. REPORTS MODULE -->
+      <section id="view-reports" class="view-section">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="nav_reports">Ripoti za Mfumo (Reports Module)</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" onclick="exportReportPDF()">📄 <span data-i18n="export_pdf">Export PDF</span></button>
+              <button class="btn btn-primary btn-sm" onclick="exportReportExcel()">📊 <span data-i18n="export_excel">Export Excel</span></button>
+              <button class="btn btn-gold btn-sm" onclick="window.print()">🖨️ <span data-i18n="print_report">Print Report</span></button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="reportCategoryTabs" class="filter-pills">
+              <button class="filter-pill active" onclick="selectReportCategory('membership', this)">Membership Reports</button>
+              <button class="filter-pill" onclick="selectReportCategory('financial', this)">Financial Reports</button>
+              <button class="filter-pill" onclick="selectReportCategory('location', this)">Location Reports</button>
+              <button class="filter-pill" onclick="selectReportCategory('event', this)">Event Reports</button>
+              <button class="filter-pill" onclick="selectReportCategory('leadership', this)">Leadership Reports</button>
+            </div>
+            <div id="reportOutputContainer"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. NOTIFICATIONS FULL VIEW -->
+      <section id="view-notifications" class="view-section">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="nav_notifications">Kituo cha Arifa (Notifications)</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <select id="notifTypeFilter" class="form-control" onchange="renderNotifications()">
+                <option value="ALL">Aina Zote za Arifa</option>
+                <option value="New Member Registration">New Member Registration</option>
+                <option value="Contribution Received">Contribution Received</option>
+                <option value="Event Reminder">Event Reminder</option>
+                <option value="Membership Renewal Reminder">Membership Renewal Reminder</option>
+                <option value="System Announcements">System Announcements</option>
+              </select>
+              <button class="btn btn-primary" onclick="markAllNotificationsRead()" data-i18n="mark_all_read">Soma Zote</button>
+            </div>
+          </div>
+          <div id="allNotificationsList"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- 4. MEMBER REGISTRATION MODAL -->
+<div id="registerModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 data-i18n="register_member">Sajili Mwanachama Mpya wa WFC</h3>
+      <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+    </div>
+    <form id="regForm" onsubmit="submitMemberRegistration(event)" style="display:flex;flex-direction:column;overflow:hidden;flex:1;">
+      <div class="modal-body">
+        <div class="form-section-title">1. Basic Information</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Full Name *</label><input type="text" id="regFullName" class="form-control" required placeholder="Mfano: Josephat Elia Mushi"></div>
+          <div class="form-group"><label>Gender *</label><select id="regGender" class="form-control" required><option value="Male">Male (Mwanaume)</option><option value="Female">Female (Mwanamke)</option></select></div>
+          <div class="form-group"><label>Date of Birth *</label><input type="date" id="regDob" class="form-control" required></div>
+          <div class="form-group"><label>Phone Number *</label><input type="tel" id="regPhone" class="form-control" required placeholder="+255 7XX XXX XXX"></div>
+          <div class="form-group"><label>Email Address</label><input type="email" id="regEmail" class="form-control" placeholder="jina@example.com"></div>
+          <div class="form-group"><label>National ID Number (NIDA) *</label><input type="text" id="regNationalId" class="form-control" required placeholder="19900101-XXXXX-XXXXX-XX"></div>
+          <div class="form-group"><label>Marital Status *</label><select id="regMarital" class="form-control"><option value="Married">Married</option><option value="Single">Single</option><option value="Widowed">Widowed</option></select></div>
+        </div>
+
+        <div class="form-section-title">2. Chagga Identity Information (Utambulisho wa Mchaga)</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Mkoa *</label><input type="text" id="regMkoa" class="form-control" required placeholder="Mfano: Kilimanjaro / Dar es Salaam"></div>
+          <div class="form-group"><label>Wilaya *</label><input type="text" id="regWilaya" class="form-control" required placeholder="Mfano: Hai / Moshi / Rombo"></div>
+          <div class="form-group"><label>Tarafa *</label><input type="text" id="regTarafa" class="form-control" required placeholder="Mfano: Machame / Vunjo"></div>
+          <div class="form-group"><label>Kata *</label><input type="text" id="regKata" class="form-control" required></div>
+          <div class="form-group"><label>Kijiji *</label><input type="text" id="regKijiji" class="form-control" required></div>
+          <div class="form-group"><label>Ukoo (Clan) *</label><input type="text" id="regUkoo" class="form-control" required placeholder="Mfano: Mushi, Massawe, Swai, Lyimo, Kimaro"></div>
+          <div class="form-group"><label>Kabila Dogo (ikiwa lipo)</label><input type="text" id="regKabilaDogo" class="form-control" placeholder="Mfano: Wamachame, Wamarangu, Warombo"></div>
+          <div class="form-group">
+            <label>Eneo la Asili *</label>
+            <input list="eneoAsiliList" id="regEneoAsili" class="form-control" required placeholder="Chagua au andika eneo...">
+            <datalist id="eneoAsiliList">
+              <option value="Machame"><option value="Marangu"><option value="Rombo"><option value="Kibosho"><option value="Uru"><option value="Old Moshi"><option value="Mwika"><option value="Kilema"><option value="Mamba"><option value="Kirua Vunjo"><option value="Siha">
+            </datalist>
+          </div>
+          <div class="form-group"><label>Jina la Baba *</label><input type="text" id="regBaba" class="form-control" required></div>
+          <div class="form-group"><label>Jina la Babu *</label><input type="text" id="regBabu" class="form-control" required></div>
+          <div class="form-group"><label>Mahali Alipozaliwa *</label><input type="text" id="regBirthPlace" class="form-control" required placeholder="Mfano: KCMC Moshi / Machame"></div>
+        </div>
+
+        <div class="form-section-title">3. Membership Information</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Membership Number (Auto Generated)</label><input type="text" id="regMemNumber" class="form-control" readonly></div>
+          <div class="form-group"><label>Membership Category *</label><select id="regCategory" class="form-control"><option value="Ordinary Member">Ordinary Member</option><option value="Founding Member">Founding Member</option><option value="Youth Member">Youth Member</option><option value="Diaspora Member">Diaspora Member</option><option value="Elder / Mshauri">Elder / Mshauri</option></select></div>
+          <div class="form-group"><label>Registration Date *</label><input type="date" id="regDate" class="form-control" required></div>
+          <div class="form-group"><label>Membership Status *</label><select id="regStatus" class="form-control"><option value="Active">Active</option><option value="Pending">Pending</option><option value="Inactive">Inactive</option></select></div>
+          <div class="form-group">
+            <label>Profile Photo</label>
+            <input type="file" accept="image/*" class="form-control" onchange="previewRegPhoto(this)">
+            <img id="regPhotoPreview" style="display:none;width:54px;height:54px;border-radius:50%;object-fit:cover;margin-top:6px;" alt="Preview">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('registerModal')">Ghairi</button>
+        <button type="submit" class="btn btn-primary">Hifadhi Mwanachama</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 5. VIEW DETAILS MODAL -->
+<div id="viewDetailsModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="viewDetailsTitle">Maelezo ya Kina</h3>
+      <button class="modal-close" onclick="closeModal('viewDetailsModal')">✕</button>
+    </div>
+    <div class="modal-body" id="viewDetailsBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('viewDetailsModal')">Funga</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD DOCUMENT MODAL -->
+<div id="uploadDocModal" class="modal-overlay">
+  <div class="modal-box modal-sm">
+    <div class="modal-header">
+      <h3>Pakia Nyaraka ya Mwanachama</h3>
+      <button class="modal-close" onclick="closeModal('uploadDocModal')">✕</button>
+    </div>
+    <form onsubmit="submitNewDocument(event)">
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="form-group"><label>Chagua Mwanachama</label><select id="docMemberSelect" class="form-control" required></select></div>
+        <div class="form-group">
+          <label>Aina ya Nyaraka</label>
+          <select id="docTypeSelect" class="form-control" required>
+            <option value="National ID">National ID</option>
+            <option value="Birth Certificate">Birth Certificate</option>
+            <option value="Passport Photo">Passport Photo</option>
+            <option value="Membership Forms">Membership Forms</option>
+            <option value="Other Documents">Other Documents</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Chagua Faili</label><input type="file" id="docFileInput" class="form-control" required></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('uploadDocModal')">Ghairi</button>
+        <button type="submit" class="btn btn-primary">Pakia Nyaraka</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- USER PROFILE / SETTINGS / PASSWORD MODAL -->
+<div id="profileModal" class="modal-overlay">
+  <div class="modal-box modal-sm">
+    <div class="modal-header">
+      <h3 id="profileModalTitle">My Profile</h3>
+      <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="profileTabContent">
+        <div class="detail-kv-grid">
+          <div class="detail-kv"><span>Jina</span><strong>Mhandisi Wilfred Mushi</strong></div>
+          <div class="detail-kv"><span>Wadhifa</span><strong>Mwenyekiti Mkuu / Admin</strong></div>
+          <div class="detail-kv"><span>Barua Pepe</span><strong>wilfred.mushi@wfc.or.tz</strong></div>
+          <div class="detail-kv"><span>Ukoo & Asili</span><strong>Mushi — Machame</strong></div>
+        </div>
+      </div>
+      <div id="settingsTabContent" style="display:none;">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Lugha Chaguomsingi (Default Language)</label>
+          <select class="form-control" onchange="setLanguage(this.value)">
+            <option value="sw">Kiswahili</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Arifa za Barua Pepe & SMS</label>
+          <select class="form-control"><option>Washa Arifa Zote (Enabled)</option><option>Arifa Muhimu Pekee</option></select>
+        </div>
+      </div>
+      <div id="passwordTabContent" style="display:none;">
+        <div class="form-group" style="margin-bottom:10px;"><label>Nenosiri la Sasa (Current Password)</label><input type="password" class="form-control" placeholder="••••••••"></div>
+        <div class="form-group" style="margin-bottom:10px;"><label>Nenosiri Jipya (New Password)</label><input type="password" class="form-control" placeholder="••••••••"></div>
+        <button class="btn btn-primary" style="width:100%;" onclick="closeModal('profileModal');showToast('Nenosiri limebadilishwa kikamilifu!');">Hifadhi Nenosiri Jipya</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('profileModal')">Funga</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toastBox" class="toast"></div>
+
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
