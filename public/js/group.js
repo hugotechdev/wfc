@@ -1,7 +1,7 @@
 "use strict";
 
 let groupProfile = {
-  name: "Wachagga Community Family", shortName: "WFC", slogan: "Umoja wa Wachagga, nguvu ya familia",
+  name: "Wachagga Community Family", shortName: "WFC", slogan: "Stand Up It's Not Over",
   logo: "/assets/wachagga-logo.jpg?v=ebb0f8240bd5", description: "", rules: "", phone: "",
   registrationFee: 0, monthlyFee: 0, paymentNumbers: {}
 };
@@ -40,7 +40,7 @@ function applyGroupProfile(group) {
     ? `${document.body.dataset.pageTitle} — ${group.name}` : group.name;
   for (const el of document.querySelectorAll("[data-group-text]")) {
     const key = el.dataset.groupText;
-    if (key === "name" || key === "shortName") el.translate = false;
+    if (key === "name" || key === "shortName" || key === "slogan") el.translate = false;
     el.textContent = key === "payments" ? paymentInstructions(group) : group[key] || "";
   }
   applyGroupLogos(document, group);

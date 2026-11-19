@@ -145,7 +145,7 @@ function showLogin() {
         <div class="studio-orbit-ring"></div><div class="studio-orbit-core">${groupLogo("studio-orbit-logo")}</div>
       </div>
       <div class="signin-brand-copy">
-            <h2>${escapeHtml(groupProfile.slogan || groupProfile.name)}</h2>
+            <h2 translate="no">${escapeHtml(groupProfile.slogan || groupProfile.name)}</h2>
       </div>
     </section>
     <div class="container">
@@ -279,7 +279,7 @@ async function showDash() {
           ${groupLogo("sidebar-group-logo")}
           <div class="sidebar-brand-text">
             <strong translate="no">${escapeHtml(groupProfile.name)}</strong>
-            <span data-group-text="shortName"></span>
+            <span data-group-text="slogan"></span>
           </div>
         </div>
         <button class="collapse-btn" id="collapseBtn" type="button" aria-label="Kunja au fungua menyu" aria-expanded="${!collapsed}">
@@ -305,7 +305,7 @@ async function showDash() {
           <button class="menu-btn" id="menuBtn" type="button" aria-controls="side" aria-expanded="false" aria-label="Menyu"><span aria-hidden="true" class="mobile-menu-bars"></span></button>
           <div class="topbar-title-group">
             <strong id="pt">Dashibodi</strong>
-            <span class="topbar-sub">${escapeHtml(groupProfile.name)} · <span>Ofisi ya kidijitali</span></span>
+            <span class="topbar-sub"><span translate="no">${escapeHtml(groupProfile.name)}</span>${groupProfile.slogan ? ` · <span translate="no">${escapeHtml(groupProfile.slogan)}</span>` : ""}</span>
           </div>
         </div>
         <div class="topbar-actions">

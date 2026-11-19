@@ -2,10 +2,12 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createHash } = require("node:crypto");
 
+const OLD_WACHAGGA_SLOGAN = "Umoja wa Wachagga, nguvu ya familia";
+
 const DEFAULT_GROUP = {
   name: "Wachagga Community Family",
   shortName: "WFC",
-  slogan: "Umoja wa Wachagga, nguvu ya familia",
+  slogan: "Stand Up It's Not Over",
   description: "Ofisi ya kidijitali ya wanachama, michango na matukio.",
   rules: "",
   phone: "",
@@ -24,6 +26,8 @@ function readGroup(db) {
   return {
     ...DEFAULT_GROUP,
     ...stored,
+    slogan: (stored.shortName ?? DEFAULT_GROUP.shortName) === "WFC" && stored.slogan === OLD_WACHAGGA_SLOGAN
+      ? DEFAULT_GROUP.slogan : (stored.slogan ?? DEFAULT_GROUP.slogan),
     logo: oldLogo ? DEFAULT_GROUP.logo : (stored.logo ?? DEFAULT_GROUP.logo),
     paymentNumbers: { ...DEFAULT_GROUP.paymentNumbers, ...stored.paymentNumbers },
     modules: { ...DEFAULT_GROUP.modules, ...stored.modules }
