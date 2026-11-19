@@ -12,7 +12,11 @@ window.googleTranslateElementInit = function () {
     const select = host.querySelector("select");
     if (!select) return false;
     select.setAttribute("aria-label", "Kiswahili / English");
-    if (select.options[0]?.value === "") select.options[0].textContent = "Kiswahili / English";
+    select.parentElement.classList.add("language-control");
+    const labels = { "": "Lugha", sw: "Kiswahili", en: "English" };
+    for (const option of select.options) {
+      if (Object.hasOwn(labels, option.value)) option.textContent = labels[option.value];
+    }
     return true;
   };
   if (!labelControl()) {
