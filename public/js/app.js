@@ -142,7 +142,7 @@ function showLogin() {
   app.innerHTML = `<div class="auth-page signin-page"><div class="auth-language" id="authLanguage"></div>
     <section class="signin-brand" aria-label="Utambulisho wa kikundi">
       <div class="studio-orbit" aria-hidden="true">
-        <div class="studio-orbit-ring"></div><div class="studio-orbit-core">${escapeHtml(groupProfile.shortName.slice(0, 7))}</div>
+        <div class="studio-orbit-ring"></div><div class="studio-orbit-core">${groupLogo("studio-orbit-logo")}</div>
       </div>
       <div class="signin-brand-copy">
             <h2>${escapeHtml(groupProfile.slogan || groupProfile.name)}</h2>
@@ -566,7 +566,7 @@ async function load(p) {
       <div class="dashboard-studio">
       <section class="hero-band overview-hero">
         <div class="studio-orbit hero-orbit" aria-hidden="true">
-          <div class="studio-orbit-ring"></div><div class="studio-orbit-core">${escapeHtml(groupProfile.shortName.slice(0, 7))}</div>
+          <div class="studio-orbit-ring"></div><div class="studio-orbit-core">${groupLogo("studio-orbit-logo")}</div>
         </div>
         <div>
           <span class="pill">${d.user.status === "ACTIVE" ? "Mwanachama hai" : escapeHtml(d.user.status)}</span>
@@ -709,6 +709,7 @@ async function load(p) {
         </div>
       </div></div>`;
 
+    applyGroupLogos(c);
     if (window.ApexCharts) {
       const base = apexBaseOptions();
       if (fin) {

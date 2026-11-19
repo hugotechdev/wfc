@@ -15,6 +15,25 @@ function paymentInstructions(group) {
     || "Wasiliana na uongozi kupata maelekezo ya malipo.";
 }
 
+function applyGroupLogos(container, group = groupProfile) {
+  for (const slot of container.querySelectorAll("[data-group-logo]")) {
+    if (!group.logo) {
+      slot.textContent = group.shortName;
+      continue;
+    }
+    const current = slot.firstElementChild;
+    if (current?.getAttribute("src") === group.logo && current.alt === group.name) continue;
+    const img = new Image();
+    img.alt = group.name;
+    img.decoding = "async";
+    img.onerror = () => {
+      if (slot.firstElementChild === img) slot.textContent = groupProfile.shortName;
+    };
+    img.src = group.logo;
+    slot.replaceChildren(img);
+  }
+}
+
 function applyGroupProfile(group) {
   groupProfile = group;
   document.title = document.body.dataset.pageTitle
@@ -24,14 +43,7 @@ function applyGroupProfile(group) {
     if (key === "name" || key === "shortName") el.translate = false;
     el.textContent = key === "payments" ? paymentInstructions(group) : group[key] || "";
   }
-  for (const slot of document.querySelectorAll("[data-group-logo]")) {
-    slot.textContent = group.shortName;
-    if (!group.logo) continue;
-    const img = new Image();
-    img.alt = group.name;
-    img.onload = () => slot.replaceChildren(img);
-    img.src = group.logo;
-  }
+  applyGroupLogos(document, group);
   for (const section of document.querySelectorAll("[data-group-optional]")) {
     section.hidden = !group[section.dataset.groupOptional];
   }
