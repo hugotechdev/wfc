@@ -2,6 +2,9 @@ const express = require("express");
 const session = require("express-session");
 const path = require("path");
 const fs = require("fs");
+const { jsPDF } = require("jspdf");
+const QRCode = require("qrcode");
+const { DEFAULT_GROUP, readGroup, updateGroup } = require("./group");
 const { randomBytes, scryptSync, timingSafeEqual } = require("node:crypto");
 
 function hashPassword(password) {
@@ -19,7 +22,7 @@ function matchPassword(user, password) {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_DIR = path.join(__dirname, "../data");
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "../data");
 const DATA_FILE = path.join(DATA_DIR, "db.json");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -32,98 +35,83 @@ const defaultDB = {
   announcements: [],
   supportTickets: [],
   attendance: [],
-  settings: {
-    registrationFee: 1000,
-    entryFee: 50000,
-    monthlyFee: 10000,
-    emergencyFee: 60000,
-    latePenalty: 2000,
-    paymentNumbers: { mpesa: "0755 000 888", tigo: "0715 000 888", airtel: "0785 000 888", crdb: "0150889944200" }
-  }
+  group: DEFAULT_GROUP,
+  settings: {}
 };
 
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify(defaultDB, null, 2));
+if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify(defaultDB, null, 2), { mode: 0o600 });
 
 function loadDB() { return JSON.parse(fs.readFileSync(DATA_FILE, "utf8")); }
-function saveDB(db) { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); }
+function saveDB(db) {
+  const temporary = DATA_FILE + ".tmp";
+  fs.writeFileSync(temporary, JSON.stringify(db, null, 2), { mode: 0o600 });
+  fs.renameSync(temporary, DATA_FILE);
+}
+
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret || sessionSecret.length < 32) throw new Error("Set SESSION_SECRET to a unique random value of at least 32 characters.");
 
 (function ensureAdmin() {
   const db = loadDB();
-  if (!db.users.find(u => u.phone === "0700000000")) {
-    db.users.push({
-      id: "admin-001", name: "Mwenyekiti WFC", phone: "0700000000", region: "Dar es Salaam",
-      password: "admin123", role: "ADMIN", status: "ACTIVE", wfcId: "WFC-ADMIN",
-      family: { head: "Mwenyekiti WFC", spouse: "", children: [] },
-      profession: "Kiongozi", createdAt: new Date().toISOString()
-    });
-    saveDB(db);
+  if (db.users.some(user => user.role === "ADMIN")) return;
+  const phone = process.env.ADMIN_PHONE?.trim();
+  const password = process.env.ADMIN_PASSWORD;
+  if (!phone || !password || password.length < 12 || password.length > 128 || db.users.some(user => user.phone === phone)) {
+    throw new Error("Set a unique ADMIN_PHONE and ADMIN_PASSWORD (12–128 characters) to create the administrator.");
   }
-})();
-
-(function seedDemo() {
-  const db = loadDB();
-  if (db.settings && db.settings.demoSeed === false) return;
-  let changed = false;
-  const ago = (days) => new Date(Date.now() - days * 86400000).toISOString();
-  const people = [
-    { id: "demo-amina", name: "Amina Swai", phone: "0711000001", region: "Dar es Salaam", password: "demo123", role: "MEMBER", status: "ACTIVE", wfcId: "WFC-0145", profession: "Muuguzi", family: { head: "Amina Swai", spouse: "Godson Swai", children: ["Nuru", "Eli"] }, createdAt: ago(140) },
-    { id: "demo-john", name: "John Mushi", phone: "0711000002", region: "Moshi", password: "demo123", role: "TREASURER", status: "ACTIVE", wfcId: "WFC-0088", profession: "Mhasibu", family: { head: "John Mushi", spouse: "", children: [] }, createdAt: ago(400) },
-    { id: "demo-neema", name: "Neema Lyimo", phone: "0711000003", region: "Arusha", password: "demo123", role: "MEMBER", status: "PENDING", wfcId: null, profession: "", family: { head: "Neema Lyimo", spouse: "", children: [] }, createdAt: ago(3) },
-    { id: "demo-baraka", name: "Baraka Kimaro", phone: "0711000004", region: "Kilimanjaro", password: "demo123", role: "SECRETARY", status: "ACTIVE", wfcId: "WFC-0102", profession: "Mwalimu", family: { head: "Baraka Kimaro", spouse: "Aika", children: ["Imani"] }, createdAt: ago(220) },
-    { id: "demo-sarah", name: "Sarah Mrema", phone: "0711000005", region: "Tanga", password: "demo123", role: "MEMBER", status: "SUSPENDED", wfcId: "WFC-0119", profession: "Mfanyabiashara", family: { head: "Sarah Mrema", spouse: "", children: [] }, createdAt: ago(300) }
-  ];
-  people.forEach((p) => {
-    if (!db.users.find((u) => u.id === p.id || u.phone === p.phone)) {
-      db.users.push({ ...p, demo: true, paymentProof: "DEMO" });
-      changed = true;
-    }
+  db.users.push({
+    id: "admin-001", name: process.env.ADMIN_NAME || "Msimamizi", phone,
+    passwordHash: hashPassword(password), role: "ADMIN", status: "ACTIVE", wfcId: null,
+    family: {}, createdAt: new Date().toISOString()
   });
-  const extras = {
-    payments: [
-      { id: "demo-pay-1", userId: "demo-amina", userName: "Amina Swai", type: "Ada ya mwezi", amount: 10000, transactionId: "DEMO-MP-1001", status: "APPROVED", receiptNo: "RCP-DEMO1", createdAt: ago(12) },
-      { id: "demo-pay-2", userId: "demo-john", userName: "John Mushi", type: "Dharura", amount: 60000, transactionId: "DEMO-MP-1002", status: "APPROVED", receiptNo: "RCP-DEMO2", createdAt: ago(30) },
-      { id: "demo-pay-3", userId: "demo-baraka", userName: "Baraka Kimaro", type: "Ada ya mwezi", amount: 10000, transactionId: "DEMO-MP-1003", status: "PENDING", createdAt: ago(1) }
-    ],
-    expenses: [
-      { id: "demo-exp-1", title: "Kukodi ukumbi", amount: 25000, category: "Matukio", note: "Mkutano mkuu", createdAt: ago(20), demo: true },
-      { id: "demo-exp-2", title: "Msaada wa msiba", amount: 50000, category: "Misaada", note: "Familia ya Mushi", createdAt: ago(45), demo: true }
-    ],
-    manualIncome: [
-      { id: "demo-inc-1", title: "Mchango wa mgeni", amount: 15000, source: "Mgeni", note: "Festival", createdAt: ago(10), demo: true }
-    ],
-    events: [
-      { id: "demo-ev-1", type: "Harusi", title: "Harusi ya Familia Swai", location: "Kibo Hall, Moshi", ticketPrice: 20000, poster: "", public: true, status: "ACTIVE", raisedAmount: 0, reportedBy: "Ofisi", createdAt: ago(4) },
-      { id: "demo-ev-2", type: "Festival", title: "WFC Festival ya Mwaka", location: "Mnazi Mmoja, Dar es Salaam", ticketPrice: 10000, poster: "", public: true, status: "ACTIVE", raisedAmount: 0, reportedBy: "Ofisi", createdAt: ago(8) }
-    ],
-    announcements: [
-      { id: "demo-an-1", title: "Mkutano mkuu mwezi huu", body: "Wanachama wote hai wanakutana kujadili ada na miradi. Weka tiketi yako mapema.", link: "/#matukio", author: "Katibu", createdAt: ago(1) },
-      { id: "demo-an-2", title: "Ada ya mwezi inakamilika", body: "TSh 10,000 kwa kila mwanachama hai. Wasilisha namba ya muamala ndani ya portal.", link: "/app", author: "Mhazini", createdAt: ago(2) },
-      { id: "demo-an-3", title: "Jiunge na directory ya taaluma", body: "Weka kazi yako ili wanachama waweze kukutana kwa msaada wa kitaalamu.", link: "/app", author: "Ofisi", createdAt: ago(6) }
-    ]
-  };
-  Object.entries(extras).forEach(([key, rows]) => {
-    if (!db[key]) db[key] = [];
-    rows.forEach((row) => {
-      if (!db[key].find((x) => x.id === row.id)) {
-        db[key].push({ ...row, demo: true });
-        changed = true;
-      }
-    });
-  });
-  if (!db.contacts) db.contacts = [];
-  if (changed) saveDB(db);
+  saveDB(db);
 })();
 
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "../public")));
-app.use(session({ secret: process.env.SESSION_SECRET || "wfc-secret", resave: false, saveUninitialized: false }));
+app.use(express.static(path.join(__dirname, "../public"), { index: false }));
+if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
+app.use(session({
+  name: "group.sid", secret: sessionSecret, resave: false, saveUninitialized: false,
+  cookie: { sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 8 * 60 * 60 * 1000 }
+}));
 
 function requireAuth(req, res, next) {
-  if (!req.session.user) return res.status(401).json({ error: "Login required" });
+  const member = loadDB().users.find(user => user.id === req.session.user?.id);
+  if (!member) return res.status(401).json({ error: "Ingia kwenye akaunti yako." });
+  if (member.status !== "ACTIVE") return res.status(403).json({ error: "Akaunti haijaidhinishwa." });
+  Object.assign(req.session.user, { role: member.role, status: member.status, wfcId: member.wfcId });
   next();
 }
 function isLeader(role) { return ["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL"].includes(role); }
+
+const moduleRoutes = {
+  tickets: ["/ticket", "/api/tickets"],
+  attendance: ["/api/attendance", "/api/attendance-report"],
+  elections: ["/api/elections"],
+  saccos: ["/api/saccos"]
+};
+for (const [key, routes] of Object.entries(moduleRoutes)) {
+  app.use(routes, (req, res, next) => {
+    if (!readGroup(loadDB()).modules[key]) return res.status(404).json({ error: "Kipengele hiki kimezimwa na kikundi." });
+    next();
+  });
+}
+
+function recordApproval(db, actor, category, subject, date) {
+  if (!db.approvalHistory) db.approvalHistory = [];
+  db.approvalHistory.unshift({ actorId: actor.id, actor: actor.name, category, subject, date });
+}
+
+function memberBalance(db, user) {
+  const monthly = readGroup(db).monthlyFee;
+  const startedAt = new Date(user.membershipApprovedAt || user.createdAt).getTime();
+  const months = Number.isFinite(startedAt) ? Math.max(1, Math.floor((Date.now() - startedAt) / 2592000000)) : 1;
+  const expected = months * monthly;
+  const paid = db.payments.filter(p => p.userId === user.id && p.type === "Ada ya mwezi" && p.status === "APPROVED")
+    .reduce((total, payment) => total + (payment.amount || 0), 0);
+  return { monthly, months, expected, paid, debt: Math.max(0, expected - paid) };
+}
 
 // Public
 app.get("/", (req, res) => {
@@ -132,6 +120,22 @@ app.get("/", (req, res) => {
 });
 app.get("/app", (req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
 app.get("/ticket/:id", (req, res) => res.sendFile(path.join(__dirname, "../public/ticket.html")));
+
+app.get("/api/public/group", (req, res) => {
+  res.set("Cache-Control", "no-store").json(readGroup(loadDB()));
+});
+
+app.post("/api/group", requireAuth, (req, res) => {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Weka mipangilio kupitia akaunti ya msimamizi." });
+  const db = loadDB();
+  try {
+    db.group = updateGroup(readGroup(db), req.body || {});
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+  saveDB(db);
+  res.json({ success: true, group: db.group });
+});
 
 app.get("/api/public/events", (req, res) => {
   const db = loadDB();
@@ -150,7 +154,7 @@ app.post("/api/contact", (req, res) => {
   if (!name || !phone || !message) return res.status(400).json({ error: "Jaza taarifa" });
   const db = loadDB();
   if (!db.contacts) db.contacts = [];
-  db.contacts.unshift({ id: Date.now().toString(), name, phone, email: req.body.email || "", message, createdAt: new Date().toISOString() });
+  db.contacts.unshift({ id: randomBytes(12).toString("hex"), name, phone, email: req.body.email || "", message, createdAt: new Date().toISOString() });
   saveDB(db);
   res.json({ success: true });
 });
@@ -160,13 +164,20 @@ app.get("/api/contacts", requireAuth, (req, res) => {
 });
 
 app.post("/api/register", (req, res) => {
-  const { name, phone, region, password, paymentProof } = req.body;
-  if (!name || !phone || typeof password !== "string" || !password || password.length > 128) return res.status(400).json({ error: "Jaza taarifa zote. Nenosiri lisizidi herufi 128." });
+  const { name, phone, region, password, paymentProof, acceptRules, displayedRules } = req.body;
+  if (!name || !phone || typeof password !== "string" || password.length < 12 || password.length > 128) return res.status(400).json({ error: "Jaza taarifa na tumia nenosiri lenye herufi 12 hadi 128." });
   const db = loadDB();
+  const group = readGroup(db);
+  if (group.rules && (acceptRules !== "on" || displayedRules !== group.rules)) {
+    return res.status(400).json({ error: "Soma na ukubali kanuni za sasa kabla ya kusajili." });
+  }
+  if (group.registrationFee > 0 && (typeof paymentProof !== "string" || !paymentProof.trim())) {
+    return res.status(400).json({ error: "Weka namba ya muamala wa ada ya usajili." });
+  }
   if (db.users.find(u => u.phone === phone)) return res.status(400).json({ error: "Namba tayari imesajiliwa" });
   db.users.push({
-    id: Date.now().toString(), name, phone, region: region || "Dar es Salaam", passwordHash: hashPassword(password),
-    role: "MEMBER", status: "PENDING", paymentProof: paymentProof || "", wfcId: null,
+    id: Date.now().toString(), name, phone, region: region || "Haijatajwa", passwordHash: hashPassword(password),
+    role: "MEMBER", status: "PENDING", rulesAcceptedAt: group.rules ? new Date().toISOString() : null, paymentProof: paymentProof || "", wfcId: null,
     family: { head: name, spouse: "", children: [] }, profession: "", createdAt: new Date().toISOString()
   });
   saveDB(db);
@@ -223,7 +234,11 @@ app.post("/api/change-password", requireAuth, (req, res) => {
 });
 
 app.post("/api/logout", (req, res) => { req.session.destroy(); res.json({ success: true }); });
-app.get("/api/me", (req, res) => res.json({ user: req.session.user || null }));
+app.get("/api/me", (req, res) => {
+  const sessionUser = req.session.user;
+  const user = sessionUser && loadDB().users.find(member => member.id === sessionUser.id);
+  res.json({ user: user ? { ...sessionUser, status: user.status, role: user.role, wfcId: user.wfcId } : null });
+});
 
 // Dashboard
 app.get("/api/dashboard", requireAuth, (req, res) => {
@@ -241,14 +256,14 @@ app.get("/api/dashboard", requireAuth, (req, res) => {
       events: (db.events || []).length
     },
     myTotalPaid: totalPaid,
-    recent: db.payments.slice(-6).reverse(),
+    recent: db.payments.filter(p => isLeader(req.session.user.role) || p.userId === user.id).slice(-6).reverse(),
     upcoming: (db.events || []).slice(0, 4),
     notices: (db.announcements || []).slice(0, 3),
     regions: Object.entries(db.users.filter(u => u.status === "ACTIVE").reduce((m, u) => { m[u.region || "Nyingine"] = (m[u.region || "Nyingine"] || 0) + 1; return m; }, {})).map(([name, value]) => ({ name, value })),
     settings: req.session.user.role === "ADMIN" ? db.settings : {
-      registrationFee: db.settings.registrationFee,
-      monthlyFee: db.settings.monthlyFee,
-      paymentNumbers: db.settings.paymentNumbers
+      registrationFee: readGroup(db).registrationFee,
+      monthlyFee: readGroup(db).monthlyFee,
+      paymentNumbers: readGroup(db).paymentNumbers
     },
     finance: isLeader(req.session.user.role) ? computeFinance(db) : null
   });
@@ -259,17 +274,9 @@ function computeFinance(db) {
   const incomeFromPayments = approved.reduce((s, p) => s + (p.amount || 0), 0);
   const manual = (db.manualIncome || []).reduce((s, i) => s + (i.amount || 0), 0);
   const expenses = (db.expenses || []).reduce((s, e) => s + (e.amount || 0), 0);
-  const monthly = db.settings.monthlyFee || 10000;
-  const active = (db.users || []).filter(u => u.status === "ACTIVE");
-  let totalDebt = 0;
-  let debtors = 0;
-  active.forEach(u => {
-    const months = Math.max(1, Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (30*24*60*60*1000)));
-    const expected = months * monthly;
-    const paid = approved.filter(p => p.userId === u.id && p.type === "Ada ya mwezi").reduce((s, p) => s + (p.amount || 0), 0);
-    const debt = Math.max(0, expected - paid);
-    if (debt > 0) { totalDebt += debt; debtors++; }
-  });
+  const debts = db.users.filter(user => user.status === "ACTIVE").map(user => memberBalance(db, user).debt);
+  const totalDebt = debts.reduce((total, debt) => total + debt, 0);
+  const debtors = debts.filter(debt => debt > 0).length;
   return {
     mapato: incomeFromPayments + manual,
     matumizi: expenses,
@@ -290,14 +297,9 @@ app.get("/api/accounting/summary", requireAuth, (req, res) => {
 app.get("/api/accounting/debts", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
   const db = loadDB();
-  const monthly = db.settings.monthlyFee || 10000;
-  const approved = (db.payments || []).filter(p => p.status === "APPROVED" && p.type === "Ada ya mwezi");
-  const list = (db.users || []).filter(u => u.status === "ACTIVE").map(u => {
-    const months = Math.max(1, Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (30*24*60*60*1000)));
-    const expected = months * monthly;
-    const paid = approved.filter(p => p.userId === u.id).reduce((s, p) => s + (p.amount || 0), 0);
-    return { id: u.id, name: u.name, region: u.region, wfcId: u.wfcId, expected, paid, debt: Math.max(0, expected - paid), months };
-  }).filter(x => x.debt > 0);
+  const list = db.users.filter(u => u.status === "ACTIVE").map(u => ({
+    id: u.id, name: u.name, region: u.region, wfcId: u.wfcId, ...memberBalance(db, u)
+  })).filter(row => row.debt > 0);
   res.json(list);
 });
 
@@ -333,7 +335,8 @@ app.post("/api/manual-income", requireAuth, (req, res) => {
 app.get("/api/members", requireAuth, (req, res) => {
   const db = loadDB();
   res.json(db.users.map(u => ({
-    id: u.id, name: u.name, phone: u.phone, region: u.region, status: u.status, role: u.role, wfcId: u.wfcId, profession: u.profession
+    id: u.id, name: u.name, phone: u.phone, region: u.region, status: u.status, role: u.role, wfcId: u.wfcId, profession: u.profession,
+    paymentProof: isLeader(req.session.user.role) ? u.paymentProof : undefined
   })));
 });
 
@@ -342,22 +345,40 @@ app.post("/api/approve-member", requireAuth, (req, res) => {
   const db = loadDB();
   const user = db.users.find(u => u.id === req.body.userId);
   if (!user) return res.status(404).json({ error: "Hajapatikana" });
+  if (user.status === "ACTIVE" && user.wfcId) return res.json({ success: true, wfcId: user.wfcId });
+  if (user.status !== "PENDING") return res.status(409).json({ error: "Ombi hili halisubiri idhini." });
   user.status = "ACTIVE";
-  if (!user.wfcId) user.wfcId = "WFC-" + String(db.users.filter(u => u.wfcId).length + 1).padStart(4, "0");
+  user.membershipApprovedAt = new Date().toISOString();
+  if (!user.wfcId) {
+    let number = db.nextMemberNumber || 1;
+    const prefix = readGroup(db).shortName;
+    do {
+      user.wfcId = prefix + "-" + String(number++).padStart(4, "0");
+    } while (db.users.some(other => other !== user && other.wfcId === user.wfcId));
+    db.nextMemberNumber = number;
+  }
+  recordApproval(db, req.session.user, "Uanachama", user.wfcId, user.membershipApprovedAt);
   saveDB(db);
   res.json({ success: true, wfcId: user.wfcId });
 });
 
 // Payments
-app.get("/api/payments", requireAuth, (req, res) => res.json(loadDB().payments));
+app.get("/api/payments", requireAuth, (req, res) => res.json(loadDB().payments.filter(p => isLeader(req.session.user.role) || p.userId === req.session.user.id)));
 
 app.post("/api/submit-payment", requireAuth, (req, res) => {
-  const { type, amount, transactionId } = req.body;
+  const { type, amount } = req.body;
+  const transactionId = typeof req.body.transactionId === "string" ? req.body.transactionId.trim().toUpperCase() : "";
+  const paymentAmount = Number(amount);
+  if (!["Ada ya mwezi", "Kiingilio", "Dharura", "Msiba"].includes(type) ||
+      !/^[A-Z0-9][A-Z0-9._/-]{0,63}$/.test(transactionId) ||
+      !Number.isSafeInteger(paymentAmount) || paymentAmount <= 0) {
+    return res.status(400).json({ error: "Weka aina ya mchango, kiasi halali na namba ya muamala." });
+  }
   const db = loadDB();
-  if (db.payments.find(p => p.transactionId === transactionId)) return res.status(400).json({ error: "Namba ya muamala tayari imetumika" });
+  if (db.payments.find(p => String(p.transactionId).trim().toUpperCase() === transactionId)) return res.status(400).json({ error: "Namba ya muamala tayari imetumika" });
   db.payments.push({
-    id: Date.now().toString(), userId: req.session.user.id, userName: req.session.user.name,
-    type, amount: Number(amount), transactionId, status: "PENDING", createdAt: new Date().toISOString()
+    id: randomBytes(12).toString("hex"), userId: req.session.user.id, userName: req.session.user.name,
+    type, amount: paymentAmount, transactionId, status: "PENDING", createdAt: new Date().toISOString()
   });
   saveDB(db);
   res.json({ success: true });
@@ -368,11 +389,55 @@ app.post("/api/approve-payment", requireAuth, (req, res) => {
   const db = loadDB();
   const p = db.payments.find(x => x.id === req.body.paymentId);
   if (!p) return res.status(404).json({ error: "Haijapatikana" });
+  if (p.status === "APPROVED") return res.json({ success: true, receiptNo: p.receiptNo });
+  if (p.status !== "PENDING") return res.status(409).json({ error: "Malipo haya hayasubiri uhakiki." });
   p.status = "APPROVED";
   p.approvedAt = new Date().toISOString();
-  p.receiptNo = "RCP-" + Date.now().toString().slice(-6);
+  p.receiptNo = "RCP-" + randomBytes(8).toString("hex").toUpperCase();
+  recordApproval(db, req.session.user, "Malipo", p.receiptNo, p.approvedAt);
   saveDB(db);
   res.json({ success: true, receiptNo: p.receiptNo });
+});
+
+app.get("/api/payments/:id/receipt", requireAuth, async (req, res) => {
+  const db = loadDB();
+  const row = db.payments.find(payment => payment.id === req.params.id && payment.status === "APPROVED");
+  if (!row || (row.userId !== req.session.user.id && !isLeader(req.session.user.role))) {
+    return res.status(404).json({ error: "Risiti haipatikani." });
+  }
+  try {
+    const group = readGroup(db);
+    const number = row.receiptNo || "RCP-" + row.id;
+    const qr = await QRCode.toDataURL(JSON.stringify({ receipt: number, amount: row.amount, transaction: row.transactionId }), { margin: 1, width: 220 });
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    const title = doc.splitTextToSize(group.name, 180);
+    doc.text(title, 14, 20);
+    let y = 26 + title.length * 8;
+    doc.setFontSize(14);
+    doc.text("Risiti ya malipo", 14, y);
+    doc.setFontSize(11);
+    for (const line of [
+      "Risiti: " + number,
+      "Mwanachama: " + row.userName,
+      "Mchango: " + row.type,
+      "Kiasi: TSh " + Number(row.amount).toLocaleString("en-TZ"),
+      "Muamala: " + row.transactionId,
+      "Tarehe: " + String(row.approvedAt || row.createdAt).slice(0, 10)
+    ]) {
+      const lines = doc.splitTextToSize(line, 116);
+      y += 8;
+      doc.text(lines, 14, y);
+      y += (lines.length - 1) * 5;
+    }
+    doc.addImage(qr, "PNG", 147, 42, 45, 45);
+    res.set("Cache-Control", "private, no-store");
+    res.attachment(number.replace(/[^a-zA-Z0-9_-]/g, "_") + ".pdf");
+    res.send(Buffer.from(doc.output("arraybuffer")));
+  } catch (error) {
+    console.error("Receipt generation failed:", error.message);
+    res.status(500).json({ error: "Risiti haikuweza kutengenezwa." });
+  }
 });
 
 // Events
@@ -459,12 +524,30 @@ app.get("/api/my-debt", requireAuth, (req, res) => {
   const db = loadDB();
   const user = db.users.find(u => u.id === req.session.user.id);
   if (!user || user.status !== "ACTIVE") return res.json({ debt: 0, breakdown: [] });
-  const monthly = db.settings.monthlyFee || 10000;
-  const monthsSince = Math.max(1, Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (30*24*60*60*1000)));
-  const expected = monthsSince * monthly;
-  const paid = db.payments.filter(p => p.userId === user.id && p.type === "Ada ya mwezi" && p.status === "APPROVED").reduce((s,p)=>s+(p.amount||0),0);
-  const debt = Math.max(0, expected - paid);
-  res.json({ debt, expected, paid, months: monthsSince });
+  res.json(memberBalance(db, user));
+});
+
+app.get("/api/my-account", requireAuth, (req, res) => {
+  const db = loadDB();
+  const user = db.users.find(member => member.id === req.session.user.id);
+  res.json({
+    ...memberBalance(db, user),
+    user: req.session.user,
+    payments: db.payments.filter(payment => payment.userId === user.id).reverse()
+  });
+});
+
+app.get("/api/group-reports", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka." });
+  const db = loadDB();
+  const debts = db.users.filter(user => user.status === "ACTIVE")
+    .map(user => ({ name: user.name, memberNumber: user.wfcId, ...memberBalance(db, user) }))
+    .filter(user => user.debt > 0);
+  res.json({
+    payments: db.payments.filter(payment => payment.status === "APPROVED").reverse(),
+    debts,
+    approvals: db.approvalHistory || []
+  });
 });
 
 // Attendance
@@ -582,10 +665,14 @@ app.get("/api/backup", requireAuth, (req, res) => {
 });
 
 // PWA
-app.get("/manifest.json", (req, res) => res.json({
-  name: "WFC Portal", short_name: "WFC", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#F97316",
-  icons: [{ src: "/wfc-logo.jpg", sizes: "192x192", type: "image/jpeg" }]
-}));
+app.get("/manifest.json", (req, res) => {
+  const group = readGroup(loadDB());
+  res.json({
+    name: group.name, short_name: group.shortName, start_url: "/", display: "standalone",
+    background_color: "#F8FAFC", theme_color: "#F97316",
+    icons: group.logo ? [{ src: group.logo, sizes: "any" }] : []
+  });
+});
 
 // Roles list
 app.get("/api/roles", requireAuth, (req, res) => {
@@ -646,7 +733,7 @@ app.post("/api/notifications", requireAuth, (req, res) => {
 app.post("/api/dispatch", requireAuth, async (req, res) => {
   const db = loadDB();
   const { channel, to, title, body } = req.body;
-  const message = `${title || "WFC"}\n${body || ""}`;
+  const message = `${title || readGroup(db).name}\n${body || ""}`;
   let status = "queued";
   let detail = "Imehifadhiwa";
   try {
@@ -689,7 +776,7 @@ app.post("/api/stk", requireAuth, async (req, res) => {
   const db = loadDB();
   const { phone, amount } = req.body;
   if (!db.settings.momoConsumerKey || !db.settings.momoConsumerSecret) {
-    return res.json({ ok: false, detail: "Daraja haijaunganishwa. Lipa kwa namba ya WFC kisha weka namba ya muamala." });
+    return res.json({ ok: false, detail: "Daraja haijaunganishwa. Lipa kwa namba ya kikundi kisha weka namba ya muamala." });
   }
   const auth = Buffer.from(`${db.settings.momoConsumerKey}:${db.settings.momoConsumerSecret}`).toString("base64");
   const tokenRes = await fetch("https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", { headers: { Authorization: `Basic ${auth}` } });
@@ -742,4 +829,4 @@ app.post("/api/demo/clear", requireAuth, (req, res) => {
 
 // Catch-all
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
-app.listen(PORT, () => console.log("WFC running on " + PORT));
+app.listen(PORT, () => console.log("Kikundi Portal running on " + PORT));

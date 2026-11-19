@@ -3,44 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WFC Portal — Enterprise Workspace</title>
+  <title>Wachagga Community Family</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#F97316">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=4d47a09b8319">
+  <link rel="stylesheet" href="/css/style.css?v=54813bcd7475">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.0/dist/apexcharts.min.js"></script>
 </head>
 <body>
   <div id="google_translate_element" class="notranslate" translate="no" aria-label="Badili lugha"></div>
   <div id="app"></div>
-  <script>
-    function googleTranslateElementInit() {
-      if (window.google && google.translate) {
-        new google.translate.TranslateElement({
-          pageLanguage: "sw",
-          includedLanguages: "en,sw"
-        }, "google_translate_element");
-        const widget = document.getElementById("google_translate_element");
-        const labelSelect = () => {
-          const select = widget.querySelector("select");
-          if (!select) return false;
-          select.setAttribute("aria-label", "Kiswahili / English");
-          return true;
-        };
-        if (!labelSelect()) {
-          const observer = new MutationObserver(() => {
-            if (labelSelect()) observer.disconnect();
-          });
-          observer.observe(widget, { childList: true, subtree: true });
-        }
-      }
-    }
-  </script>
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-  <script src="/js/app.js?v=a4d70474b3fb"></script>
+  <script src="/js/group.js?v=abdc459cf0ae"></script>
+  <script src="/js/translate.js?v=7c67ab9f000a"></script>
+  <script async src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script src="/js/app.js?v=0f7c19a69130"></script>
 </body>
 </html>

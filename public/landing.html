@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wachagga Family Community — Ofisi ya Kidijitali</title>
-  <meta name="description" content="Umoja wa Wachagga, Nguvu ya Familia. Tovuti na ofisi ya kidijitali ya WFC.">
+  <title>Wachagga Community Family</title>
+  <meta name="description" content="Ofisi ya kidijitali ya kikundi, wanachama, michango na matukio.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=4d47a09b8319">
+  <link rel="stylesheet" href="/css/style.css?v=54813bcd7475">
 </head>
 <body class="landing-body">
   <header class="site-nav">
     <a class="brand" href="#nyumbani">
-      <div class="brand-badge-img"><img src="/wfc-logo.jpg" alt="WFC" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'), {className: this.className + \' wfc-wordmark\', textContent: \'WFC\'}))"></div>
+      <div class="brand-badge-img"><span class="group-logo" data-group-logo>WFC</span></div>
       <div class="brand-wordmark">
-        <strong>WACHAGGA FAMILY</strong>
-        <span>Community Portal</span>
+        <strong data-group-text="name">Wachagga Community Family</strong>
+        <span>Ofisi ya kidijitali</span>
       </div>
     </a>
+    <div id="google_translate_element" class="notranslate" translate="no" aria-label="Badili lugha"></div>
     <button class="nav-toggle" id="navToggle" type="button" aria-label="Fungua menyu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
@@ -33,11 +34,11 @@
 
   <section class="hero" id="nyumbani">
     <div class="hero-copy">
-      <div class="kicker-pill"><span class="dot-live"></span> The Pride of Chagga · Digital Office</div>
-      <h1>Umoja wa Wachagga, <span>nguvu ya familia.</span></h1>
-      <p class="lead">Ofisi ya Wachagga Family Community mtandaoni. Wanachama, michango yenye risiti za QR, matukio na taarifa za jumuiya katika jukwaa moja la kisasa.</p>
+      <div class="kicker-pill"><span class="dot-live"></span> Ofisi ya kidijitali</div>
+      <h1 data-group-text="name">Wachagga Community Family</h1>
+      <p class="lead" data-group-text="slogan"></p>
       <div class="cta">
-        <a class="btn" href="/app">Fungua akaunti</a>
+        <a class="btn" href="/app#register">Fungua akaunti</a>
         <a class="btn ghost" href="#matukio">Tazama matukio</a>
       </div>
       <div class="metrics">
@@ -50,17 +51,16 @@
     <div class="hero-visual">
       <div class="hero-showcase-card">
         <div class="showcase-top">
-          <img src="/wfc-logo.jpg" alt="Wachagga Family Community" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'), {className: this.className + \' wfc-wordmark\', textContent: \'WFC\'}))">
+          <span class="group-logo" data-group-logo>WFC</span>
           <div>
-            <span class="badge badge-active">Imethibitishwa</span>
-            <h3>WFC Digital Suite</h3>
-            <p class="muted">Stand up · It's not over</p>
+            <h3 data-group-text="name">Wachagga Community Family</h3>
+            <p class="muted" data-group-text="slogan"></p>
           </div>
         </div>
         <div class="showcase-stats">
           <div class="mini-stat">
             <span>Malipo ya Haraka</span>
-            <strong>M-Pesa · Tigo · Airtel · CRDB</strong>
+            <strong><span data-group-text="payments"></span></strong>
           </div>
           <div class="mini-stat">
             <span>Risiti & Kitambulisho</span>
@@ -76,7 +76,8 @@
       <div class="reveal">
         <div class="kicker">Kuhusu sisi</div>
         <h2>Jumuiya inayokumbuka, inayosaidia, na inayokua pamoja.</h2>
-        <p class="section-lead">WFC ni muungano wa familia za Wachagga. Tunashikilia ada, misaada ya dharura, sherehe, SACCOS na kumbukumbu za uongozi kwa uwazi na usalama wa kudumu.</p>
+        <p class="section-lead" data-group-text="description"></p>
+        <details data-group-optional="rules" hidden><summary>Kanuni za kikundi</summary><div class="group-rules" data-group-text="rules"></div></details>
       </div>
       <div class="values">
         <article class="value reveal">
@@ -84,8 +85,8 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
           <div>
-            <h3>Umoja wa Kanda</h3>
-            <p>Kanda, halmashauri na tawi vinawasiliana kwenye mfumo mmoja wenye utambulisho wa WFC ID.</p>
+            <h3>Uanachama</h3>
+            <p>Kila mwanachama aliyeidhinishwa hupata namba ya uanachama.</p>
           </div>
         </article>
         <article class="value reveal">
@@ -93,7 +94,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </div>
           <div>
-            <h3>Mshikamano wa Familia</h3>
+            <h3>Matukio ya kikundi</h3>
             <p>Msiba, ugonjwa na harusi vinafuatiliwa kwa utaratibu maalum na haraka.</p>
           </div>
         </article>
@@ -151,11 +152,10 @@
       </form>
       <aside class="contact-card card reveal">
         <span class="kicker">Makao Makuu</span>
-        <h3>Ofisi ya WFC</h3>
+        <h3 data-group-text="name">Wachagga Community Family</h3>
         <div class="office-list">
-          <div class="office-item"><strong>Eneo:</strong> Dar es Salaam, Tanzania</div>
-          <div class="office-item"><strong>Simu ya Ofisi:</strong> 0755 000 888</div>
-          <div class="office-item"><strong>Njia za Malipo:</strong> M-Pesa (0755 000 888), Tigo Pesa (0715 000 888), Airtel Money (0785 000 888) na CRDB (0150889944200).</div>
+          <div class="office-item" data-group-optional="phone" hidden><strong>Simu ya ofisi </strong><span data-group-text="phone"></span></div>
+          <div class="office-item"><strong>Njia za malipo </strong><span data-group-text="payments"></span></div>
         </div>
         <div style="margin-top:24px">
           <a class="btn" href="/app">Ingia kwenye Portal</a>
@@ -165,10 +165,13 @@
   </section>
 
   <footer class="foot">
-    <span>© Wachagga Family Community (WFC)</span>
-    <span>Umoja wa Wachagga, Nguvu ya Familia</span>
+    <span data-group-text="name">Wachagga Community Family</span>
+    <span data-group-text="slogan"></span>
   </footer>
 
+  <script src="/js/group.js?v=abdc459cf0ae"></script>
+  <script src="/js/translate.js?v=7c67ab9f000a"></script>
+  <script async src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   <script>
     document.getElementById("navToggle").onclick = () => document.getElementById("siteNav").classList.toggle("open");
     fetch("/api/public/stats").then(r=>r.json()).then(s=>{
@@ -186,7 +189,7 @@
       }
       root.innerHTML = slides.map((a,n)=>`
         <article class="slide ${n===i?"on":""}">
-          <div class="slide-meta"><span class="badge badge-pending">${a.author||"Ofisi ya WFC"}</span></div>
+          <div class="slide-meta"><span class="badge badge-pending">${a.author||"Ofisi ya kikundi"}</span></div>
           <h3>${a.title}</h3>
           <p>${a.body||""}</p>
           ${a.link?`<div style="margin-top:20px"><a class="btn btn-sm" href="${a.link}">Fungua taarifa</a></div>`:""}
@@ -202,10 +205,10 @@
     }
     fetch("/api/public/announcements").then(r=>r.json()).then(boot).catch(()=>boot([]));
 
-    fetch("/api/public/events").then(r=>r.json()).then(list=>{
+    Promise.all([groupReady, fetch("/api/public/events").then(r=>r.json())]).then(([, list])=>{
       document.getElementById("events").innerHTML = list.length ? list.map(e=>`
         <article class="ev">
-          <div class="poster">${e.poster?`<img src="${e.poster}" alt="${e.title}">`:`<div class="poster-placeholder"><span>WFC EVENT</span></div>`}</div>
+          <div class="poster">${e.poster?`<img src="${e.poster}" alt="${e.title}">`:`<div class="poster-placeholder"><span>Tukio la kikundi</span></div>`}</div>
           <div class="b">
             <div class="ev-top">
               <span class="badge badge-pending">${e.type||"Tukio"}</span>
@@ -213,7 +216,7 @@
             </div>
             <h3>${e.title}</h3>
             <p class="muted">${e.location||"Eneo litatangazwa"}</p>
-            <a class="btn btn-sm" href="/ticket/${e.id}">Kata tiketi</a>
+            ${groupProfile.modules?.tickets !== false ? `<a class="btn btn-sm" href="/ticket/${encodeURIComponent(e.id)}">Kata tiketi</a>` : ""}
           </div>
         </article>`).join("") : `<div class="empty-state"><p>Hakuna matukio yaliyotangazwa kwa sasa.</p></div>`;
     });

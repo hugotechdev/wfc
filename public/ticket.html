@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kata Tiketi — WFC Portal</title>
+  <title>Kata Tiketi — Wachagga Community Family</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=4d47a09b8319">
+  <link rel="stylesheet" href="/css/style.css?v=54813bcd7475">
 </head>
-<body>
-  <div class="auth-page">
+<body data-page-title="Kata Tiketi">
+  <div class="auth-page"><div class="auth-language"><div id="google_translate_element" class="notranslate" translate="no" aria-label="Badili lugha"></div></div>
     <div class="container auth-card">
       <div class="auth-header">
-        <img src="/wfc-logo.jpg" class="logo" alt="WFC Logo" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'), {className: this.className + \' wfc-wordmark\', textContent: \'WFC\'}))">
-        <span class="kicker">WFC Ticketing</span>
+        <span class="logo group-logo" data-group-logo>WFC</span>
+        <span class="kicker" data-group-text="name">Wachagga Community Family</span>
         <h1>Kata Tiketi</h1>
       </div>
 
@@ -29,7 +29,7 @@
           <div class="form-group"><label>Idadi ya Tiketi</label><input name="qty" type="number" value="1" min="1" required></div>
         </div>
         <div class="payment-hint">
-          <strong>Lipa kupitia:</strong> M-Pesa <code>0755 000 888</code> · Tigo <code>0715 000 888</code> · Airtel <code>0785 000 888</code> · CRDB <code>0150889944200</code>
+          <strong>Lipa kupitia</strong> <span data-group-text="payments"></span>
         </div>
         <div class="form-group"><label>Namba ya Muamala (Transaction ID)</label><input name="transactionId" placeholder="Mf. QK82J910LP" required></div>
         <button class="btn" type="submit">Wasilisha Tiketi</button>
@@ -40,6 +40,9 @@
     </div>
   </div>
 
+  <script src="/js/group.js?v=abdc459cf0ae"></script>
+  <script src="/js/translate.js?v=7c67ab9f000a"></script>
+  <script async src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   <script>
     const id = location.pathname.split("/").pop();
     fetch("/api/public/events").then(r=>r.json()).then(list=>{

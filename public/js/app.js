@@ -1,21 +1,35 @@
 const app = document.getElementById("app");
+const groupModules = { tickets: "Tiketi", attendance: "Mahudhurio", elections: "Uchaguzi", saccos: "SACCOS" };
+const canReviewPayments = role => ["ADMIN", "TREASURER", "CHAIRPERSON"].includes(role);
+const canViewReports = role => ["ADMIN", "TREASURER", "CHAIRPERSON", "SECRETARY", "REGIONAL"].includes(role);
+const formatTsh = value => "TSh " + Number(value || 0).toLocaleString();
 
-document.addEventListener("error", event => {
-  const image = event.target;
-  if (!(image instanceof HTMLImageElement) || !image.matches("[data-wfc-logo]")) return;
-  const fallback = document.createElement("span");
-  fallback.className = [image.className, "wfc-wordmark"].filter(Boolean).join(" ");
-  fallback.setAttribute("role", "img");
-  fallback.setAttribute("aria-label", "Wachagga Family Community");
-  fallback.textContent = "WFC";
-  image.replaceWith(fallback);
-}, true);
+function downloadReport(filename, columns, rows) {
+  const cell = value => {
+    const text = String(value ?? "");
+    const safe = /^[\s]*[=+@-]|^[\t\r\n]/.test(text) && typeof value !== "number" ? "'" + text : text;
+    return '"' + safe.replaceAll('"', '""') + '"';
+  };
+  const csv = [columns, ...rows].map(row => row.map(cell).join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+
+function groupLogo(className = "logo") {
+  return `<span class="${className} group-logo" data-group-logo>${escapeHtml(groupProfile.shortName)}</span>`;
+}
 
 const languageWidget = document.getElementById("google_translate_element");
 
 function placeLanguageSwitcher() {
   const slot = document.getElementById("portalLanguage") || document.getElementById("authLanguage");
   slot.append(languageWidget);
+  applyGroupProfile(groupProfile);
 }
 
 function escapeHtml(value) {
@@ -78,7 +92,7 @@ const IC = {
 function showOtp(phone, devCode) {
   app.innerHTML = `<div class="auth-page"><div class="auth-language" id="authLanguage"></div>
     <div class="container">
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC" data-wfc-logo>
+      ${groupLogo()}
       <h1>Thibitisha OTP</h1>
       <p class="subtitle">Ingiza msimbo wa tarakimu 6 uliotumwa kwako. Unaisha baada ya dakika 5.</p>
       ${devCode ? `<div class="payment-hint">SMS haijaunganishwa. Msimbo wa majaribio: <strong>${devCode}</strong></div>` : ""}
@@ -100,23 +114,22 @@ function showOtp(phone, devCode) {
 
 function showLogin() {
   app.innerHTML = `<div class="auth-page signin-page"><div class="auth-language" id="authLanguage"></div>
-    <section class="signin-brand" aria-label="Wachagga Family Community">
+    <section class="signin-brand" aria-label="Utambulisho wa kikundi">
       <div class="studio-orbit" aria-hidden="true">
-        <div class="studio-orbit-ring"></div><div class="studio-orbit-core">WFC</div>
+        <div class="studio-orbit-ring"></div><div class="studio-orbit-core">${escapeHtml(groupProfile.shortName.slice(0, 7))}</div>
       </div>
       <div class="signin-brand-copy">
-        <span>Wachagga Family Community</span>
-        <h2>Umoja wa Wachagga.<br>Nguvu ya familia.</h2>
+            <h2>${escapeHtml(groupProfile.slogan || groupProfile.name)}</h2>
       </div>
     </section>
     <div class="container">
       <div class="auth-topbar">
-        <span class="kicker">WFC Portal</span>
+        <span class="kicker">Ingia</span>
         <button class="theme-toggle" onclick="toggleTheme()" type="button" aria-label="Badili mwanga">◐ Mandhari</button>
       </div>
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC Logo" data-wfc-logo>
-      <h1>Karibu WFC Portal</h1>
-      <p class="subtitle">Umoja wa Wachagga, Nguvu ya Familia</p>
+      ${groupLogo()}
+      <h1 translate="no">${escapeHtml(groupProfile.name)}</h1>
+      <p class="subtitle">Ingia kwa namba ya simu na nenosiri lako.</p>
       <form id="f">
         <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
         <div class="form-group"><label>Nenosiri</label><input name="password" type="password" placeholder="••••••••" required></div>
@@ -124,11 +137,6 @@ function showLogin() {
         <div id="m"></div>
       </form>
       <p class="link">Huna akaunti? <a href="#" id="r">Jisajili sasa</a> · <a href="/">Tovuti kuu</a></p>
-      <details class="demo-box"><summary>Akaunti za majaribio (Demo)</summary>
-        <p><strong>Mwenyekiti:</strong> 0700000000 / admin123</p>
-        <p><strong>Mwanachama:</strong> 0711000001 / demo123</p>
-        <p><strong>Mhazini:</strong> 0711000002 / demo123</p>
-      </details>
     </div>
   </div>`;
   placeLanguageSwitcher();
@@ -146,20 +154,20 @@ function showLogin() {
 function showRegister() {
   app.innerHTML = `<div class="auth-page"><div class="auth-language" id="authLanguage"></div>
     <div class="container">
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC Logo" data-wfc-logo>
+      ${groupLogo()}
       <h1>Usajili wa Mwanachama</h1>
-      <p class="subtitle">Ada ya Usajili: <strong>TSh 1,000</strong></p>
-      <div class="payment-hint">
-        Lipa ada ya usajili kupitia M-Pesa <code>0755 000 888</code>, Tigo <code>0715 000 888</code>, Airtel <code>0785 000 888</code> au CRDB <code>0150889944200</code> kisha weka uthibitisho hapa chini.
-      </div>
+      <p class="subtitle">Ada ya usajili: <strong>TSh ${groupProfile.registrationFee.toLocaleString("sw-TZ")}</strong></p>
+      ${groupProfile.registrationFee > 0 ? `<div class="payment-hint">${escapeHtml(paymentInstructions(groupProfile))}</div>` : ""}
       <form id="f">
         <div class="form-group"><label>Jina Kamili</label><input name="name" placeholder="Mf. Amina Swai" required></div>
         <div class="form-row-2">
           <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
-          <div class="form-group"><label>Kanda</label><select name="region"><option>Dar es Salaam</option><option>Arusha</option><option>Moshi</option><option>Kilimanjaro</option><option>Tanga</option><option>Mwanza</option></select></div>
+          <div class="form-group"><label>Kanda</label><input name="region" placeholder="Andika eneo lako"></div>
         </div>
-        <div class="form-group"><label>Nenosiri</label><input name="password" type="password" placeholder="Unda nenosiri imara" required></div>
-        <div class="form-group"><label>Uthibitisho wa Malipo (Namba ya Muamala)</label><textarea name="paymentProof" rows="2" placeholder="Weka namba ya muamala au ujumbe wa malipo"></textarea></div>
+        <div class="form-group"><label>Nenosiri</label><input name="password" type="password" placeholder="Unda nenosiri imara" minlength="12" maxlength="128" required></div>
+        ${groupProfile.registrationFee > 0 ? `<div class="form-group"><label for="groupPaymentProof">Namba ya muamala</label><input id="groupPaymentProof" name="paymentProof" required></div>` : ""}
+        ${groupProfile.rules ? `<div class="payment-hint"><strong>Kanuni za kikundi</strong><div class="group-rules">${escapeHtml(groupProfile.rules)}</div>
+          <label class="group-check"><input type="checkbox" name="acceptRules" required> Nimesoma na ninakubali kanuni.</label></div>` : ""}
         <button class="btn" type="submit">Wasilisha Usajili</button>
         <div id="m"></div>
       </form>
@@ -170,7 +178,7 @@ function showRegister() {
   document.getElementById("l").onclick = e => { e.preventDefault(); showLogin(); };
   document.getElementById("f").onsubmit = async e => {
     e.preventDefault();
-    const d = await api("/api/register", { method: "POST", body: Object.fromEntries(new FormData(e.target)) });
+    const d = await api("/api/register", { method: "POST", body: { ...Object.fromEntries(new FormData(e.target)), displayedRules: groupProfile.rules } });
     document.getElementById("m").innerHTML = d.error ? `<div class="error">${d.error}</div>` : `<div class="success">${d.message}</div>`;
     if (d.success) setTimeout(showLogin, 1200);
   };
@@ -179,15 +187,15 @@ function showRegister() {
 async function showDash() {
   const me = await api("/api/me");
   if (!me.user) return showLogin();
-  if (me.user.status === "PENDING") {
+  if (me.user.status !== "ACTIVE") {
     app.innerHTML = `<div class="auth-page"><div class="auth-language" id="authLanguage"></div>
       <div class="container">
-        <img src="/wfc-logo.jpg" class="logo" alt="WFC" data-wfc-logo>
-        <div style="text-align:center;margin-bottom:10px"><span class="badge badge-pending">Waiting Approval</span></div>
+        ${groupLogo()}
+        <div style="text-align:center;margin-bottom:10px"><span class="badge badge-pending">Akaunti haijawa hai</span></div>
         <h1>Inasubiri Idhini</h1>
         <p class="subtitle">Habari <strong>${me.user.name}</strong></p>
         <div class="payment-hint" style="text-align:center">
-          Usajili wako na malipo ya <strong>TSh 1,000</strong> yamepokelewa. Tafadhali subiri viongozi waidhinishe akaunti yako na kukupatia WFC ID.
+          Ombi lako la usajili limepokelewa. Subiri viongozi waidhinishe akaunti yako na kukupatia namba ya uanachama.
         </div>
         <button class="btn ghost" onclick="logout()">Toka nje</button>
       </div>
@@ -208,6 +216,7 @@ async function showDash() {
       ["announcements", "Matangazo", IC.meg]
     ]],
     ["Mwanachama", [
+      ["account", "Akaunti yangu", IC.id],
       ["card", "Kitambulisho", IC.id],
       ["family", "Familia", IC.home2],
       ["directory", "Directory", IC.book],
@@ -215,11 +224,11 @@ async function showDash() {
       ["notifications", "Taarifa", IC.bell]
     ]],
     ["Ofisi", [
-      ["pending", "Inasubiri", IC.clock],
-      ["attendance", "Mahudhurio", IC.cal],
-      ["elections", "Uchaguzi", IC.vote],
+      ...(canViewReports(me.user.role) ? [["pending", "Maombi ya uanachama", IC.clock], ["reports", "Ripoti na historia", IC.file]] : []),
+      ...(groupProfile.modules?.attendance !== false ? [["attendance", "Mahudhurio", IC.cal]] : []),
+      ...(groupProfile.modules?.elections !== false ? [["elections", "Uchaguzi", IC.vote]] : []),
       ["cases", "Kesi", IC.case],
-      ["saccos", "SACCOS", IC.bank],
+      ...(groupProfile.modules?.saccos !== false ? [["saccos", "SACCOS", IC.bank]] : []),
       ["assets", "Mali", IC.box],
       ["projects", "Miradi", IC.flag],
       ["penalties", "Faini", IC.file],
@@ -229,7 +238,7 @@ async function showDash() {
       ["messages", "Ujumbe", IC.mail],
       ["momo", "Malipo ya simu", IC.phone],
       ["accounting", "Uhasibu", IC.coin],
-      ["settings", "Mipangilio", IC.gear]
+      ...(me.user.role === "ADMIN" ? [["settings", "Mipangilio ya kikundi", IC.gear]] : [])
     ]]
   ];
 
@@ -240,10 +249,10 @@ async function showDash() {
     <aside class="sidebar" id="side" aria-label="Menyu kuu">
       <div class="sidebar-header">
         <div class="sidebar-brand">
-          <img src="/wfc-logo.jpg" alt="WFC" data-wfc-logo>
+          ${groupLogo("sidebar-group-logo")}
           <div class="sidebar-brand-text">
-            <strong>WFC Portal</strong>
-            <span>Wachagga Family</span>
+            <strong>${escapeHtml(groupProfile.name)}</strong>
+            <span data-group-text="shortName"></span>
           </div>
         </div>
         <button class="collapse-btn" id="collapseBtn" type="button" aria-label="Kunja au fungua menyu" aria-expanded="${!collapsed}">
@@ -269,7 +278,7 @@ async function showDash() {
           <button class="menu-btn" id="menuBtn" type="button" aria-controls="side" aria-expanded="false">Menyu</button>
           <div class="topbar-title-group">
             <strong id="pt">Dashibodi</strong>
-            <span class="topbar-sub">Wachagga Family Community · Ofisi ya Kidijitali</span>
+            <span class="topbar-sub">${escapeHtml(groupProfile.name)} · Ofisi ya kidijitali</span>
           </div>
         </div>
         <div class="topbar-actions">
@@ -281,6 +290,7 @@ async function showDash() {
               <span class="user-chip-name" translate="no">${escapeHtml(me.user.name)}</span>
             </summary>
             <div class="profile-panel">
+              <button type="button" data-p="account">Akaunti yangu</button>
               <button type="button" data-p="profile">Wasifu wangu</button>
               <button type="button" data-p="preferences">Mipangilio ya akaunti</button>
               <button type="button" data-p="password">Badili nenosiri</button>
@@ -392,6 +402,7 @@ async function load(p) {
   c.dataset.page = p;
   const titles = {
     profile: "Wasifu wangu", preferences: "Mipangilio ya akaunti", password: "Badili nenosiri",
+    account: "Akaunti yangu", reports: "Ripoti na historia",
     home: "Dashibodi", members: "Wanachama", payments: "Michango", events: "Matukio",
     announcements: "Matangazo", card: "Kitambulisho", family: "Familia", directory: "Directory",
     help: "Msaada", pending: "Inasubiri Idhini", attendance: "Mahudhurio", elections: "Uchaguzi",
@@ -463,12 +474,12 @@ async function load(p) {
       <div class="dashboard-studio">
       <section class="hero-band overview-hero">
         <div class="studio-orbit hero-orbit" aria-hidden="true">
-          <div class="studio-orbit-ring"></div><div class="studio-orbit-core">WFC</div>
+          <div class="studio-orbit-ring"></div><div class="studio-orbit-core">${escapeHtml(groupProfile.shortName.slice(0, 7))}</div>
         </div>
         <div>
           <span class="pill">${d.user.status === "ACTIVE" ? "Mwanachama hai" : escapeHtml(d.user.status)}</span>
           <h2>Karibu, ${escapeHtml(d.user.name)}</h2>
-          <p>WFC ID: <strong>${escapeHtml(d.user.wfcId || "—")}</strong> · Kanda ya ${escapeHtml(d.user.region || "Tanzania")} · Jukumu: ${d.user.role}</p>
+          <p>Namba ya uanachama: <strong>${escapeHtml(d.user.wfcId || "—")}</strong> · Kanda ya ${escapeHtml(d.user.region || "Tanzania")} · Jukumu: ${d.user.role}</p>
         </div>
         <div class="hero-contribution">
           <div class="kicker">Jumla Uliyochanga</div>
@@ -477,7 +488,7 @@ async function load(p) {
       </section>
       <h3 class="studio-section-title">Hatua za haraka</h3>
       <nav class="overview-actions" aria-label="Hatua za haraka">
-        <button type="button" data-overview-page="payments">${IC.coin}<span>Michango</span></button>
+        <button type="button" data-overview-page="account">${IC.coin}<span>Akaunti yangu</span></button>
         <button type="button" data-overview-page="card">${IC.id}<span>Kitambulisho</span></button>
         <button type="button" data-overview-page="events">${IC.cal}<span>Matukio</span></button>
         <button type="button" data-overview-page="notifications">${IC.bell}<span>Arifa</span></button>
@@ -549,7 +560,7 @@ async function load(p) {
             <div class="stat-icon">${IC.bank}</div>
             <span class="stat-trend">Salio</span>
           </div>
-          <div class="stat-label">Salio Halisi (Balance)</div>
+          <div class="stat-label">Salio halisi</div>
           <div class="val">${money(fin.balance)}</div>
           <div class="stat-desc">Fedha iliyopo mkononi / benki</div>
         </div>
@@ -597,7 +608,7 @@ async function load(p) {
               ${(d.recent || []).map(x => `
                 <tr>
                   <td><strong>${x.userName || "Mwanachama"}</strong></td>
-                  <td>${x.type}</td>
+                  <td>${escapeHtml(x.type)}</td>
                   <td style="font-variant-numeric:tabular-nums;font-weight:600">${money(x.amount)}</td>
                   <td><span class="badge ${x.status === "APPROVED" ? "badge-approved" : "badge-pending"}">${x.status === "APPROVED" ? "Imeidhinishwa" : "Inasubiri"}</span></td>
                 </tr>`).join("") || `<tr><td colspan="4" class="muted" style="text-align:center;padding:24px">Hakuna malipo yaliyorekodiwa bado</td></tr>`}
@@ -643,7 +654,7 @@ async function load(p) {
     const m = await api("/api/members");
     window.__members = m;
     c.innerHTML = `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-      <input id="memberSearch" placeholder="Tafuta jina, simu, kanda au WFC ID..." style="flex:1;min-width:220px">
+      <input id="memberSearch" placeholder="Tafuta jina, simu, kanda au Namba ya uanachama..." style="flex:1;min-width:220px">
       <span class="badge badge-active">${m.length} wanachama</span>
     </div>
     <div id="memberGrid" class="member-grid"></div>`;
@@ -655,7 +666,7 @@ async function load(p) {
           <div class="avatar">${ini}</div>
           <div class="member-info">
             <strong>${x.name}</strong>
-            <div class="muted">${x.wfcId || "WFC-—"} · ${x.region || ""}</div>
+            <div class="muted">${x.wfcId || "—"} · ${x.region || ""}</div>
             <div class="muted">${x.phone || ""}</div>
           </div>
           <span class="badge ${x.status === "ACTIVE" ? "badge-active" : x.status === "SUSPENDED" ? "badge-suspended" : "badge-pending"}">${x.status === "ACTIVE" ? "Hai" : x.status === "SUSPENDED" ? "Imesimamishwa" : "Inasubiri"}</span>
@@ -676,15 +687,28 @@ async function load(p) {
     };
   }
 
-  if (p === "payments") {
-    const list = await api("/api/payments");
-    window.__pays = list;
-    c.innerHTML = `<div class="card">
-      <div class="card-head"><h3>Wasilisha Malipo Mapya</h3><span class="kicker">M-Pesa · Tigo · Airtel · CRDB</span></div>
+  if (p === "payments" || p === "account") {
+    const account = p === "account" ? await api("/api/my-account") : null;
+    const list = account ? account.payments : await api("/api/payments");
+    if (!Array.isArray(list)) {
+      c.textContent = "Taarifa za malipo hazikupatikana.";
+      return;
+    }
+    const canApprove = !account && canReviewPayments(window.__me.role);
+    const awaitingReview = canApprove ? list.filter(payment => payment.status === "PENDING").length : 0;
+    if (canApprove) list.sort((a, b) => Number(b.status === "PENDING") - Number(a.status === "PENDING"));
+    c.innerHTML = `${account ? `<section class="hero-band overview-hero"><div><h2>Akaunti yangu</h2>
+      <p>${escapeHtml(account.user.name)} · ${escapeHtml(account.user.wfcId || "—")} · Mwanachama hai</p></div>
+      <div class="hero-contribution"><span class="kicker">Salio la ada</span><strong>${formatTsh(account.debt)}</strong></div></section>
+      <div class="stats">${[["Ada ya mwezi", account.monthly], ["Jumla ya ada inayotarajiwa", account.expected], ["Ada iliyothibitishwa", account.paid]].map(([label, value]) => `<div class="stat"><div class="stat-label">${label}</div><div class="val">${formatTsh(value)}</div></div>`).join("")}</div>` : ""}
+      ${canApprove ? `<section class="card"><h3>Malipo yanayosubiri uhakiki</h3><p>${awaitingReview} miamala. Linganisha namba ya muamala na malipo yaliyopokelewa kabla ya kuidhinisha.</p></section>` : ""}
+      <div class="card">
+      <div class="card-head"><h3>Wasilisha Malipo Mapya</h3></div>
+      <p class="payment-hint">${escapeHtml(paymentInstructions(groupProfile))}</p>
       <form id="pf">
         <div class="form-row-3">
           <div class="form-group"><label>Aina ya Mchango</label><select name="type"><option>Ada ya mwezi</option><option>Kiingilio</option><option>Dharura</option><option>Msiba</option></select></div>
-          <div class="form-group"><label>Kiasi (TSh)</label><input name="amount" type="number" placeholder="10000" required></div>
+          <div class="form-group"><label>Kiasi (TSh)</label><input name="amount" type="number" min="1" step="1" placeholder="10000" required></div>
           <div class="form-group"><label>Namba ya Muamala</label><input name="transactionId" placeholder="Mf. MP2608..." required></div>
         </div>
         <button class="btn btn-sm" type="submit">Wasilisha Malipo</button>
@@ -697,21 +721,23 @@ async function load(p) {
           <thead><tr><th>Mwanachama</th><th>Aina</th><th>Kiasi</th><th>Muamala</th><th>Hali</th><th>Hatua</th></tr></thead>
           <tbody>
             ${list.map(x => `<tr>
-              <td><strong>${x.userName || "—"}</strong></td>
+              <td><strong>${escapeHtml(x.userName || "—")}</strong></td>
               <td>${x.type}</td>
               <td style="font-variant-numeric:tabular-nums;font-weight:600">TSh ${Number(x.amount || 0).toLocaleString()}</td>
-              <td><code>${x.transactionId}</code></td>
+              <td><code>${escapeHtml(x.transactionId)}</code></td>
               <td><span class="badge ${x.status === "APPROVED" ? "badge-approved" : "badge-pending"}">${x.status === "APPROVED" ? (x.receiptNo || "Imethibitishwa") : "Inasubiri"}</span></td>
-              <td>${x.status === "PENDING" ? `<button class="btn btn-sm" onclick="approvePay('${x.id}')">Idhinisha</button>` : `<button class="btn btn-sm ghost" onclick="downloadReceipt('${x.id}')">Pakua PDF</button>`}</td>
+              <td>${x.status === "APPROVED" ? `<button class="btn btn-sm ghost" data-receipt="${escapeHtml(x.id)}">Pakua risiti</button>` : canApprove ? `<button class="btn btn-sm" data-approve-payment="${escapeHtml(x.id)}">Idhinisha</button>` : "—"}</td>
             </tr>`).join("") || `<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">Hakuna historia ya malipo</td></tr>`}
           </tbody>
         </table>
       </div>
     </div>`;
+    c.querySelectorAll("[data-receipt]").forEach(button => button.onclick = () => downloadReceipt(button.dataset.receipt));
+    c.querySelectorAll("[data-approve-payment]").forEach(button => button.onclick = () => approvePay(button.dataset.approvePayment));
     document.getElementById("pf").onsubmit = async e => {
       e.preventDefault();
       const d = await api("/api/submit-payment", { method: "POST", body: Object.fromEntries(new FormData(e.target)) });
-      if (d.error) alert(d.error); else load("payments");
+      if (d.error) alert(d.error); else load(p);
     };
   }
 
@@ -722,7 +748,7 @@ async function load(p) {
       <form id="ef">
         <div class="form-row-2">
           <div class="form-group"><label>Aina ya Tukio</label><select name="type"><option>Msiba</option><option>Harusi</option><option>Festival</option><option>Tour</option></select></div>
-          <div class="form-group"><label>Kichwa cha Tukio</label><input name="title" placeholder="Mf. WFC Festival" required></div>
+          <div class="form-group"><label>Kichwa cha Tukio</label><input name="title" placeholder="Mf. Mkutano wa mwaka" required></div>
         </div>
         <div class="form-row-3">
           <div class="form-group"><label>Eneo</label><input name="location" placeholder="Moshi / Dar es Salaam"></div>
@@ -786,10 +812,10 @@ async function load(p) {
   if (p === "card") {
     const d = await api("/api/dashboard");
     c.innerHTML = `<div class="card idcard" style="margin:0 auto;text-align:center">
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC" data-wfc-logo>
-      <h2>WFC Official Membership</h2>
+      ${groupLogo()}
+      <h2>Kitambulisho cha ${escapeHtml(groupProfile.name)}</h2>
       <p style="font-size:1.35rem;margin:6px 0 2px;color:var(--ink)"><strong>${d.user.name}</strong></p>
-      <p style="font-weight:700;color:var(--brand-orange);margin:0 0 6px">${d.user.wfcId || "WFC-PENDING"}</p>
+      <p style="font-weight:700;color:var(--brand-orange);margin:0 0 6px">${d.user.wfcId || "Inasubiri idhini"}</p>
       <p class="muted" style="margin:0 0 8px">${d.user.region || "Tanzania"} · <span class="badge badge-active">${d.user.status}</span></p>
       <img id="qrc" class="qr" alt="QR Code">
       <button class="btn" onclick="window.print()">Pakua / Chapisha Kitambulisho</button>
@@ -912,7 +938,7 @@ async function load(p) {
   if (p === "saccos") {
     const d = await api("/api/saccos");
     c.innerHTML = `<div class="card">
-      <div class="card-head"><h3>WFC SACCOS — Nunua Hisa</h3></div>
+      <div class="card-head"><h3>SACCOS — Nunua Hisa</h3></div>
       <form id="sf" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
         <div class="form-group" style="flex:1;min-width:220px;margin:0"><label>Kiasi cha Hisa (TSh)</label><input name="amount" type="number" placeholder="50000" required></div>
         <button class="btn btn-sm" type="submit">Wasilisha Hisa</button>
@@ -939,7 +965,7 @@ async function load(p) {
       </form>
     </div>
     <div class="card">
-      <div class="card-head"><h3>Daftari la Mali za WFC</h3></div>
+      <div class="card-head"><h3>Daftari la mali za kikundi</h3></div>
       ${list.map(a => `<div class="list-row"><div><strong>${a.name}</strong><div class="muted">${a.location || "—"}</div></div><strong>TSh ${(Number(a.value) || 0).toLocaleString()}</strong></div>`).join("") || `<div class="empty-state">Hakuna mali zilizosajiliwa</div>`}
     </div>`;
     document.getElementById("asf").onsubmit = async e => { e.preventDefault(); await api("/api/assets", { method: "POST", body: Object.fromEntries(new FormData(e.target)) }); load("assets"); };
@@ -951,7 +977,7 @@ async function load(p) {
       <div class="card-head"><h3>Ongeza Mradi wa Maendeleo</h3></div>
       <form id="prf">
         <div class="form-row-2">
-          <div class="form-group"><label>Jina la Mradi</label><input name="name" placeholder="Mf. WFC Queens / UTT AMIS" required></div>
+          <div class="form-group"><label>Jina la Mradi</label><input name="name" placeholder="Mf. Mradi wa akiba" required></div>
           <div class="form-group"><label>Maendeleo (%)</label><input name="progress" type="number" value="0" min="0" max="100"></div>
         </div>
         <button class="btn btn-sm" type="submit">Hifadhi Mradi</button>
@@ -985,7 +1011,7 @@ async function load(p) {
 
   if (p === "documents") {
     const list = await api("/api/documents");
-    const constitution = list.find(d => (d.title || "").toLowerCase().includes("katiba")) || { title: "Katiba ya WFC", url: "#", summary: "Sheria, kanuni na misingi mikuu ya Wachagga Family Community." };
+    const constitution = list.find(d => (d.title || "").toLowerCase().includes("katiba")) || { title: "Katiba ya kikundi", url: "#", summary: "Sheria, kanuni na misingi ya kikundi." };
     c.innerHTML = `<div class="hero-band">
       <div>
         <span class="kicker">Nyaraka Kuu</span>
@@ -1019,9 +1045,9 @@ async function load(p) {
       <div class="card-head"><h3>Maombi Yanayosubiri Idhini</h3><span class="badge badge-pending">${pen.length} wanasubiri</span></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th>Hatua</th></tr></thead>
+          <thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th>Muamala wa usajili</th><th>Hatua</th></tr></thead>
           <tbody>
-            ${pen.map(x => `<tr><td><strong>${x.name}</strong></td><td>${x.phone}</td><td>${x.region}</td><td><button class="btn btn-sm" onclick="approve('${x.id}')">Idhinisha Mwanachama</button></td></tr>`).join("") || `<tr><td colspan="4" class="muted" style="text-align:center;padding:24px">Hakuna maombi yanayosubiri</td></tr>`}
+            ${pen.map(x => `<tr><td><strong>${escapeHtml(x.name)}</strong></td><td>${escapeHtml(x.phone)}</td><td>${escapeHtml(x.region)}</td><td>${escapeHtml(x.paymentProof || "—")}</td><td><button class="btn btn-sm" onclick="approve('${x.id}')">Idhinisha Mwanachama</button></td></tr>`).join("") || `<tr><td colspan="5" class="muted" style="text-align:center;padding:24px">Hakuna maombi yanayosubiri</td></tr>`}
           </tbody>
         </table>
       </div>
@@ -1110,7 +1136,7 @@ async function load(p) {
       </form>
       <div id="skm" class="muted" style="margin-top:10px"></div>
       <div class="payment-hint" style="margin-top:14px">
-        M-Pesa <code>0755 000 888</code> · Tigo <code>0715 000 888</code> · Airtel <code>0785 000 888</code> · CRDB <code>0150889944200</code>
+        ${escapeHtml(paymentInstructions(groupProfile))}
       </div>
     </div>
     <div class="card">
@@ -1128,43 +1154,160 @@ async function load(p) {
     document.getElementById("cf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/submit-payment", { method: "POST", body: Object.fromEntries(new FormData(e.target)) }); if (d.error) alert(d.error); else load("payments"); };
   }
 
+  if (p === "reports") {
+    const report = await api("/api/group-reports");
+    if (report.error) { c.textContent = report.error; return; }
+    const sections = [
+      { title: "Michango iliyoidhinishwa", file: "michango.csv", fields: ["Mwanachama", "Aina", "Kiasi (TSh)", "Risiti", "Tarehe"],
+        rows: report.payments.map(row => [row.userName, row.type, row.amount, row.receiptNo, row.approvedAt || row.createdAt]) },
+      { title: "Madeni ya ada", file: "madeni.csv", fields: ["Mwanachama", "Namba ya uanachama", "Ada (TSh)", "Iliyolipwa (TSh)", "Deni (TSh)"],
+        rows: report.debts.map(row => [row.name, row.memberNumber, row.expected, row.paid, row.debt]) },
+      { title: "Historia ya idhini", file: "historia-ya-idhini.csv", fields: ["Aina", "Rejea", "Aliyeidhinisha", "Tarehe"],
+        rows: report.approvals.map(row => [row.category, row.subject, row.actor, row.date]) }
+    ];
+    c.innerHTML = sections.map(({title, fields, rows}, index) => `<section class="card">
+      <div class="card-head"><h3>${title}</h3><button class="btn btn-sm ghost" data-export="${index}">Pakua CSV</button></div>
+      <div class="table-wrap"><table><thead><tr>${fields.map(field => `<th>${field}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(row => `<tr>${row.map(value => `<td>${escapeHtml(value ?? "—")}</td>`).join("")}</tr>`).join("") || `<tr><td colspan="${fields.length}">Hakuna rekodi bado.</td></tr>`}</tbody></table></div>
+    </section>`).join("");
+    c.querySelectorAll("[data-export]").forEach(button => {
+      const {file, fields, rows} = sections[Number(button.dataset.export)];
+      button.onclick = () => downloadReport(file, fields, rows);
+    });
+  }
+
   if (p === "settings") {
+    if (window.__me.role !== "ADMIN") {
+      c.textContent = "Mipangilio hii ni ya msimamizi wa kikundi.";
+      return;
+    }
     const d = await api("/api/dashboard");
     const s = d.settings || {};
-    c.innerHTML = `<div class="split" style="grid-template-columns:1fr 1fr">
-      <div class="card">
-        <div class="card-head"><h3>Usalama wa OTP (2FA)</h3></div>
-        <p class="muted">Washa au zima uthibitisho wa msimbo wa OTP wakati wa kuingia kwenye akaunti.</p>
-        <button class="btn btn-sm" id="tfa" type="button">Washa / Zima OTP</button>
-        <p id="tfam" class="muted" style="margin-top:10px"></p>
-      </div>
-      <div class="card">
-        <div class="card-head"><h3>Data ya Majaribio (Demo)</h3></div>
-        <p class="muted">Akaunti 0711000001 hadi 0711000005 (demo123). Kuondoa hakuathiri wanachama halisi.</p>
-        <button class="btn btn-sm danger-ghost" id="cleardemo" type="button">Ondoa Data ya Majaribio</button>
-      </div>
-    </div>
+    const group = groupProfile;
+    const field = (name, label, value, limit) => `<div class="form-group"><label for="group-${name}">${label}</label><input id="group-${name}" name="${name}" value="${escapeHtml(value)}" maxlength="${limit}"></div>`;
+    c.innerHTML = `<section class="card">
+      <div class="card-head"><h3>Mipangilio ya kikundi</h3></div>
+      <form id="groupForm">
+        <p id="setupStep" class="muted" aria-live="polite"></p>
+        <fieldset data-setup-step><legend>Utambulisho</legend>
+        <div class="form-row-2">
+          ${field("name", "Jina la kikundi", group.name, 80)}
+          ${field("shortName", "Kifupi cha jina", group.shortName, 12)}
+          ${field("slogan", "Kaulimbiu", group.slogan, 120)}
+          ${field("phone", "Simu ya mawasiliano", group.phone, 40)}
+        </div>
+        <div class="form-group"><label for="group-description">Maelezo ya kikundi</label><textarea id="group-description" name="description" maxlength="600" rows="3">${escapeHtml(group.description)}</textarea></div>
+        <div class="form-row-2">
+          <div class="form-group"><label for="group-logo">Nembo (PNG, JPG au WebP, KB 500)</label><input id="group-logo" type="file" accept="image/png,image/jpeg,image/webp"></div>
+          <label class="group-check"><input name="removeLogo" type="checkbox"> Ondoa nembo iliyopo</label>
+        </div>
+        </fieldset>
+        <fieldset data-setup-step hidden><legend>Kanuni na ada</legend>
+        <div class="form-group"><label for="group-rules">Kanuni na taratibu</label><textarea id="group-rules" name="rules" maxlength="12000" rows="5">${escapeHtml(group.rules)}</textarea></div>
+        <div class="form-row-2">
+          <div class="form-group"><label for="group-registrationFee">Ada ya usajili (TSh)</label><input id="group-registrationFee" name="registrationFee" type="number" min="0" max="1000000000" value="${group.registrationFee}" required></div>
+          <div class="form-group"><label for="group-monthlyFee">Ada ya mwezi (TSh)</label><input id="group-monthlyFee" name="monthlyFee" type="number" min="0" max="1000000000" value="${group.monthlyFee}" required></div>
+        </div>
+        <div class="form-row-2">${Object.entries(paymentLabels).map(([key, label]) => field(key, label, group.paymentNumbers[key], 40)).join("")}</div>
+        </fieldset>
+        <fieldset data-setup-step hidden><legend>Vipengele na mwaliko</legend>
+          <p class="muted">Chagua vipengele vinavyotumika kwenye kikundi hiki.</p>
+          <div class="form-row-2">${Object.entries(groupModules).map(([key,label]) => `<label class="group-check"><input type="checkbox" name="module-${key}" ${group.modules?.[key] !== false ? "checked" : ""}> ${label}</label>`).join("")}</div>
+          <div class="form-group"><label for="groupInvite">Kiungo cha kuwaalika wanachama</label><input id="groupInvite" value="${escapeHtml(location.origin + "/app#register")}" readonly></div>
+          <button class="btn ghost" id="copyInvite" type="button">Nakili kiungo</button>
+        </fieldset>
+        <div class="btn-row">
+          <button class="btn ghost" id="setupBack" type="button">Rudi</button>
+          <button class="btn" id="setupNext" type="button">Endelea</button>
+          <button class="btn" type="submit" hidden>Hifadhi mipangilio ya kikundi</button>
+        </div><p id="groupResult" role="status"></p>
+      </form>
+    </section>
     <div class="card">
       <div class="card-head"><h3>Funguo za Huduma (API Integrations)</h3></div>
       <form id="sf">
         <div class="form-row-2">
-          <div class="form-group"><label>Africa's Talking Username</label><input name="smsUsername" value="${s.smsUsername || ""}"></div>
-          <div class="form-group"><label>SMS API Key</label><input name="smsKey" value="${s.smsKey || ""}"></div>
+          <div class="form-group"><label>Africa's Talking Username</label><input name="smsUsername" value="${escapeHtml(s.smsUsername || "")}"></div>
+          <div class="form-group"><label>SMS API Key</label><input name="smsKey" value="${escapeHtml(s.smsKey || "")}"></div>
         </div>
         <div class="form-row-2">
-          <div class="form-group"><label>WhatsApp Token</label><input name="whatsappToken" value="${s.whatsappToken || ""}"></div>
-          <div class="form-group"><label>WhatsApp Phone ID</label><input name="whatsappPhoneId" value="${s.whatsappPhoneId || ""}"></div>
+          <div class="form-group"><label>WhatsApp Token</label><input name="whatsappToken" value="${escapeHtml(s.whatsappToken || "")}"></div>
+          <div class="form-group"><label>WhatsApp Phone ID</label><input name="whatsappPhoneId" value="${escapeHtml(s.whatsappPhoneId || "")}"></div>
         </div>
         <div class="form-row-3">
-          <div class="form-group"><label>M-Pesa Consumer Key</label><input name="momoConsumerKey" value="${s.momoConsumerKey || ""}"></div>
-          <div class="form-group"><label>M-Pesa Consumer Secret</label><input name="momoConsumerSecret" value="${s.momoConsumerSecret || ""}"></div>
-          <div class="form-group"><label>Shortcode</label><input name="momoShortcode" value="${s.momoShortcode || ""}"></div>
+          <div class="form-group"><label>M-Pesa Consumer Key</label><input name="momoConsumerKey" value="${escapeHtml(s.momoConsumerKey || "")}"></div>
+          <div class="form-group"><label>M-Pesa Consumer Secret</label><input name="momoConsumerSecret" value="${escapeHtml(s.momoConsumerSecret || "")}"></div>
+          <div class="form-group"><label>Shortcode</label><input name="momoShortcode" value="${escapeHtml(s.momoShortcode || "")}"></div>
         </div>
         <button class="btn btn-sm" type="submit">Hifadhi Mipangilio</button>
       </form>
     </div>`;
-    document.getElementById("tfa").onclick = async () => { const r = await api("/api/toggle-2fa", { method: "POST", body: {} }); document.getElementById("tfam").textContent = r.twoFactor ? "OTP imewashwa." : "OTP imezimwa."; };
-    document.getElementById("cleardemo").onclick = async () => { const r = await api("/api/demo/clear", { method: "POST", body: {} }); alert(r.error || "Data ya majaribio imeondolewa."); };
+    const groupForm = document.getElementById("groupForm");
+    const steps = [...groupForm.querySelectorAll("[data-setup-step]")];
+    const back = document.getElementById("setupBack");
+    const next = document.getElementById("setupNext");
+    let currentStep = 0;
+    const showStep = index => {
+      currentStep = index;
+      steps.forEach((step, i) => step.hidden = i !== index);
+      document.getElementById("setupStep").textContent = `Hatua ${index + 1} kati ya ${steps.length}`;
+      back.hidden = index === 0;
+      next.hidden = index === steps.length - 1;
+      groupForm.querySelector("button[type=submit]").hidden = !next.hidden;
+    };
+    back.onclick = () => showStep(currentStep - 1);
+    next.onclick = () => {
+      const invalid = steps[currentStep].querySelector(":invalid");
+      if (invalid) invalid.reportValidity();
+      else showStep(currentStep + 1);
+    };
+    document.getElementById("copyInvite").onclick = async () => {
+      const invite = document.getElementById("groupInvite");
+      try {
+        await navigator.clipboard.writeText(invite.value);
+        document.getElementById("groupResult").textContent = "Kiungo kimenakiliwa.";
+      } catch {
+        invite.select();
+        document.getElementById("groupResult").textContent = "Nakili kiungo kilichochaguliwa.";
+      }
+    };
+    showStep(0);
+    document.getElementById("groupForm").onsubmit = async event => {
+      event.preventDefault();
+      if (currentStep !== steps.length - 1) { next.click(); return; }
+      const form = event.currentTarget;
+      const submit = form.querySelector("button[type=submit]");
+      const result = document.getElementById("groupResult");
+      submit.disabled = true;
+      try {
+        const body = Object.fromEntries(new FormData(form));
+        body.modules = Object.fromEntries(Object.keys(groupModules).map(key => [key, Boolean(body["module-" + key])]));
+        body.removeLogo = Boolean(body.removeLogo);
+        const file = document.getElementById("group-logo").files[0];
+        if (file) {
+          if (file.size > 512000) throw new Error("Nembo isizidi KB 500.");
+          body.logo = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error("Nembo haijasomwa."));
+            reader.readAsDataURL(file);
+          });
+        }
+        const response = await api("/api/group", { method: "POST", body });
+        if (!response.success) throw new Error(response.error || "Mipangilio haijahifadhiwa.");
+        applyGroupProfile(response.group);
+        await showDash();
+        await load("settings");
+        const nextStep = document.getElementById("setupNext");
+        nextStep.click();
+        nextStep.click();
+        document.getElementById("groupResult").textContent = "Mipangilio ya kikundi imehifadhiwa.";
+      } catch (error) {
+        result.textContent = error.message;
+      } finally {
+        submit.disabled = false;
+      }
+    };
     document.getElementById("sf").onsubmit = async e => { e.preventDefault(); const r = await api("/api/settings", { method: "POST", body: Object.fromEntries(new FormData(e.target)) }); alert(r.error || "Mipangilio imehifadhiwa"); };
   }
 
@@ -1281,31 +1424,13 @@ async function load(p) {
   }
 }
 
-async function downloadReceipt(id) {
-  const row = (window.__pays || []).find(x => x.id === id);
-  if (!row) return;
-  const payload = JSON.stringify({ org: "WFC", receipt: row.receiptNo, name: row.userName, type: row.type, amount: row.amount, tx: row.transactionId });
-  const qr = await QRCode.toDataURL(payload, { margin: 1, width: 220 });
-  const doc = new jspdf.jsPDF();
-  doc.setFillColor(17, 24, 39);
-  doc.rect(0, 0, 210, 28, "F");
-  doc.setTextColor(249, 115, 22);
-  doc.setFontSize(16);
-  doc.text("WACHAGGA FAMILY COMMUNITY", 14, 12);
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
-  doc.text("Risiti Rasmi ya Malipo", 14, 20);
-  doc.setTextColor(17, 24, 39);
-  doc.setFontSize(12);
-  doc.text(row.receiptNo || "Risiti", 14, 42);
-  ["Jina: " + (row.userName || ""), "Aina: " + row.type, "Kiasi: TSh " + Number(row.amount).toLocaleString(), "Muamala: " + row.transactionId].forEach((line, i) => doc.text(line, 14, 54 + i * 8));
-  doc.addImage(qr, "PNG", 140, 36, 50, 50);
-  doc.save((row.receiptNo || "risiti") + ".pdf");
+function downloadReceipt(id) {
+  window.location.assign("/api/payments/" + encodeURIComponent(id) + "/receipt");
 }
 
 async function approve(id) {
   const d = await api("/api/approve-member", { method: "POST", body: { userId: id } });
-  if (d.success) { alert("Imeidhinishwa: " + d.wfcId); load("members"); } else alert(d.error || "Imeshindwa");
+  if (d.success) { alert("Imeidhinishwa: " + d.wfcId); load(document.getElementById("c").dataset.page); } else alert(d.error || "Imeshindwa");
 }
 async function approvePay(id) {
   const d = await api("/api/approve-payment", { method: "POST", body: { paymentId: id } });
@@ -1331,7 +1456,9 @@ async function logout() {
 }
 
 (async () => {
+  await groupReady;
   const me = await api("/api/me");
   if (me.user) showDash();
+  else if (location.hash === "#register") showRegister();
   else showLogin();
 })();

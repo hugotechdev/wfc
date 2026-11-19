@@ -1790,3 +1790,64 @@ body { top: 0 !important; }
   .dashboard-studio .stat .val { font-size: clamp(1rem, 4vw, 1.4rem); }
   .dashboard-studio .stat-top { flex-wrap: wrap; gap: 6px; }
 }
+
+/* Group identity and Google Translate */
+.group-logo {
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  flex: none;
+  color: #583b2a;
+  background: var(--brand-tint-50);
+  font-weight: 800;
+  font-size: .68rem;
+  text-align: center;
+}
+.group-logo img { display: block; width: 100%; height: 100%; object-fit: contain; border: 0; margin: 0; }
+.logo.group-logo { display: grid; }
+.sidebar-group-logo, .brand-badge-img .group-logo { width: 42px; height: 42px; border-radius: 12px; }
+.showcase-top .group-logo { width: 56px; height: 56px; border-radius: 14px; }
+.signin-page h1 { overflow-wrap: anywhere; }
+.group-rules { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 19rem; overflow: auto; margin-block: .6rem; }
+.group-check { display: flex; align-items: center; gap: .6rem; margin-bottom: .8rem; }
+.group-check input { width: auto; flex: none; accent-color: var(--brand-orange); }
+
+#google_translate_element:not(:empty) {
+  max-width: 12rem;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--card);
+  box-shadow: 0 2px 5px #0000000c;
+}
+#google_translate_element .goog-te-gadget {
+  color: var(--muted);
+  font-size: 9px !important;
+  line-height: 1.25;
+}
+#google_translate_element .goog-te-gadget .goog-te-combo {
+  display: block;
+  width: 100%;
+  min-height: 27px;
+  padding: 2px 4px;
+  border-radius: 7px;
+  font-weight: 650;
+  background: var(--bg);
+}
+#google_translate_element .goog-logo-link { font-size: 9px; color: var(--muted); }
+.site-nav > #google_translate_element { margin-inline-start: auto; }
+@media (max-width: 530px) {
+  .site-nav .brand-wordmark { max-width: 36vw; }
+  .site-nav > #google_translate_element { max-width: 9rem; }
+}
+
+#groupForm [hidden] { display: none !important; }
+#groupForm fieldset {
+  margin-block: 16px;
+  padding: 14px;
+  min-inline-size: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+#groupForm legend { padding-inline: 6px; font-weight: 700; }
+#groupForm .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
