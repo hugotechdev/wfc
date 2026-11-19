@@ -240,7 +240,7 @@ async function showDash() {
       ["payments", "Michango", IC.coin],
       ["events", "Matukio", IC.cal],
       ["announcements", "Matangazo", IC.meg],
-      ["posts", "Vikao na machapisho", IC.meg]
+      ["posts", "Social Post", IC.meg]
     ]],
     ["Mwanachama", [
       ["account", "Akaunti yangu", IC.id],
@@ -334,7 +334,7 @@ async function showDash() {
     <nav class="tabbar" aria-label="Menyu ya haraka">
       <button type="button" data-p="home">${IC.home}<span>Nyumbani</span></button>
       <button type="button" data-p="payments">${IC.coin}<span>Michango</span></button>
-      <button type="button" data-p="events">${IC.cal}<span>Matukio</span></button>
+      <button type="button" data-p="posts">${IC.meg}<span>Social Post</span></button>
       <button type="button" id="moreBtn">${IC.meg}<span>Zaidi</span></button>
     </nav>
   </div>`;
@@ -434,7 +434,7 @@ async function load(p) {
   c.dataset.page = p;
   const titles = {
     profile: "Wasifu wangu", preferences: "Mipangilio ya akaunti", password: "Badili nenosiri",
-    account: "Akaunti yangu", reports: "Ripoti na historia", posts: "Vikao na machapisho",
+    account: "Akaunti yangu", reports: "Ripoti na historia", posts: "Social Post",
     home: "Dashibodi", members: "Wanachama", payments: "Michango", events: "Matukio",
     announcements: "Matangazo", card: "Kitambulisho", family: "Familia", directory: "Directory",
     help: "Msaada", pending: "Inasubiri Idhini", attendance: "Mahudhurio", elections: "Uchaguzi",
@@ -872,67 +872,13 @@ async function load(p) {
   }
 
   if (p === "posts") {
-    const posts = await api("/api/portal-posts");
-    if (c.dataset.page !== p) return;
-    if (!Array.isArray(posts)) { c.textContent = posts.error || "Machapisho hayakupatikana."; return; }
-    const timestamp = date => new Intl.DateTimeFormat(portalLocale === "en" ? "en-TZ" : "sw-TZ", {
-      dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Dar_es_Salaam"
-    }).format(new Date(date));
-    const commentHtml = note => `<article class="post-comment"><div class="post-byline"><strong translate="no">${escapeHtml(note.author)}</strong>
-      <time datetime="${escapeHtml(note.createdAt)}">${timestamp(note.createdAt)}</time></div>
-      <p translate="no">${escapeHtml(note.text)}</p></article>`;
-    c.innerHTML = `<section class="portal-feed">
-      ${canViewReports(window.__me.role) ? `<form method="post" id="portalPostForm" class="card"><h3>Andika chapisho</h3>
-        <div class="form-row-2"><div class="form-group"><label for="portalPostType">Aina</label>
-          <select name="type" id="portalPostType"><option value="announcement">Tangazo</option><option value="discussion">Mjadala</option></select></div>
-          <div class="form-group"><label for="portalPostTitle">Kichwa</label><input required maxlength="100" id="portalPostTitle" name="title"></div></div>
-        <div class="form-group"><label for="portalPostText">Ujumbe</label><textarea id="portalPostText" name="text" rows="3" maxlength="4000" required></textarea></div>
-        <button class="btn" type="submit">Chapisha</button><p role="status"></p>
-      </form>` : ""}
-      ${posts.map(post => `<article class="card portal-post">
-        <span class="badge badge-active">${post.type === "announcement" ? "Tangazo" : "Mjadala"}</span>
-        <h3 translate="no">${escapeHtml(post.title)}</h3>
-        <div class="post-byline"><strong translate="no">${escapeHtml(post.author)}</strong>
-          <time datetime="${escapeHtml(post.createdAt)}">${timestamp(post.createdAt)}</time></div>
-        <p class="post-text" translate="no">${escapeHtml(post.text)}</p>
-        <details>
-          <summary><span>Maoni</span> · <span data-comment-count>${post.comments.length}</span></summary>
-          <div class="post-comments">${post.comments.map(commentHtml).join("")}</div>
-          <form class="portal-comment-form" method="post" data-post="${escapeHtml(post.id)}">
-            <label for="reply-${escapeHtml(post.id)}">Andika maoni</label>
-            <textarea id="reply-${escapeHtml(post.id)}" name="text" rows="2" maxlength="1500" required></textarea>
-            <button class="btn btn-sm" type="submit">Tuma maoni</button><p role="status"></p>
-          </form>
-        </details></article>`).join("") || '<div class="card empty-state">Hakuna machapisho bado.</div>'}
-    </section>`;
-    const bindSubmit = (form, url, saved) => {
-      form.onsubmit = async event => {
-        event.preventDefault();
-        const submit = form.querySelector('button[type="submit"]');
-        const status = form.querySelector('[role="status"]');
-        submit.disabled = true;
-        status.textContent = "";
-        try {
-          const result = await api(url, { method: "POST", body: Object.fromEntries(new FormData(form)) });
-          if (!result.success) throw new Error(result.error || "Imeshindwa kuhifadhi.");
-          form.reset();
-          saved(result);
-        } catch (error) {
-          status.textContent = error.message;
-        } finally {
-          submit.disabled = false;
-        }
-      };
-    };
-    const postForm = document.getElementById("portalPostForm");
-    if (postForm) bindSubmit(postForm, "/api/portal-posts", () => load("posts"));
-    for (const form of c.querySelectorAll(".portal-comment-form")) {
-      bindSubmit(form, `/api/portal-posts/${form.dataset.post}/comments`, result => {
-        const details = form.closest("details");
-        details.querySelector(".post-comments").insertAdjacentHTML("beforeend", commentHtml(result.comment));
-        const count = details.querySelector("[data-comment-count]");
-        count.textContent = String(Number(count.textContent) + 1);
-      });
+    try {
+      const posts = await api("/api/portal-posts");
+      if (c.dataset.page !== p) return;
+      if (!Array.isArray(posts)) throw new Error(posts.error);
+      renderSocialFeed(c, posts, window.__me);
+    } catch {
+      if (c.dataset.page === p) c.textContent = "Machapisho hayakupatikana.";
     }
     return;
   }

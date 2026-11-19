@@ -5,6 +5,7 @@ const fs = require("fs");
 const { jsPDF } = require("jspdf");
 const QRCode = require("qrcode");
 const { normalizePortrait, cardQr, buildMemberCard } = require("./member-card");
+const { readAttachments, visiblePost } = require("./social-post");
 const { DEFAULT_GROUP, readGroup, updateGroup } = require("./group");
 const { randomBytes, scryptSync, timingSafeEqual } = require("node:crypto");
 
@@ -25,6 +26,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "../data");
 const DATA_FILE = path.join(DATA_DIR, "db.json");
+const POST_FILES = path.join(DATA_DIR, "social-attachments");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -78,6 +80,7 @@ if (!sessionSecret || sessionSecret.length < 32) throw new Error("Set SESSION_SE
   saveDB(db);
 })();
 
+app.post("/api/portal-posts", express.json({ limit: "12mb" }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "../public"), { index: false }));
@@ -519,23 +522,76 @@ function readPostText(value, maxLength) {
 }
 
 app.get("/api/portal-posts", requireAuth, (req, res) => {
-  res.set("Cache-Control", "private, no-store").json(loadDB().portalPosts || []);
+  const posts = loadDB().portalPosts || [];
+  res.set("Cache-Control", "private, no-store").json(posts.map(post => visiblePost(post, req.session.user.id)));
 });
 
-app.post("/api/portal-posts", requireAuth, (req, res) => {
+app.post("/api/portal-posts", requireAuth, (req, res, next) => {
   const actor = req.session.user;
   if (!isLeader(actor.role)) return res.status(403).json({ error: "Viongozi pekee wanaweza kuchapisha." });
-  const title = readPostText(req.body?.title, 100);
-  const text = readPostText(req.body?.text, 4000);
-  const type = req.body?.type;
-  if (!title || !text || !["announcement", "discussion"].includes(type)) {
+  const input = req.body || {};
+  const title = readPostText(input.title, 100);
+  const text = readPostText(input.text, 4000);
+  const type = input.type;
+  if (!["announcement", "discussion"].includes(type) ||
+      (input.title != null && (typeof input.title !== "string" || input.title.trim().length > 100)) ||
+      (input.text != null && (typeof input.text !== "string" || input.text.trim().length > 4000))) {
     return res.status(400).json({ error: "Weka aina, kichwa na ujumbe wa chapisho." });
   }
+  let files;
+  try {
+    files = readAttachments(input.attachments);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+  if (!title && !text && files.length === 0) {
+    return res.status(400).json({ error: "Andika ujumbe au ambatisha faili." });
+  }
   const db = loadDB();
-  const post = { id: randomBytes(12).toString("hex"), title, text, type, author: actor.name, createdAt: new Date().toISOString(), comments: [] };
-  (db.portalPosts ||= []).unshift(post);
-  saveDB(db);
-  res.status(201).json({ success: true, post });
+  const post = {
+    id: randomBytes(12).toString("hex"), title, text, type, author: actor.name, createdAt: new Date().toISOString(),
+    comments: [], likes: [],
+    attachments: files.map(({ id, name, type, bytes }) => ({ id, name, type, size: bytes.length }))
+  };
+  const saved = [];
+  try {
+    if (files.length) fs.mkdirSync(POST_FILES, { recursive: true, mode: 0o700 });
+    for (const file of files) {
+      const filePath = path.join(POST_FILES, file.id);
+      fs.writeFileSync(filePath, file.bytes, { flag: "wx", mode: 0o600 });
+      saved.push(filePath);
+    }
+    (db.portalPosts ||= []).unshift(post);
+    saveDB(db);
+  } catch (error) {
+    for (const filePath of saved) fs.rmSync(filePath, { force: true });
+    return next(error);
+  }
+  res.status(201).json({ success: true, post: visiblePost(post, actor.id) });
+});
+
+app.get("/api/portal-posts/:id/attachments/:file", requireAuth, (req, res) => {
+  const post = (loadDB().portalPosts || []).find(entry => entry.id === req.params.id);
+  const file = post?.attachments?.find(entry => entry.id === req.params.file);
+  if (!file || !/^[a-f0-9]{24}$/.test(file.id)) return res.sendStatus(404);
+  res.set({ "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox" });
+  if (file.type === "application/pdf") res.attachment(file.name);
+  res.type(file.type).sendFile(path.join(POST_FILES, file.id));
+});
+
+app.put("/api/portal-posts/:id/like", requireAuth, (req, res) => {
+  const desired = req.body?.liked;
+  if (typeof desired !== "boolean") return res.status(400).json({ error: "Imeshindwa kuhifadhi." });
+  const db = loadDB();
+  const post = (db.portalPosts || []).find(entry => entry.id === req.params.id);
+  if (!post) return res.status(404).json({ error: "Chapisho halikupatikana." });
+  const member = req.session.user.id;
+  const likes = post.likes ||= [];
+  if (desired !== likes.includes(member)) {
+    post.likes = desired ? [...likes, member] : likes.filter(id => id !== member);
+    saveDB(db);
+  }
+  res.json({ success: true, liked: desired, likeCount: post.likes.length });
 });
 
 app.post("/api/portal-posts/:id/comments", requireAuth, (req, res) => {

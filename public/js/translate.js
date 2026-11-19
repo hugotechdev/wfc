@@ -414,6 +414,25 @@ Weka aina, kichwa na ujumbe wa chapisho.|Choose a type and enter a title and mes
 Andika maoni yasiyozidi herufi 1500.|Write a comment of up to 1,500 characters.
 Chapisho halikupatikana.|Post not found.
 Imeshindwa kuhifadhi.|Could not save.
+Matangazo, mijadala na maoni ya wanachama.|Announcements, discussions and member comments.
+Chuja machapisho|Filter posts
+Yote|All
+Mijadala|Discussions
+Chapisho|Post
+Kichwa (hiari)|Title (optional)
+Andika ujumbe wa kikundi…|Write a message for the group…
+Andika ujumbe au ambatisha faili.|Write a message or attach a file.
+Picha au PDF|Photo or PDF
+Ondoa faili|Remove attachment
+Ambatisha hadi faili nne.|Attach up to four files.
+Faili moja lisizidi MB 5 na jumla isizidi MB 8.|Files can be up to 5 MB each and 8 MB in total.
+Ambatisha picha au hati ya PDF.|Attach a photo or PDF document.
+Hati iliyochaguliwa si PDF halali.|The selected document is not a valid PDF.
+Picha iliyochaguliwa haiwezi kusomwa.|The selected photo could not be read.
+Inachapisha…|Publishing…
+Chapisho limetumwa.|Post published.
+Machapisho hayakupatikana.|Posts could not be loaded.
+Pakua|Download
 `.trim().split("\n").map(line => line.split("|")));
 
 let portalLocale;
