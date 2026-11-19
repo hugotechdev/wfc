@@ -7,9 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=40989b35d006">
+  <link rel="stylesheet" href="/css/style.css?v=d9c570039aac">
 </head>
-<body data-page-title="Kata Tiketi">
+<body class="ticket-page" data-page-title="Kata Tiketi">
   <div class="auth-page"><div class="auth-language"><div id="portal_language" class="language-switch" role="group" translate="no" aria-label="Badili lugha"><button type="button" data-language="sw" aria-pressed="true" aria-label="Kiswahili">SW</button><button type="button" data-language="en" aria-pressed="false" aria-label="English">EN</button></div></div>
     <div class="container auth-card">
       <div class="auth-header">
@@ -28,10 +28,12 @@
           <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
           <div class="form-group"><label>Idadi ya Tiketi</label><input name="qty" type="number" value="1" min="1" required></div>
         </div>
-        <div class="payment-hint">
-          <strong>Lipa kupitia</strong> <span data-group-text="payments"></span>
+        <div id="customTicketFields"></div>
+        <div id="ticketPayment" hidden>
+          <p class="payment-hint"><strong>Lipa kupitia</strong> <span data-group-text="payments"></span></p>
+          <p><strong>Jumla ya kulipa</strong> <span id="ticketAmount"></span></p>
+          <div id="ticketProof"></div>
         </div>
-        <div class="form-group"><label>Namba ya Muamala (Transaction ID)</label><input name="transactionId" placeholder="Mf. QK82J910LP" required></div>
         <button class="btn" type="submit">Wasilisha Tiketi</button>
         <div id="m"></div>
       </form>
@@ -41,40 +43,8 @@
   </div>
 
   <script src="/js/group.js?v=376ca96c0409"></script>
-  <script src="/js/translate.js?v=2487a9b2d208"></script>
-  <script>
-    const id = location.pathname.split("/").pop();
-    fetch("/api/public/events").then(r=>r.json()).then(list=>{
-      const e = list.find(x=>x.id===id);
-      if(!e){
-        document.getElementById("info").innerHTML = `<div class="error">Tukio halijapatikana au limefungwa.</div>`;
-        return;
-      }
-      document.getElementById("info").innerHTML = `
-        <div class="ticket-event-box">
-          <span class="badge badge-pending">${e.type||"Tukio"}</span>
-          <h2>${e.title}</h2>
-          <p class="muted">${e.location||"Dar es Salaam / Moshi"}</p>
-          <div class="ticket-price-tag">TSh ${(e.ticketPrice||0).toLocaleString()} <span>/ tiketi</span></div>
-        </div>`;
-      document.getElementById("f").classList.remove("hidden");
-    });
-
-    document.getElementById("f").onsubmit = async e => {
-      e.preventDefault();
-      const body = Object.fromEntries(new FormData(e.target));
-      body.eventId = id;
-      const r = await fetch("/api/tickets",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(body)
-      });
-      const d = await r.json();
-      document.getElementById("m").innerHTML = d.success
-        ? `<div class="success">Tiketi imewasilishwa kikamilifu! Subiri uthibitisho.</div>`
-        : `<div class="error">${d.error||"Imeshindwa kuwasilisha"}</div>`;
-      if (d.success) e.target.reset();
-    };
-  </script>
+  <script src="/js/payment-flow.js?v=fdbd93581986"></script>
+  <script src="/js/translate.js?v=07a30c8697a4"></script>
+  <script src="/js/ticket.js?v=291b64d4cce6"></script>
 </body>
 </html>

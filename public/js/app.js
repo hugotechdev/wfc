@@ -1,6 +1,6 @@
 const app = document.getElementById("app");
 const groupModules = { tickets: "Tiketi", attendance: "Mahudhurio", elections: "Uchaguzi", saccos: "SACCOS" };
-const canReviewPayments = role => ["ADMIN", "TREASURER", "CHAIRPERSON"].includes(role);
+const canReviewPayments = role => ["ADMIN", "TREASURER", "CHAIRPERSON", "PAYMENT_APPROVER"].includes(role);
 const canViewReports = role => ["ADMIN", "TREASURER", "CHAIRPERSON", "SECRETARY", "REGIONAL"].includes(role);
 const formatTsh = value => "TSh " + Number(value || 0).toLocaleString();
 
@@ -191,7 +191,7 @@ function showRegister() {
           <div class="form-group"><label>Kanda</label><input name="region" placeholder="Andika eneo lako"></div>
         </div>
         <div class="form-group"><label>Nenosiri</label><input name="password" type="password" placeholder="Unda nenosiri imara" minlength="12" maxlength="128" required></div>
-        ${groupProfile.registrationFee > 0 ? `<div class="form-group"><label for="groupPaymentProof">Namba ya muamala</label><input id="groupPaymentProof" name="paymentProof" required></div>` : ""}
+        ${groupProfile.registrationFee > 0 ? manualProofFields() : ""}
         ${groupProfile.rules ? `<div class="payment-hint"><strong>Kanuni za kikundi</strong><div class="group-rules" translate="no">${escapeHtml(groupProfile.rules)}</div>
           <label class="group-check"><input type="checkbox" name="acceptRules" required> Nimesoma na ninakubali kanuni.</label></div>` : ""}
         <button class="btn" type="submit">Wasilisha Usajili</button>
@@ -204,9 +204,16 @@ function showRegister() {
   document.getElementById("l").onclick = e => { e.preventDefault(); showLogin(); };
   document.getElementById("f").onsubmit = async e => {
     e.preventDefault();
-    const d = await api("/api/register", { method: "POST", body: { ...Object.fromEntries(new FormData(e.target)), displayedRules: groupProfile.rules } });
-    document.getElementById("m").innerHTML = d.error ? `<div class="error">${d.error}</div>` : `<div class="success">${d.message}</div>`;
-    if (d.success) setTimeout(showLogin, 1200);
+    const form = e.currentTarget;
+    const status = document.getElementById("m");
+    const button = form.querySelector('[type="submit"]');
+    button.disabled = true;
+    try {
+      const d = await api("/api/register", { method: "POST", body: { ...await paymentFormData(form), displayedRules: groupProfile.rules } });
+      status.textContent = d.error || d.message;
+      if (d.success) setTimeout(showLogin, 1200);
+    } catch (error) { status.textContent = error.message; }
+    finally { button.disabled = false; }
   };
 }
 
@@ -825,6 +832,7 @@ async function load(p) {
   if (p === "payments" || p === "account") {
     const account = p === "account" ? await api("/api/my-account") : null;
     const list = account ? account.payments : await api("/api/payments");
+    if (c.dataset.page !== p) return;
     if (!Array.isArray(list)) {
       c.textContent = "Taarifa za malipo hazikupatikana.";
       return;
@@ -836,7 +844,7 @@ async function load(p) {
       <p>${displayMemberName(account.user)} · ${escapeHtml(account.user.wfcId || "—")} · <span>Mwanachama hai</span></p></div>
       <div class="hero-contribution"><span class="kicker">Salio la ada</span><strong>${formatTsh(account.debt)}</strong></div></section>
       <div class="stats">${[["Ada ya mwezi", account.monthly], ["Jumla ya ada inayotarajiwa", account.expected], ["Ada iliyothibitishwa", account.paid]].map(([label, value]) => `<div class="stat"><div class="stat-label">${label}</div><div class="val">${formatTsh(value)}</div></div>`).join("")}</div>` : ""}
-      ${canApprove ? `<section class="card"><h3>Malipo yanayosubiri uhakiki</h3><p>${awaitingReview} miamala. Linganisha namba ya muamala na malipo yaliyopokelewa kabla ya kuidhinisha.</p></section>` : ""}
+      ${canApprove ? `<section class="card"><h3>Malipo yanayosubiri uhakiki</h3><p>${awaitingReview} <span>miamala</span>. <span>Hakiki uthibitisho kabla ya kuidhinisha.</span></p></section>` : ""}
       <div class="card">
       <div class="card-head"><h3>Wasilisha Malipo Mapya</h3></div>
       <p class="payment-hint">${escapeHtml(paymentInstructions(groupProfile))}</p>
@@ -844,22 +852,25 @@ async function load(p) {
         <div class="form-row-3">
           <div class="form-group"><label>Aina ya Mchango</label><select name="type"><option>Ada ya mwezi</option><option>Kiingilio</option><option>Dharura</option><option>Msiba</option></select></div>
           <div class="form-group"><label>Kiasi (TSh)</label><input name="amount" type="number" min="1" step="1" placeholder="10000" required></div>
-          <div class="form-group"><label>Namba ya Muamala</label><input name="transactionId" placeholder="Mf. MP2608..." required></div>
         </div>
-        <button class="btn btn-sm" type="submit">Wasilisha Malipo</button>
+        ${manualProofFields(window.__me.name)}
+        <button class="btn btn-sm" type="submit">Wasilisha Malipo</button> <span id="paymentSubmitStatus" role="status"></span>
       </form>
     </div>
     <div class="card">
       <div class="card-head"><h3>Historia ya Michango</h3><span class="muted">${list.length} <span>miamala</span></span></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Mwanachama</th><th>Aina</th><th>Kiasi</th><th>Muamala</th><th>Hali</th><th>Hatua</th></tr></thead>
+          <thead><tr><th>Mwanachama</th><th>Aina</th><th>Kiasi</th><th>Uthibitisho</th><th>Hali</th><th>Hatua</th></tr></thead>
           <tbody>
             ${list.map(x => `<tr>
-              <td><strong>${escapeHtml(x.userName || "—")}</strong></td>
-              <td>${escapeHtml(x.type)}</td>
+              <td><strong>${escapeHtml(x.payerName || x.userName || "—")}</strong><small class="payment-meta">${escapeHtml(MANUAL_NETWORKS[x.network] || "—")}</small></td>
+              <td>${escapeHtml(x.type)}${x.eventName ? `<small class="payment-meta">${escapeHtml(x.eventName)} · ${Number(x.ticketQty)} <span>tiketi</span></small>` : ""}</td>
               <td style="font-variant-numeric:tabular-nums;font-weight:600">TSh ${Number(x.amount || 0).toLocaleString()}</td>
-              <td><code>${escapeHtml(x.transactionId)}</code></td>
+              <td><code>${escapeHtml(x.transactionId || "—")}</code>
+                ${x.hasProof ? `<a class="payment-meta" href="/api/payments/${encodeURIComponent(x.id)}/proof" target="_blank" rel="noopener noreferrer">Fungua picha ya risiti</a>` : ""}
+                ${x.transactionMessage ? `<details><summary>Ujumbe wa muamala</summary><p class="proof-message" translate="no">${escapeHtml(x.transactionMessage)}</p></details>` : ""}
+              </td>
               <td><span class="badge ${x.status === "APPROVED" ? "badge-approved" : "badge-pending"}">${x.status === "APPROVED" ? (x.receiptNo || "Imethibitishwa") : "Inasubiri"}</span></td>
               <td>${x.status === "APPROVED" ? `<button class="btn btn-sm ghost" data-receipt="${escapeHtml(x.id)}">Pakua risiti</button>` : canApprove ? `<button class="btn btn-sm" data-approve-payment="${escapeHtml(x.id)}">Idhinisha</button>` : "—"}</td>
             </tr>`).join("") || `<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">Hakuna historia ya malipo</td></tr>`}
@@ -871,45 +882,112 @@ async function load(p) {
     c.querySelectorAll("[data-approve-payment]").forEach(button => button.onclick = () => approvePay(button.dataset.approvePayment));
     document.getElementById("pf").onsubmit = async e => {
       e.preventDefault();
-      const d = await api("/api/submit-payment", { method: "POST", body: Object.fromEntries(new FormData(e.target)) });
-      if (d.error) alert(d.error); else load(p);
+      const form = e.currentTarget;
+      const button = form.querySelector('[type="submit"]');
+      const status = document.getElementById("paymentSubmitStatus");
+      button.disabled = true;
+      try {
+        const d = await api("/api/submit-payment", { method: "POST", body: await paymentFormData(form) });
+        if (d.error) status.textContent = d.error;
+        else load(p);
+      } catch (error) { status.textContent = error.message; }
+      finally { button.disabled = false; }
     };
   }
 
   if (p === "events") {
     const list = await api("/api/events");
-    c.innerHTML = `<div class="card">
+    if (c.dataset.page !== p) return;
+    c.innerHTML = `${canViewReports(window.__me.role) ? `<div class="card">
       <div class="card-head"><h3>Ongeza Tukio Jipya</h3></div>
       <form id="ef">
         <div class="form-row-2">
-          <div class="form-group"><label>Aina ya Tukio</label><select name="type"><option>Msiba</option><option>Harusi</option><option>Festival</option><option>Tour</option></select></div>
-          <div class="form-group"><label>Kichwa cha Tukio</label><input name="title" placeholder="Mf. Mkutano wa mwaka" required></div>
+          <label>Aina ya Tukio<select name="type"><option>Msiba</option><option>Harusi</option><option>Festival</option><option>Tour</option><option>Mkutano</option><option>Nyingine</option></select></label>
+          <label>Kichwa cha Tukio<input name="title" maxlength="120" required></label>
         </div>
+        <label>Maelezo ya tukio<textarea name="description" maxlength="1800" rows="3"></textarea></label>
         <div class="form-row-3">
-          <div class="form-group"><label>Eneo</label><input name="location" placeholder="Moshi / Dar es Salaam"></div>
-          <div class="form-group"><label>Bei ya Tiketi (TSh)</label><input name="ticketPrice" type="number" value="0"></div>
-          <div class="form-group"><label>Poster (picha ≤ 1.2MB)</label><input id="posterFile" type="file" accept="image/*"></div>
+          <label>Eneo<input name="location" maxlength="100"></label>
+          <label>Tarehe ya tukio<input name="eventDate" type="datetime-local"></label>
+          <label>Simu ya mawasiliano<input name="contactPhone" type="tel" maxlength="30" placeholder="+255…"></label>
         </div>
-        <button class="btn btn-sm" type="submit">Chapisha Tukio</button>
+        <div class="form-row-2"><label>Hadhi ya uchapishaji<select name="visibility"><option value="public">Umma</option><option value="members">Wanachama pekee</option></select></label>
+        <label>Poster<input id="posterFile" type="file" accept="image/jpeg,image/png,image/webp"></label></div>
+        <fieldset class="manual-proof"><legend>Mpangilio wa tiketi</legend>
+          <label class="ticket-check"><input type="checkbox" name="ticketEnabled" checked> Ruhusu kukata tiketi</label>
+          <div id="eventTicketOptions"><label>Bei ya Tiketi (TSh)<input name="ticketPrice" type="number" min="0" step="1" value="0"></label>
+            <p class="muted">Jina, simu na idadi ya tiketi huulizwa kila mara. Ongeza sehemu maalumu ukihitaji.</p>
+            <div id="eventCustomFields"></div><button id="addTicketField" class="btn btn-sm ghost" type="button">Ongeza sehemu ya tiketi</button>
+          </div>
+        </fieldset>
+        <button class="btn btn-sm" type="submit">Chapisha Tukio</button><p id="eventStatus" role="status"></p>
       </form>
-    </div>
+    </div>` : ""}
     <div class="card">
-      <div class="card-head"><h3>Orodha ya Matukio</h3><span class="muted">${list.length} matukio</span></div>
-      ${list.map(e => `<div class="list-row">
-        <div><strong>${e.title}</strong> <span class="badge badge-pending">${e.type}</span><div class="muted">${e.location || "Eneo halijawekwa"}</div></div>
-        <div style="font-weight:700;font-variant-numeric:tabular-nums">TSh ${(e.ticketPrice || 0).toLocaleString()}</div>
-      </div>`).join("") || `<div class="empty-state">Hakuna matukio yaliyorekodiwa</div>`}
+      <div class="card-head"><h3>Orodha ya Matukio</h3></div>
+      ${list.map(e => `<div class="list-row"><div><strong translate="no">${escapeHtml(e.title)}</strong> <span class="badge badge-pending">${e.public === false ? "Wanachama pekee" : "Umma"}</span>
+      <div class="muted" translate="no">${escapeHtml(e.location || "")}</div></div>
+      <div><strong>${formatTsh(e.ticketPrice)}</strong>
+      ${canViewReports(window.__me.role) || canReviewPayments(window.__me.role) ? `<button class="btn btn-sm ghost" type="button" data-event-orders="${escapeHtml(e.id)}">Orodha ya tiketi</button>` : ""}</div></div>`).join("") || '<div class="empty-state">Hakuna matukio yaliyorekodiwa</div>'}
     </div>`;
-    document.getElementById("ef").onsubmit = async e => {
-      e.preventDefault();
-      const body = Object.fromEntries(new FormData(e.target));
-      const file = document.getElementById("posterFile").files[0];
-      if (file) {
-        if (file.size > 1200000) { alert("Picha ni kubwa. Tumia chini ya 1.2 MB."); return; }
-        body.poster = await new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(file); });
-      }
-      await api("/api/events", { method: "POST", body });
-      load("events");
+    const orders = document.createElement("div");
+    c.append(orders);
+    for (const button of c.querySelectorAll("[data-event-orders]")) button.onclick = async () => {
+      button.disabled = true;
+      try {
+        const rows = await api("/api/events/" + encodeURIComponent(button.dataset.eventOrders) + "/orders");
+        if (!Array.isArray(rows)) throw new Error(rows.error);
+        orders.innerHTML = `<section class="card"><h3>Orodha ya tiketi</h3>
+          ${rows.map(row => `<div class="list-row"><div><strong translate="no">${escapeHtml(row.name)}</strong> · ${escapeHtml(row.phone)}<p>${Number(row.qty)} <span>tiketi</span> · ${formatTsh(row.amount)} · <span>${row.status === "APPROVED" ? "Imethibitishwa" : "Inasubiri"}</span></p>
+          ${row.answers.map(answer => `<div class="muted" translate="no">${escapeHtml(answer.label)}: ${escapeHtml(answer.value)}</div>`).join("")}</div></div>`).join("") || "<p>Hakuna tiketi zilizoombwa bado.</p>"}
+        </section>`;
+        orders.scrollIntoView({ block: "nearest" });
+      } catch (error) { orders.textContent = error.message || "Orodha ya tiketi haikupatikana."; }
+      finally { button.disabled = false; }
+    };
+    const form = document.getElementById("ef");
+    if (!form) return;
+    const custom = document.getElementById("eventCustomFields");
+    const addField = document.getElementById("addTicketField");
+    form.elements.ticketEnabled.onchange = () => {
+      document.getElementById("eventTicketOptions").hidden = !form.elements.ticketEnabled.checked;
+      for (const field of document.querySelectorAll("#eventTicketOptions input, #eventTicketOptions select")) field.disabled = !form.elements.ticketEnabled.checked;
+    };
+    addField.onclick = () => {
+      if (custom.children.length >= 8) return;
+      const row = document.createElement("div");
+      row.className = "ticket-custom-row";
+      row.innerHTML = `<div class="form-row-2"><label>Jina la sehemu<input maxlength="80" data-field-label required></label>
+        <label>Aina ya sehemu<select data-field-type><option value="text">Maandishi</option><option value="email">Barua pepe</option><option value="number">Namba</option><option value="select">Chaguo</option></select></label></div>
+        <label data-options-wrapper hidden>Chaguo (tenganisha kwa koma)<input data-field-options></label>
+        <label class="ticket-check"><input type="checkbox" data-field-required> Lazima ijazwe</label>
+        <button class="btn btn-sm ghost" type="button">Ondoa</button>`;
+      const type = row.querySelector("[data-field-type]");
+      type.onchange = () => { row.querySelector("[data-options-wrapper]").hidden = type.value !== "select"; };
+      row.querySelector("button").onclick = () => { row.remove(); addField.disabled = false; };
+      custom.append(row);
+      addField.disabled = custom.children.length >= 8;
+      row.querySelector("[data-field-label]").focus();
+    };
+    form.onsubmit = async event => {
+      event.preventDefault();
+      const button = form.querySelector('[type="submit"]');
+      const status = document.getElementById("eventStatus");
+      button.disabled = true;
+      try {
+        const body = Object.fromEntries(new FormData(form));
+        body.ticketEnabled = form.elements.ticketEnabled.checked;
+        body.ticketFields = body.ticketEnabled ? [...custom.children].map(row => ({
+          label: row.querySelector("[data-field-label]").value, type: row.querySelector("[data-field-type]").value,
+          required: row.querySelector("[data-field-required]").checked, options: row.querySelector("[data-field-options]").value.split(",")
+        })) : [];
+        const file = document.getElementById("posterFile").files[0];
+        if (file) body.poster = await readPaymentPhoto(file);
+        const result = await api("/api/events", { method: "POST", body });
+        if (result.error) status.textContent = result.error;
+        else load("events");
+      } catch (error) { status.textContent = error.message; }
+      finally { button.disabled = false; }
     };
   }
 
@@ -926,30 +1004,33 @@ async function load(p) {
   }
 
   if (p === "announcements") {
-    const list = await api("/api/announcements");
-    c.innerHTML = `<div class="card">
+    const leader = canViewReports(window.__me.role);
+    const [list, events] = await Promise.all([api("/api/announcements"), leader ? api("/api/events") : []]);
+    c.innerHTML = `${leader ? `<div class="card">
       <div class="card-head"><h3>Tangazo Jipya</h3></div>
       <form id="af">
         <div class="form-row-2">
           <div class="form-group"><label>Kichwa</label><input name="title" required></div>
           <div class="form-group"><label>Kiungo (hiari)</label><input name="link" placeholder="/#matukio au https://..."></div>
         </div>
-        <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" required></textarea></div>
+        <div class="form-row-2"><label>Hadhi ya uchapishaji<select name="visibility"><option value="public">Umma</option><option value="members">Wanachama pekee</option></select></label>
+        <label>Tukio linalohusiana<select name="eventId"><option value="">Hakuna</option>${events.map(event => `<option value="${escapeHtml(event.id)}">${escapeHtml(event.title)}</option>`).join("")}</select></label></div>
+        <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" maxlength="2000" required></textarea></div>
         <button class="btn btn-sm" type="submit">Chapisha Tangazo</button>
       </form>
-    </div>
+    </div>` : ""}
     <div class="card">
       <div class="card-head"><h3>Matangazo Yaliyochapishwa</h3></div>
       ${list.map(a => `<div class="list-row" style="align-items:flex-start">
         <div>
-          <strong>${a.title}</strong>
-          <p style="margin:4px 0 6px;color:var(--text)">${a.body}</p>
-          ${a.link ? `<a href="${a.link}" style="color:var(--brand-orange);font-size:.82rem;font-weight:600">${a.link} →</a>` : ""}
+          <strong translate="no">${escapeHtml(a.title)}</strong>
+          <p style="margin:4px 0 6px;color:var(--text)">${escapeHtml(a.body)}</p>
+          ${safePublicLink(a.link) ? `<a href="${escapeHtml(safePublicLink(a.link))}">Fungua taarifa</a>` : ""}
         </div>
-        <span class="badge badge-active">${a.author || "Ofisi"}</span>
+        <span class="badge badge-active">${a.public === false ? "Wanachama pekee" : "Umma"}</span>
       </div>`).join("") || `<div class="empty-state">Hakuna matangazo</div>`}
     </div>`;
-    document.getElementById("af").onsubmit = async e => {
+    if (leader) document.getElementById("af").onsubmit = async e => {
       e.preventDefault();
       const d = await api("/api/announcements", { method: "POST", body: Object.fromEntries(new FormData(e.target)) });
       if (d.error) alert(d.error); else load("announcements");
@@ -1287,33 +1368,10 @@ async function load(p) {
   }
 
   if (p === "momo") {
-    c.innerHTML = `<div class="card">
-      <div class="card-head"><h3>Omba Malipo ya Simu (STK Push)</h3></div>
-      <form id="sk">
-        <div class="form-row-2">
-          <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
-          <div class="form-group"><label>Kiasi (TSh)</label><input name="amount" type="number" required></div>
-        </div>
-        <button class="btn btn-sm" type="submit">Tuma Ombi la STK</button>
-      </form>
-      <div id="skm" class="muted" style="margin-top:10px"></div>
-      <div class="payment-hint" style="margin-top:14px">
-        ${escapeHtml(paymentInstructions(groupProfile))}
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><h3>Weka Namba ya Muamala</h3></div>
-      <form id="cf">
-        <div class="form-row-3">
-          <div class="form-group"><label>Aina</label><select name="type"><option>Ada ya mwezi</option><option>Kiingilio</option><option>Dharura</option></select></div>
-          <div class="form-group"><label>Kiasi (TSh)</label><input name="amount" type="number" required></div>
-          <div class="form-group"><label>Namba ya Muamala</label><input name="transactionId" required></div>
-        </div>
-        <button class="btn btn-sm" type="submit">Wasilisha kwa Idhini</button>
-      </form>
-    </div>`;
-    document.getElementById("sk").onsubmit = async e => { e.preventDefault(); const d = await api("/api/stk", { method: "POST", body: Object.fromEntries(new FormData(e.target)) }); document.getElementById("skm").textContent = d.detail || ""; };
-    document.getElementById("cf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/submit-payment", { method: "POST", body: Object.fromEntries(new FormData(e.target)) }); if (d.error) alert(d.error); else load("payments"); };
+    c.innerHTML = `<section class="card"><h3>Malipo ya simu</h3>
+      <p class="payment-hint">${escapeHtml(paymentInstructions(groupProfile))}</p>
+      <button id="openManualPayments" class="btn" type="button">Wasilisha Malipo</button></section>`;
+    document.getElementById("openManualPayments").onclick = () => load("payments");
   }
 
   if (p === "reports") {
@@ -1485,7 +1543,7 @@ async function load(p) {
         <div class="role-row list-row" data-name="${m.name.toLowerCase()}" data-phone="${m.phone}">
           <div><strong>${m.name}</strong><div class="muted">${m.phone} · ${m.wfcId || "—"}</div></div>
           <div style="display:flex;gap:8px;align-items:center">
-            ${isAdmin ? `<select class="role-select" data-id="${m.id}" style="width:auto">${roles.map(r => `<option ${r === m.role ? "selected" : ""}>${r}</option>`).join("")}</select><button class="btn btn-sm" data-save="${m.id}">Hifadhi</button>` : `<span class="badge badge-approved">${m.role}</span>`}
+            ${isAdmin ? `<select class="role-select" data-id="${m.id}" style="width:auto">${roles.map(r => `<option value="${r}" ${r === m.role ? "selected" : ""}>${r === "PAYMENT_APPROVER" ? "Mwidhinishaji wa malipo" : r}</option>`).join("")}</select><button class="btn btn-sm" data-save="${m.id}">Hifadhi</button>` : `<span class="badge badge-approved">${m.role}</span>`}
           </div>
         </div>`).join("")}</div>
     </div>`;

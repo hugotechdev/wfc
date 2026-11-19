@@ -6,6 +6,7 @@ const { jsPDF } = require("jspdf");
 const QRCode = require("qrcode");
 const { normalizePortrait, cardQr, buildMemberCard } = require("./member-card");
 const { readAttachments, visiblePost } = require("./social-post");
+const { APPROVERS, paymentText, paymentEvidence, ticketFields, ticketAnswers } = require("./manual-payment");
 const { DEFAULT_GROUP, readGroup, updateGroup } = require("./group");
 const { randomBytes, scryptSync, timingSafeEqual } = require("node:crypto");
 
@@ -27,6 +28,7 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "../data");
 const DATA_FILE = path.join(DATA_DIR, "db.json");
 const POST_FILES = path.join(DATA_DIR, "social-attachments");
+const PAYMENT_FILES = path.join(DATA_DIR, "payment-evidence");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -59,6 +61,24 @@ function ensureMemberNumber(db, user) {
     user.wfcId = prefix + "-" + String(number++).padStart(4, "0");
   } while (db.users.some(other => other !== user && other.wfcId === user.wfcId));
   db.nextMemberNumber = number;
+}
+
+function savePaymentSubmission(db, photo) {
+  if (!photo) return saveDB(db);
+  fs.mkdirSync(PAYMENT_FILES, { recursive: true, mode: 0o700 });
+  const filePath = path.join(PAYMENT_FILES, photo.id);
+  fs.writeFileSync(filePath, photo.bytes, { flag: "wx", mode: 0o600 });
+  try { saveDB(db); }
+  catch (error) { fs.rmSync(filePath, { force: true }); throw error; }
+}
+
+function publicEvent(event) {
+  return {
+    id: event.id, title: event.title, type: event.type, location: event.location, poster: event.poster,
+    description: event.description, eventDate: event.eventDate, contactPhone: event.contactPhone,
+    ticketPrice: event.ticketPrice || 0, ticketEnabled: event.ticketEnabled !== false && event.status === "ACTIVE",
+    ticketFields: event.ticketFields || []
+  };
 }
 
 const sessionSecret = process.env.SESSION_SECRET;
@@ -107,7 +127,10 @@ const moduleRoutes = {
 };
 for (const [key, routes] of Object.entries(moduleRoutes)) {
   app.use(routes, (req, res, next) => {
-    if (!readGroup(loadDB()).modules[key]) return res.status(404).json({ error: "Kipengele hiki kimezimwa na kikundi." });
+    const existingTicket = key === "tickets" && req.method === "GET" &&
+      ((req.baseUrl === "/api/tickets" && req.path.startsWith("/status/")) ||
+       (req.baseUrl === "/ticket" && typeof req.query.order === "string"));
+    if (!existingTicket && !readGroup(loadDB()).modules[key]) return res.status(404).json({ error: "Kipengele hiki kimezimwa na kikundi." });
     next();
   });
 }
@@ -153,9 +176,9 @@ app.post("/api/group", requireAuth, (req, res) => {
 
 app.get("/api/public/events", (req, res) => {
   const db = loadDB();
-  res.json((db.events || []).filter(e => e.public !== false));
+  res.json((db.events || []).filter(event => event.public !== false).map(publicEvent));
 });
-app.get("/api/public/announcements", (req, res) => res.json(loadDB().announcements || []));
+app.get("/api/public/announcements", (req, res) => res.json((loadDB().announcements || []).filter(note => note.public !== false)));
 app.get("/api/public/stats", (req, res) => {
   const db = loadDB();
   res.json({
@@ -178,23 +201,34 @@ app.get("/api/contacts", requireAuth, (req, res) => {
 });
 
 app.post("/api/register", (req, res) => {
-  const { name, phone, region, password, paymentProof, acceptRules, displayedRules } = req.body;
-  if (!name || !phone || typeof password !== "string" || password.length < 12 || password.length > 128) return res.status(400).json({ error: "Jaza taarifa na tumia nenosiri lenye herufi 12 hadi 128." });
+  const { name, phone, region, password, acceptRules, displayedRules } = req.body;
+  if (!paymentText(name, 120) || !paymentText(phone, 30) || typeof password !== "string" || password.length < 12 || password.length > 128) return res.status(400).json({ error: "Jaza taarifa na tumia nenosiri lenye herufi 12 hadi 128." });
   const db = loadDB();
   const group = readGroup(db);
   if (group.rules && (acceptRules !== "on" || displayedRules !== group.rules)) {
     return res.status(400).json({ error: "Soma na ukubali kanuni za sasa kabla ya kusajili." });
   }
-  if (group.registrationFee > 0 && (typeof paymentProof !== "string" || !paymentProof.trim())) {
-    return res.status(400).json({ error: "Weka namba ya muamala wa ada ya usajili." });
+  if (db.users.find(u => u.phone === phone.trim())) return res.status(400).json({ error: "Namba tayari imesajiliwa" });
+  const id = randomBytes(12).toString("hex");
+  const createdAt = new Date().toISOString();
+  const user = {
+    id, name: name.trim(), phone: phone.trim(), region: paymentText(region, 80) || "Haijatajwa", passwordHash: hashPassword(password),
+    role: "MEMBER", status: "PENDING", rulesAcceptedAt: group.rules ? createdAt : null, wfcId: null,
+    family: { head: name.trim(), spouse: "", children: [] }, profession: "", createdAt
+  };
+  let photo;
+  if (group.registrationFee > 0) {
+    let evidence;
+    try { evidence = paymentEvidence(req.body, db); }
+    catch (error) { return res.status(400).json({ error: error.message }); }
+    user.registrationPaymentId = randomBytes(12).toString("hex");
+    user.paymentProof = evidence.data.transactionId || "Malipo yamewasilishwa";
+    db.payments.push({ id: user.registrationPaymentId, userId: id, userName: user.name, type: "Ada ya usajili", amount: group.registrationFee,
+      status: "PENDING", createdAt, ...evidence.data });
+    photo = evidence.photo;
   }
-  if (db.users.find(u => u.phone === phone)) return res.status(400).json({ error: "Namba tayari imesajiliwa" });
-  db.users.push({
-    id: Date.now().toString(), name, phone, region: region || "Haijatajwa", passwordHash: hashPassword(password),
-    role: "MEMBER", status: "PENDING", rulesAcceptedAt: group.rules ? new Date().toISOString() : null, paymentProof: paymentProof || "", wfcId: null,
-    family: { head: name, spouse: "", children: [] }, profession: "", createdAt: new Date().toISOString()
-  });
-  saveDB(db);
+  db.users.push(user);
+  savePaymentSubmission(db, photo);
   res.json({ success: true, message: "Usajili umepokelewa. Subiri idhini." });
 });
 
@@ -340,7 +374,7 @@ app.get("/api/dashboard", requireAuth, (req, res) => {
       events: (db.events || []).length
     },
     myTotalPaid: totalPaid,
-    recent: db.payments.filter(p => isLeader(req.session.user.role) || p.userId === user.id).slice(-6).reverse(),
+    recent: db.payments.filter(p => isLeader(req.session.user.role) || p.userId === user.id).slice(-6).reverse().map(({ userName, type, amount, status }) => ({ userName, type, amount, status })),
     upcoming: (db.events || []).slice(0, 4),
     notices: (db.announcements || []).slice(0, 3),
     regions: Object.entries(db.users.filter(u => u.status === "ACTIVE").reduce((m, u) => { m[u.region || "Nyingine"] = (m[u.region || "Nyingine"] || 0) + 1; return m; }, {})).map(([name, value]) => ({ name, value })),
@@ -431,6 +465,9 @@ app.post("/api/approve-member", requireAuth, (req, res) => {
   if (!user) return res.status(404).json({ error: "Hajapatikana" });
   if (user.status === "ACTIVE" && user.wfcId) return res.json({ success: true, wfcId: user.wfcId });
   if (user.status !== "PENDING") return res.status(409).json({ error: "Ombi hili halisubiri idhini." });
+  if (user.registrationPaymentId && !db.payments.some(payment => payment.id === user.registrationPaymentId && payment.status === "APPROVED")) {
+    return res.status(409).json({ error: "Idhinisha malipo ya usajili kwanza." });
+  }
   user.status = "ACTIVE";
   user.membershipApprovedAt = new Date().toISOString();
   ensureMemberNumber(db, user);
@@ -440,29 +477,48 @@ app.post("/api/approve-member", requireAuth, (req, res) => {
 });
 
 // Payments
-app.get("/api/payments", requireAuth, (req, res) => res.json(loadDB().payments.filter(p => isLeader(req.session.user.role) || p.userId === req.session.user.id)));
+function visiblePayment(row, showProof) {
+  const { proofHash, proofId, transactionMessage, ...payment } = row;
+  return { ...payment, hasProof: Boolean(proofId) && showProof, transactionMessage: showProof ? transactionMessage : undefined };
+}
+
+app.get("/api/payments", requireAuth, (req, res) => {
+  const user = req.session.user;
+  const reviewer = APPROVERS.includes(user.role);
+  const db = loadDB();
+  res.set("Cache-Control", "private, no-store").json(db.payments
+    .filter(payment => reviewer || isLeader(user.role) || payment.userId === user.id)
+    .map(payment => visiblePayment(payment, reviewer || payment.userId === user.id)));
+});
+
+app.get("/api/payments/:id/proof", requireAuth, (req, res) => {
+  const actor = req.session.user;
+  const row = loadDB().payments.find(payment => payment.id === req.params.id);
+  if (!row || !/^[a-f0-9]{24}$/.test(row.proofId || "") || (!APPROVERS.includes(actor.role) && actor.id !== row.userId)) return res.sendStatus(404);
+  res.set({ "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" })
+    .type("jpeg").sendFile(path.join(PAYMENT_FILES, row.proofId));
+});
 
 app.post("/api/submit-payment", requireAuth, (req, res) => {
   const { type, amount } = req.body;
-  const transactionId = typeof req.body.transactionId === "string" ? req.body.transactionId.trim().toUpperCase() : "";
   const paymentAmount = Number(amount);
-  if (!["Ada ya mwezi", "Kiingilio", "Dharura", "Msiba"].includes(type) ||
-      !/^[A-Z0-9][A-Z0-9._/-]{0,63}$/.test(transactionId) ||
-      !Number.isSafeInteger(paymentAmount) || paymentAmount <= 0) {
-    return res.status(400).json({ error: "Weka aina ya mchango, kiasi halali na namba ya muamala." });
+  if (!["Ada ya mwezi", "Kiingilio", "Dharura", "Msiba"].includes(type) || !Number.isSafeInteger(paymentAmount) || paymentAmount <= 0) {
+    return res.status(400).json({ error: "Weka aina ya mchango na kiasi halali." });
   }
   const db = loadDB();
-  if (db.payments.find(p => String(p.transactionId).trim().toUpperCase() === transactionId)) return res.status(400).json({ error: "Namba ya muamala tayari imetumika" });
+  let evidence;
+  try { evidence = paymentEvidence(req.body, db); }
+  catch (error) { return res.status(400).json({ error: error.message }); }
   db.payments.push({
     id: randomBytes(12).toString("hex"), userId: req.session.user.id, userName: req.session.user.name,
-    type, amount: paymentAmount, transactionId, status: "PENDING", createdAt: new Date().toISOString()
+    type, amount: paymentAmount, status: "PENDING", createdAt: new Date().toISOString(), ...evidence.data
   });
-  saveDB(db);
+  savePaymentSubmission(db, evidence.photo);
   res.json({ success: true });
 });
 
 app.post("/api/approve-payment", requireAuth, (req, res) => {
-  if (!["ADMIN", "TREASURER", "CHAIRPERSON"].includes(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  if (!APPROVERS.includes(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
   const db = loadDB();
   const p = db.payments.find(x => x.id === req.body.paymentId);
   if (!p) return res.status(404).json({ error: "Haijapatikana" });
@@ -471,6 +527,10 @@ app.post("/api/approve-payment", requireAuth, (req, res) => {
   p.status = "APPROVED";
   p.approvedAt = new Date().toISOString();
   p.receiptNo = "RCP-" + randomBytes(8).toString("hex").toUpperCase();
+  if (p.ticketId) {
+    const ticket = (db.tickets || []).find(order => order.id === p.ticketId);
+    if (ticket) { ticket.status = "APPROVED"; ticket.approvedAt = p.approvedAt; ticket.receiptNo = p.receiptNo; }
+  }
   recordApproval(db, req.session.user, "Malipo", p.receiptNo, p.approvedAt);
   saveDB(db);
   res.json({ success: true, receiptNo: p.receiptNo });
@@ -479,7 +539,7 @@ app.post("/api/approve-payment", requireAuth, (req, res) => {
 app.get("/api/payments/:id/receipt", requireAuth, async (req, res) => {
   const db = loadDB();
   const row = db.payments.find(payment => payment.id === req.params.id && payment.status === "APPROVED");
-  if (!row || (row.userId !== req.session.user.id && !isLeader(req.session.user.role))) {
+  if (!row || (row.userId !== req.session.user.id && !isLeader(req.session.user.role) && !APPROVERS.includes(req.session.user.role))) {
     return res.status(404).json({ error: "Risiti haipatikani." });
   }
   try {
@@ -609,25 +669,58 @@ app.post("/api/portal-posts/:id/comments", requireAuth, (req, res) => {
 // Events
 app.get("/api/events", requireAuth, (req, res) => res.json(loadDB().events || []));
 app.post("/api/events", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const input = req.body;
+  const title = paymentText(input.title, 120);
+  const ticketPrice = Number(input.ticketPrice || 0);
+  const contactPhone = paymentText(input.contactPhone, 30);
+  if (!title || !Number.isSafeInteger(ticketPrice) || ticketPrice < 0 || ticketPrice > 1000000000 ||
+      (input.contactPhone && !/^[+0-9() -]{7,30}$/.test(contactPhone))) {
+    return res.status(400).json({ error: "Hakiki jina, bei na simu ya tukio." });
+  }
+  let fields, poster;
+  try {
+    fields = ticketFields(input.ticketFields);
+    poster = input.poster ? readAttachments([{ name: "poster.jpg", data: input.poster }])[0] : null;
+    if (poster && poster.type !== "image/jpeg") throw new Error("Ambatisha picha ya tukio.");
+  } catch (error) { return res.status(400).json({ error: error.message }); }
   const db = loadDB();
-  if (!db.events) db.events = [];
-  db.events.push({
-    id: Date.now().toString(), ...req.body,
-    ticketPrice: Number(req.body.ticketPrice) || 0,
-    raisedAmount: 0, status: "ACTIVE", public: true,
-    reportedBy: req.session.user.name, createdAt: new Date().toISOString()
+  (db.events ||= []).push({
+    id: randomBytes(12).toString("hex"), title, type: paymentText(input.type, 50), description: paymentText(input.description, 1800),
+    location: paymentText(input.location, 100), eventDate: paymentText(input.eventDate, 24), contactPhone,
+    ticketPrice, ticketEnabled: input.ticketEnabled !== false, ticketFields: fields, public: input.visibility !== "members",
+    poster: poster ? "data:image/jpeg;base64," + poster.bytes.toString("base64") : "", raisedAmount: 0,
+    status: "ACTIVE", reportedBy: req.session.user.name, createdAt: new Date().toISOString()
   });
   saveDB(db);
   res.json({ success: true });
+});
+
+app.get("/api/events/:id/orders", requireAuth, (req, res) => {
+  if (!isLeader(req.session.user.role) && !APPROVERS.includes(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const rows = (loadDB().tickets || []).filter(ticket => ticket.eventId === req.params.id)
+    .map(({ id, name, phone, qty, amount, status, answers = [] }) => ({ id, name, phone, qty, amount, status, answers }));
+  res.set("Cache-Control", "private, no-store").json(rows);
 });
 
 // Announcements
 app.get("/api/announcements", requireAuth, (req, res) => res.json(loadDB().announcements || []));
 app.post("/api/announcements", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
+  const title = paymentText(req.body.title, 120);
+  const body = paymentText(req.body.body, 2000);
+  const link = paymentText(req.body.link, 800);
+  const eventId = paymentText(req.body.eventId, 80);
+  const safeLink = /^(https?:)/i.test(link) || (link.startsWith("/") && !link.startsWith("//") && !link.includes(String.fromCharCode(92)));
+  if (!title || !body || (link && !safeLink)) {
+    return res.status(400).json({ error: "Hakiki kichwa, ujumbe na kiungo cha tangazo." });
+  }
   const db = loadDB();
-  if (!db.announcements) db.announcements = [];
-  db.announcements.unshift({ id: Date.now().toString(), ...req.body, author: req.session.user.name, createdAt: new Date().toISOString() });
+  if (eventId && !(db.events || []).some(event => event.id === eventId && (req.body.visibility === "members" || event.public !== false))) {
+    return res.status(400).json({ error: "Chagua tukio la umma kwa tangazo la umma." });
+  }
+  (db.announcements ||= []).unshift({ id: randomBytes(12).toString("hex"), title, body, link, eventId,
+    public: req.body.visibility !== "members", author: req.session.user.name, createdAt: new Date().toISOString() });
   saveDB(db);
   res.json({ success: true });
 });
@@ -675,12 +768,43 @@ app.post("/api/support", requireAuth, (req, res) => {
 
 // Tickets
 app.post("/api/tickets", (req, res) => {
+  const input = req.body;
   const db = loadDB();
-  if (!db.tickets) db.tickets = [];
-  if (db.tickets.find(t => t.transactionId === req.body.transactionId)) return res.status(400).json({ error: "Namba tayari imetumika" });
-  db.tickets.push({ id: Date.now().toString(), ...req.body, status: "PENDING", createdAt: new Date().toISOString() });
-  saveDB(db);
-  res.json({ success: true });
+  const event = (db.events || []).find(item => item.id === input.eventId && item.public !== false && item.ticketEnabled !== false && item.status === "ACTIVE");
+  if (!event) return res.status(404).json({ error: "Tukio halijapatikana au limefungwa." });
+  const name = paymentText(input.name, 120);
+  const phone = paymentText(input.phone, 30);
+  const qty = Number(input.qty);
+  if (!name || !/^[+0-9() -]{7,30}$/.test(phone) || !Number.isSafeInteger(qty) || qty < 1 || qty > 50) {
+    return res.status(400).json({ error: "Hakiki jina, simu na idadi ya tiketi." });
+  }
+  const amount = Number(event.ticketPrice || 0) * qty;
+  if (!Number.isSafeInteger(amount) || amount < 0) return res.status(409).json({ error: "Bei ya tiketi si halali." });
+  let answers, evidence;
+  try {
+    answers = ticketAnswers(event.ticketFields || [], input.answers);
+    if (amount > 0) evidence = paymentEvidence(input, db);
+  } catch (error) { return res.status(400).json({ error: error.message }); }
+  const ticket = { id: randomBytes(12).toString("hex"), token: randomBytes(24).toString("hex"),
+    eventId: event.id, eventName: event.title, name, phone, qty, amount, answers,
+    status: evidence ? "PENDING" : "APPROVED", createdAt: new Date().toISOString() };
+  if (!evidence) ticket.approvedAt = ticket.createdAt;
+  (db.tickets ||= []).push(ticket);
+  if (evidence) db.payments.push({
+    id: randomBytes(12).toString("hex"), userId: req.session.user?.id || null, userName: name,
+    type: "Tiketi", amount, status: "PENDING", createdAt: ticket.createdAt,
+    ticketId: ticket.id, eventName: ticket.eventName, ticketQty: qty, ...evidence.data
+  });
+  savePaymentSubmission(db, evidence?.photo);
+  res.status(201).json({ success: true, token: ticket.token, status: ticket.status });
+});
+
+app.get("/api/tickets/status/:token", (req, res) => {
+  const token = req.params.token;
+  const ticket = /^[a-f0-9]{48}$/.test(token) && (loadDB().tickets || []).find(order => order.token === token);
+  if (!ticket) return res.status(404).json({ error: "Ombi la tiketi halikupatikana." });
+  const { id, eventName, name, qty, amount, status, receiptNo } = ticket;
+  res.set("Cache-Control", "private, no-store").json({ reference: id, eventName, name, qty, amount, status, receiptNo });
 });
 
 // ===== NEW MODULES =====
@@ -699,7 +823,7 @@ app.get("/api/my-account", requireAuth, (req, res) => {
   res.json({
     ...memberBalance(db, user),
     user: req.session.user,
-    payments: db.payments.filter(payment => payment.userId === user.id).reverse()
+    payments: db.payments.filter(payment => payment.userId === user.id).reverse().map(row => visiblePayment(row, true))
   });
 });
 
@@ -710,7 +834,7 @@ app.get("/api/group-reports", requireAuth, (req, res) => {
     .map(user => ({ name: user.name, memberNumber: user.wfcId, ...memberBalance(db, user) }))
     .filter(user => user.debt > 0);
   res.json({
-    payments: db.payments.filter(payment => payment.status === "APPROVED").reverse(),
+    payments: db.payments.filter(payment => payment.status === "APPROVED").reverse().map(row => visiblePayment(row, false)),
     debts,
     approvals: db.approvalHistory || []
   });
@@ -863,7 +987,7 @@ app.get("/manifest.json", (req, res) => {
 
 // Roles list
 app.get("/api/roles", requireAuth, (req, res) => {
-  res.json(["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL", "MEMBER"]);
+  res.json(["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL", "PAYMENT_APPROVER", "MEMBER"]);
 });
 
 app.post("/api/set-role", requireAuth, (req, res) => {
@@ -871,6 +995,9 @@ app.post("/api/set-role", requireAuth, (req, res) => {
   const db = loadDB();
   const u = db.users.find(x => x.id === req.body.userId);
   if (!u) return res.status(404).json({ error: "Haijapatikana" });
+  if (!["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL", "PAYMENT_APPROVER", "MEMBER"].includes(req.body.role)) {
+    return res.status(400).json({ error: "Chagua jukumu halali." });
+  }
   u.role = req.body.role;
   saveDB(db);
   res.json({ success: true });

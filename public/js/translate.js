@@ -437,6 +437,52 @@ Jumuiya|Community
 Fedha na miradi|Finance and projects
 Uongozi na ofisi|Leadership and office
 Arifa hazikupatikana.|Notifications could not be loaded.
+Uthibitisho wa malipo|Payment evidence
+Jina la mlipaji|Payer name
+Mtandao wa malipo|Payment network
+Chagua mtandao|Choose a network
+Namba ya muamala (hiari)|Transaction reference (optional)
+Ujumbe wa muamala|Transaction message
+Picha ya risiti|Receipt image
+Ambatisha picha ya risiti au bandika ujumbe wa muamala.|Attach a receipt image or paste the transaction message.
+Weka jina la mlipaji, mtandao na taarifa halali za muamala.|Enter a payer name, network and valid transaction details.
+Uthibitisho au namba hii ya muamala tayari imetumika.|This evidence or transaction reference has already been used.
+Hakiki uthibitisho kabla ya kuidhinisha.|Check the evidence before approving.
+Fungua picha ya risiti|View receipt image
+Uthibitisho|Evidence
+Idhinisha malipo ya usajili kwanza.|Approve the registration payment first.
+Hadhi ya uchapishaji|Visibility
+Umma|Public
+Wanachama pekee|Members only
+Tukio linalohusiana|Related event
+Maelezo ya tukio|Event details
+Tarehe ya tukio|Event date
+Mpangilio wa tiketi|Ticket setup
+Ruhusu kukata tiketi|Enable ticket booking
+Jina, simu na idadi ya tiketi huulizwa kila mara. Ongeza sehemu maalumu ukihitaji.|Name, phone and ticket quantity are always collected. Add custom fields if needed.
+Ongeza sehemu ya tiketi|Add ticket field
+Jina la sehemu|Field name
+Aina ya sehemu|Field type
+Chaguo (tenganisha kwa koma)|Options (comma-separated)
+Lazima ijazwe|Required
+Nunua tiketi|Buy ticket
+Piga simu|Call
+Matangazo ya umma|Public announcements
+Slaidi iliyopita|Previous slide
+Slaidi inayofuata|Next slide
+Jumla ya kulipa|Total to pay
+Tiketi imethibitishwa|Ticket confirmed
+Inasubiri uhakiki wa malipo|Awaiting payment review
+Namba ya ombi|Booking reference
+Hifadhi kiungo hiki ili kufuatilia tiketi yako.|Save this link to track your ticket.
+Chapisha tiketi|Print ticket
+Angalia hali ya tiketi|Check ticket status
+Orodha ya tiketi|Ticket orders
+Hakuna tiketi zilizoombwa bado.|No ticket orders yet.
+Mwidhinishaji wa malipo|Payment approver
+Chagua tukio la umma kwa tangazo la umma.|Choose a public event for a public announcement.
+Hakiki jina, simu na idadi ya tiketi.|Check the name, phone number and number of tickets.
+Jaza sehemu za fomu ya tiketi kwa usahihi.|Complete the ticket form correctly.
 `.trim().split("\n").map(line => line.split("|")));
 
 let portalLocale;
