@@ -1,5 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const { createHash } = require("node:crypto");
 
 const DEFAULT_GROUP = {
   name: "Wachagga Community Family",
@@ -17,9 +18,13 @@ const DEFAULT_GROUP = {
 
 function readGroup(db) {
   const stored = db.group || {};
+  const oldLogo = stored.logo?.startsWith("data:image/jpeg;base64,") &&
+    createHash("sha256").update(Buffer.from(stored.logo.slice("data:image/jpeg;base64,".length), "base64"))
+      .digest("hex") === "139bdf344480d3b98a5b95242247453501d7f97f9f30cdb69217224d5be82067";
   return {
     ...DEFAULT_GROUP,
     ...stored,
+    logo: oldLogo ? DEFAULT_GROUP.logo : (stored.logo ?? DEFAULT_GROUP.logo),
     paymentNumbers: { ...DEFAULT_GROUP.paymentNumbers, ...stored.paymentNumbers },
     modules: { ...DEFAULT_GROUP.modules, ...stored.modules }
   };

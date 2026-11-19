@@ -24,6 +24,34 @@ function groupLogo(className = "logo") {
   return `<span class="${className} group-logo" data-group-logo>${escapeHtml(groupProfile.shortName)}</span>`;
 }
 
+function displayMemberName(user) {
+  const defaultAdmin = user.id === "admin-001" && user.name === "Msimamizi";
+  return `<span translate="${defaultAdmin ? "yes" : "no"}">${escapeHtml(user.name)}</span>`;
+}
+
+async function readPortrait(file) {
+  if (!file || !["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 8000000) {
+    throw new Error("Chagua picha ya JPG, PNG au WebP isiyozidi MB 8.");
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const size = Math.min(image.naturalWidth, image.naturalHeight);
+    if (size < 96) throw new Error("Picha iwe angalau pikseli 96 kwa 96.");
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = Math.min(600, size);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, (image.naturalWidth - size) / 2, (image.naturalHeight - size) / 2, size, size, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.88);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function placeLanguageSwitcher() {
   const slot = document.getElementById("portalLanguage") || document.getElementById("authLanguage");
   slot.append(languageWidget);
@@ -211,7 +239,8 @@ async function showDash() {
       ["members", "Wanachama", IC.users],
       ["payments", "Michango", IC.coin],
       ["events", "Matukio", IC.cal],
-      ["announcements", "Matangazo", IC.meg]
+      ["announcements", "Matangazo", IC.meg],
+      ["posts", "Vikao na machapisho", IC.meg]
     ]],
     ["Mwanachama", [
       ["account", "Akaunti yangu", IC.id],
@@ -285,7 +314,7 @@ async function showDash() {
           <details class="profile-menu" id="profileMenu">
             <summary class="user-chip" aria-label="Wasifu wangu">
               <span class="user-chip-avatar" aria-hidden="true">${escapeHtml(initials)}</span>
-              <span class="user-chip-name" translate="no">${escapeHtml(me.user.name)}</span>
+              <span class="user-chip-name">${displayMemberName(me.user)}</span>
             </summary>
             <div class="profile-panel">
               <button type="button" data-p="account">Akaunti yangu</button>
@@ -405,7 +434,7 @@ async function load(p) {
   c.dataset.page = p;
   const titles = {
     profile: "Wasifu wangu", preferences: "Mipangilio ya akaunti", password: "Badili nenosiri",
-    account: "Akaunti yangu", reports: "Ripoti na historia",
+    account: "Akaunti yangu", reports: "Ripoti na historia", posts: "Vikao na machapisho",
     home: "Dashibodi", members: "Wanachama", payments: "Michango", events: "Matukio",
     announcements: "Matangazo", card: "Kitambulisho", family: "Familia", directory: "Directory",
     help: "Msaada", pending: "Inasubiri Idhini", attendance: "Mahudhurio", elections: "Uchaguzi",
@@ -423,12 +452,72 @@ async function load(p) {
 
   if (p === "profile") {
     const user = window.__me;
-    c.innerHTML = `<section class="card"><h3>Wasifu wangu</h3><dl class="profile-fields">
-      <dt>Jina</dt><dd translate="no">${escapeHtml(user.name)}</dd>
-      <dt>Simu</dt><dd>${escapeHtml(user.phone)}</dd>
-      <dt>Namba ya uanachama</dt><dd>${escapeHtml(user.wfcId || "—")}</dd>
-      <dt>Jukumu</dt><dd>${escapeHtml(user.role)}</dd>
-    </dl></section>`;
+    const card = await api("/api/member-card");
+    if (c.dataset.page !== p) return;
+    if (!card.number) { c.textContent = card.error || "Wasifu haukupatikana."; return; }
+    c.innerHTML = `<section class="card profile-photo-panel"><h3>Wasifu wangu</h3>
+      <div class="profile-photo-area">
+        <div id="portraitPlaceholder" class="profile-portrait initials" aria-hidden="true" ${card.hasPhoto ? "hidden" : ""}>${escapeHtml((user.name || "W").slice(0, 1))}</div>
+        <img id="portraitPreview" class="profile-portrait" alt="Picha ya wasifu" ${card.hasPhoto ? 'src="/api/me/photo?v=' + Date.now() + '"' : "hidden"}>
+        <form id="portraitForm">
+          <div class="form-group"><label for="portraitFile">Picha ya wasifu</label>
+          <input id="portraitFile" type="file" accept="image/jpeg,image/png,image/webp" required></div>
+          <p class="muted">Chagua picha inayoonyesha uso wako vizuri. Itaonekana kwenye kitambulisho.</p>
+          <button class="btn" type="submit" disabled>Hifadhi picha</button>
+          <button class="btn ghost" type="button" id="openMemberId">Tazama kitambulisho</button>
+          <p id="portraitStatus" role="status"></p>
+        </form>
+      </div>
+      <dl class="profile-fields">
+        <dt>Jina</dt><dd>${displayMemberName(user)}</dd>
+        <dt>Simu</dt><dd>${escapeHtml(user.phone)}</dd>
+        <dt>Namba ya uanachama</dt><dd>${escapeHtml(card.number)}</dd>
+        <dt>Jukumu</dt><dd>${escapeHtml(user.role)}</dd>
+      </dl></section>`;
+    const form = document.getElementById("portraitForm");
+    const fileInput = document.getElementById("portraitFile");
+    const preview = document.getElementById("portraitPreview");
+    const placeholder = document.getElementById("portraitPlaceholder");
+    const status = document.getElementById("portraitStatus");
+    const save = form.querySelector('button[type="submit"]');
+    let portrait = "";
+    fileInput.onchange = async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      save.disabled = true;
+      portrait = "";
+      status.textContent = "";
+      try {
+        const data = await readPortrait(file);
+        if (fileInput.files[0] !== file) return;
+        portrait = data;
+        preview.src = data;
+        preview.hidden = false;
+        placeholder.hidden = true;
+        save.disabled = false;
+      } catch (error) {
+        if (fileInput.files[0] === file) status.textContent = error.message;
+      }
+    };
+    form.onsubmit = async event => {
+      event.preventDefault();
+      if (!portrait) return;
+      save.disabled = true;
+      fileInput.disabled = true;
+      try {
+        const result = await api("/api/me/photo", { method: "PUT", body: { photo: portrait } });
+        if (!result.success) throw new Error(result.error || "Picha haikuhifadhiwa.");
+        status.textContent = "Picha imehifadhiwa.";
+        portrait = "";
+        fileInput.value = "";
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        fileInput.disabled = false;
+        save.disabled = !portrait;
+      }
+    };
+    document.getElementById("openMemberId").onclick = () => load("card");
     return;
   }
 
@@ -481,7 +570,7 @@ async function load(p) {
         </div>
         <div>
           <span class="pill">${d.user.status === "ACTIVE" ? "Mwanachama hai" : escapeHtml(d.user.status)}</span>
-          <h2><span>Karibu</span>, <span translate="no">${escapeHtml(d.user.name)}</span></h2>
+          <h2><span>Karibu</span>, ${displayMemberName(d.user)}</h2>
           <p><span>Namba ya uanachama:</span> <strong>${escapeHtml(d.user.wfcId || "—")}</strong><span class="desktop-member-meta"> · <span>Kanda</span> <span translate="no">${escapeHtml(d.user.region || "Tanzania")}</span> · <span>Jukumu</span>: ${escapeHtml(d.user.role)}</span></p>
         </div>
         <div class="hero-contribution">
@@ -589,7 +678,7 @@ async function load(p) {
         <div class="card">
           <div class="card-head">
             <h3>Kanda za Wanachama</h3>
-            <span class="muted">${(d.regions || []).length} <span>kanda</span></span>
+            <span class="muted">${(d.regions || []).length === 1 ? "1 kanda" : `${(d.regions || []).length} <span>kanda</span>`}</span>
           </div>
           ${(d.regions || []).map(r => `
             <div class="bar-row">
@@ -657,8 +746,8 @@ async function load(p) {
     const m = await api("/api/members");
     window.__members = m;
     c.innerHTML = `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-      <input id="memberSearch" placeholder="Tafuta jina, simu, kanda au Namba ya uanachama..." style="flex:1;min-width:220px">
-      <span class="badge badge-active">${m.length} <span>wanachama</span></span>
+      <input id="memberSearch" type="search" aria-label="Tafuta wanachama" placeholder="Tafuta jina, simu, kanda au Namba ya uanachama..." style="flex:1;min-width:min(220px,100%)">
+      <span class="badge badge-active">${m.length === 1 ? "1 mwanachama" : `${m.length} <span>wanachama</span>`}</span>
     </div>
     <div id="memberGrid" class="member-grid"></div>`;
     const render = (list) => {
@@ -668,9 +757,9 @@ async function load(p) {
         return `<div class="member-card">
           <div class="avatar">${ini}</div>
           <div class="member-info">
-            <strong>${x.name}</strong>
-            <div class="muted">${x.wfcId || "—"} · ${x.region || ""}</div>
-            <div class="muted">${x.phone || ""}</div>
+            <strong>${displayMemberName(x)}</strong>
+            <div class="muted">${[x.wfcId, x.region].filter(Boolean).map(escapeHtml).join(" · ") || "—"}</div>
+            <div class="muted" translate="no">${escapeHtml(x.phone || "")}</div>
           </div>
           <span class="badge ${x.status === "ACTIVE" ? "badge-active" : x.status === "SUSPENDED" ? "badge-suspended" : "badge-pending"}">${x.status === "ACTIVE" ? "Hai" : x.status === "SUSPENDED" ? "Imesimamishwa" : "Inasubiri"}</span>
           <div class="member-actions">
@@ -701,7 +790,7 @@ async function load(p) {
     const awaitingReview = canApprove ? list.filter(payment => payment.status === "PENDING").length : 0;
     if (canApprove) list.sort((a, b) => Number(b.status === "PENDING") - Number(a.status === "PENDING"));
     c.innerHTML = `${account ? `<section class="hero-band overview-hero"><div><h2>Akaunti yangu</h2>
-      <p><span translate="no">${escapeHtml(account.user.name)}</span> · ${escapeHtml(account.user.wfcId || "—")} · <span>Mwanachama hai</span></p></div>
+      <p>${displayMemberName(account.user)} · ${escapeHtml(account.user.wfcId || "—")} · <span>Mwanachama hai</span></p></div>
       <div class="hero-contribution"><span class="kicker">Salio la ada</span><strong>${formatTsh(account.debt)}</strong></div></section>
       <div class="stats">${[["Ada ya mwezi", account.monthly], ["Jumla ya ada inayotarajiwa", account.expected], ["Ada iliyothibitishwa", account.paid]].map(([label, value]) => `<div class="stat"><div class="stat-label">${label}</div><div class="val">${formatTsh(value)}</div></div>`).join("")}</div>` : ""}
       ${canApprove ? `<section class="card"><h3>Malipo yanayosubiri uhakiki</h3><p>${awaitingReview} miamala. Linganisha namba ya muamala na malipo yaliyopokelewa kabla ya kuidhinisha.</p></section>` : ""}
@@ -781,6 +870,72 @@ async function load(p) {
     };
   }
 
+  if (p === "posts") {
+    const posts = await api("/api/portal-posts");
+    if (c.dataset.page !== p) return;
+    if (!Array.isArray(posts)) { c.textContent = posts.error || "Machapisho hayakupatikana."; return; }
+    const timestamp = date => new Intl.DateTimeFormat(portalLocale === "en" ? "en-TZ" : "sw-TZ", {
+      dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Dar_es_Salaam"
+    }).format(new Date(date));
+    const commentHtml = note => `<article class="post-comment"><div class="post-byline"><strong translate="no">${escapeHtml(note.author)}</strong>
+      <time datetime="${escapeHtml(note.createdAt)}">${timestamp(note.createdAt)}</time></div>
+      <p translate="no">${escapeHtml(note.text)}</p></article>`;
+    c.innerHTML = `<section class="portal-feed">
+      ${canViewReports(window.__me.role) ? `<form method="post" id="portalPostForm" class="card"><h3>Andika chapisho</h3>
+        <div class="form-row-2"><div class="form-group"><label for="portalPostType">Aina</label>
+          <select name="type" id="portalPostType"><option value="announcement">Tangazo</option><option value="discussion">Mjadala</option></select></div>
+          <div class="form-group"><label for="portalPostTitle">Kichwa</label><input required maxlength="100" id="portalPostTitle" name="title"></div></div>
+        <div class="form-group"><label for="portalPostText">Ujumbe</label><textarea id="portalPostText" name="text" rows="3" maxlength="4000" required></textarea></div>
+        <button class="btn" type="submit">Chapisha</button><p role="status"></p>
+      </form>` : ""}
+      ${posts.map(post => `<article class="card portal-post">
+        <span class="badge badge-active">${post.type === "announcement" ? "Tangazo" : "Mjadala"}</span>
+        <h3 translate="no">${escapeHtml(post.title)}</h3>
+        <div class="post-byline"><strong translate="no">${escapeHtml(post.author)}</strong>
+          <time datetime="${escapeHtml(post.createdAt)}">${timestamp(post.createdAt)}</time></div>
+        <p class="post-text" translate="no">${escapeHtml(post.text)}</p>
+        <details>
+          <summary><span>Maoni</span> · <span data-comment-count>${post.comments.length}</span></summary>
+          <div class="post-comments">${post.comments.map(commentHtml).join("")}</div>
+          <form class="portal-comment-form" method="post" data-post="${escapeHtml(post.id)}">
+            <label for="reply-${escapeHtml(post.id)}">Andika maoni</label>
+            <textarea id="reply-${escapeHtml(post.id)}" name="text" rows="2" maxlength="1500" required></textarea>
+            <button class="btn btn-sm" type="submit">Tuma maoni</button><p role="status"></p>
+          </form>
+        </details></article>`).join("") || '<div class="card empty-state">Hakuna machapisho bado.</div>'}
+    </section>`;
+    const bindSubmit = (form, url, saved) => {
+      form.onsubmit = async event => {
+        event.preventDefault();
+        const submit = form.querySelector('button[type="submit"]');
+        const status = form.querySelector('[role="status"]');
+        submit.disabled = true;
+        status.textContent = "";
+        try {
+          const result = await api(url, { method: "POST", body: Object.fromEntries(new FormData(form)) });
+          if (!result.success) throw new Error(result.error || "Imeshindwa kuhifadhi.");
+          form.reset();
+          saved(result);
+        } catch (error) {
+          status.textContent = error.message;
+        } finally {
+          submit.disabled = false;
+        }
+      };
+    };
+    const postForm = document.getElementById("portalPostForm");
+    if (postForm) bindSubmit(postForm, "/api/portal-posts", () => load("posts"));
+    for (const form of c.querySelectorAll(".portal-comment-form")) {
+      bindSubmit(form, `/api/portal-posts/${form.dataset.post}/comments`, result => {
+        const details = form.closest("details");
+        details.querySelector(".post-comments").insertAdjacentHTML("beforeend", commentHtml(result.comment));
+        const count = details.querySelector("[data-comment-count]");
+        count.textContent = String(Number(count.textContent) + 1);
+      });
+    }
+    return;
+  }
+
   if (p === "announcements") {
     const list = await api("/api/announcements");
     c.innerHTML = `<div class="card">
@@ -813,17 +968,32 @@ async function load(p) {
   }
 
   if (p === "card") {
-    const d = await api("/api/dashboard");
-    c.innerHTML = `<div class="card idcard" style="margin:0 auto;text-align:center">
-      ${groupLogo()}
-      <h2>Kitambulisho cha ${escapeHtml(groupProfile.name)}</h2>
-      <p style="font-size:1.35rem;margin:6px 0 2px;color:var(--ink)"><strong>${d.user.name}</strong></p>
-      <p style="font-weight:700;color:var(--brand-orange);margin:0 0 6px">${d.user.wfcId || "Inasubiri idhini"}</p>
-      <p class="muted" style="margin:0 0 8px">${d.user.region || "Tanzania"} · <span class="badge badge-active">${d.user.status}</span></p>
-      <img id="qrc" class="qr" alt="QR Code">
-      <button class="btn" onclick="window.print()">Pakua / Chapisha Kitambulisho</button>
-    </div>`;
-    if (window.QRCode) QRCode.toDataURL(d.user.wfcId || d.user.name, { margin: 1, width: 180 }).then(url => { const img = document.getElementById("qrc"); if (img) img.src = url; });
+    const member = await api("/api/member-card");
+    if (c.dataset.page !== p) return;
+    if (!member.number) { c.textContent = member.error || "Kitambulisho hakikupatikana."; return; }
+    c.innerHTML = `<section class="member-id-panel" aria-label="Kitambulisho cha mwanachama">
+      <div class="member-id-preview">
+        <header class="member-id-brand">${groupLogo("member-id-logo")}<strong translate="no">${escapeHtml(groupProfile.name)}</strong></header>
+        <div class="member-id-details">
+          ${member.hasPhoto ? '<img class="member-id-photo" src="/api/me/photo?v=' + Date.now() + '" alt="Picha ya wasifu">' : `<div class="member-id-photo initials" aria-hidden="true">${escapeHtml((member.name || "W").slice(0, 1))}</div>`}
+          <div class="member-id-copy">
+            <div class="member-id-label">Kitambulisho cha mwanachama</div>
+            <h2>${displayMemberName(member)}</h2>
+            <p class="member-id-number" translate="no">${escapeHtml(member.number)}</p>
+            <span class="badge badge-active">Uanachama hai</span>
+          </div>
+          <figure class="member-id-code"><img src="/api/member-card/qr" alt="QR ya uhakiki"><figcaption>Hakiki</figcaption></figure>
+        </div>
+      </div>
+      <div class="member-id-actions">
+        ${member.hasPhoto ? '<button id="downloadMemberId" class="btn" type="button">Pakua kitambulisho (PDF)</button>' : '<p class="muted">Weka picha kwenye wasifu kabla ya kupakua kitambulisho.</p>'}
+        <button id="editMemberPortrait" class="btn ghost" type="button">${member.hasPhoto ? "Badili picha ya wasifu" : "Weka picha ya wasifu"}</button>
+      </div>
+    </section>`;
+    applyGroupProfile(groupProfile);
+    document.getElementById("editMemberPortrait").onclick = () => load("profile");
+    const download = document.getElementById("downloadMemberId");
+    if (download) download.onclick = () => location.assign("/api/member-card/pdf?lang=" + portalLocale);
   }
 
   if (p === "family") {

@@ -2,7 +2,7 @@
 
 let groupProfile = {
   name: "Wachagga Community Family", shortName: "WFC", slogan: "Umoja wa Wachagga, nguvu ya familia",
-  logo: "/assets/wachagga-logo.jpg", description: "", rules: "", phone: "",
+  logo: "/assets/wachagga-logo.jpg?v=ebb0f8240bd5", description: "", rules: "", phone: "",
   registrationFee: 0, monthlyFee: 0, paymentNumbers: {}
 };
 

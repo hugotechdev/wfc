@@ -119,8 +119,13 @@ Historia ya Michango|Contribution history
 Mwanachama|Member
 Wanachama|Members
 wanachama|members
+1 mwanachama|1 member
+Tafuta wanachama|Search members
+Tafuta jina, simu, kanda au Namba ya uanachama...|Search name, phone, region or membership number…
 wanadaiwa|with outstanding fees
 kanda|regions
+1 kanda|1 region
+Msimamizi|Administrator
 miamala|transactions
 wanasubiri|pending
 Aina|Type
@@ -379,6 +384,36 @@ Taarifa za malipo hazikupatikana.|Payment details could not be loaded.
 Usajili umepokelewa. Subiri idhini.|Registration received. Please wait for approval.
 Namba tayari imesajiliwa|This phone number is already registered
 Huna mamlaka|You do not have permission
+Picha ya wasifu|Profile photo
+Chagua picha inayoonyesha uso wako vizuri. Itaonekana kwenye kitambulisho.|Choose a clear front-facing photo. It will appear on your member ID.
+Hifadhi picha|Save photo
+Picha imehifadhiwa.|Photo saved.
+Picha haikuhifadhiwa.|Photo could not be saved.
+Picha haikubaliki au ni kubwa sana.|The photo is invalid or too large.
+Picha iwe angalau pikseli 96 kwa 96.|Use a photo at least 96 by 96 pixels.
+Chagua picha ya JPG, PNG au WebP isiyozidi MB 8.|Choose a JPG, PNG or WebP photo up to 8 MB.
+Kitambulisho cha mwanachama|Member ID
+Pakua kitambulisho (PDF)|Download member ID (PDF)
+Tazama kitambulisho|View member ID
+Weka picha ya wasifu|Add profile photo
+Badili picha ya wasifu|Change profile photo
+Weka picha kwenye wasifu kabla ya kupakua kitambulisho.|Add a profile photo before downloading your member ID.
+Uanachama hai|Active membership
+Hakiki|Verify
+Vikao na machapisho|Discussions and posts
+Andika chapisho|Create a post
+Tangazo|Announcement
+Mjadala|Discussion
+Chapisha|Publish
+Maoni|Comments
+Andika maoni|Write a comment
+Tuma maoni|Post comment
+Hakuna machapisho bado.|No posts yet.
+Viongozi pekee wanaweza kuchapisha.|Only leaders can publish posts.
+Weka aina, kichwa na ujumbe wa chapisho.|Choose a type and enter a title and message.
+Andika maoni yasiyozidi herufi 1500.|Write a comment of up to 1,500 characters.
+Chapisho halikupatikana.|Post not found.
+Imeshindwa kuhifadhi.|Could not save.
 `.trim().split("\n").map(line => line.split("|")));
 
 let portalLocale;

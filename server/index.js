@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const { jsPDF } = require("jspdf");
 const QRCode = require("qrcode");
+const { normalizePortrait, cardQr, buildMemberCard } = require("./member-card");
 const { DEFAULT_GROUP, readGroup, updateGroup } = require("./group");
 const { randomBytes, scryptSync, timingSafeEqual } = require("node:crypto");
 
@@ -46,6 +47,16 @@ function saveDB(db) {
   const temporary = DATA_FILE + ".tmp";
   fs.writeFileSync(temporary, JSON.stringify(db, null, 2), { mode: 0o600 });
   fs.renameSync(temporary, DATA_FILE);
+}
+
+function ensureMemberNumber(db, user) {
+  if (user.wfcId) return;
+  let number = db.nextMemberNumber || 1;
+  const prefix = readGroup(db).shortName;
+  do {
+    user.wfcId = prefix + "-" + String(number++).padStart(4, "0");
+  } while (db.users.some(other => other !== user && other.wfcId === user.wfcId));
+  db.nextMemberNumber = number;
 }
 
 const sessionSecret = process.env.SESSION_SECRET;
@@ -240,13 +251,83 @@ app.get("/api/me", (req, res) => {
   res.json({ user: user ? { ...sessionUser, status: user.status, role: user.role, wfcId: user.wfcId } : null });
 });
 
+// A photo is served only to its owner and is never included in member lists.
+app.get("/api/me/photo", requireAuth, (req, res) => {
+  const member = loadDB().users.find(user => user.id === req.session.user.id);
+  if (!member.profilePhoto) return res.sendStatus(404);
+  res.set({ "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" });
+  res.type("jpeg").send(Buffer.from(member.profilePhoto, "base64"));
+});
+
+app.put("/api/me/photo", requireAuth, (req, res) => {
+  let photo;
+  try {
+    photo = normalizePortrait(req.body?.photo);
+  } catch {
+    return res.status(400).json({ error: "Picha haikubaliki au ni kubwa sana." });
+  }
+  const db = loadDB();
+  const member = db.users.find(user => user.id === req.session.user.id);
+  member.profilePhoto = photo;
+  saveDB(db);
+  res.json({ success: true });
+});
+
+function prepareMemberCard(req) {
+  const db = loadDB();
+  const member = db.users.find(user => user.id === req.session.user.id);
+  if (!member.wfcId || !member.cardToken) {
+    ensureMemberNumber(db, member);
+    member.cardToken ||= randomBytes(24).toString("hex");
+    saveDB(db);
+  }
+  req.session.user.wfcId = member.wfcId;
+  const origin = (process.env.PUBLIC_ORIGIN || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+  return { db, member, verificationUrl: `${origin}/verify/member/${member.cardToken}` };
+}
+
+app.get("/api/member-card", requireAuth, (req, res) => {
+  const { member } = prepareMemberCard(req);
+  res.set("Cache-Control", "private, no-store").json({
+    id: member.id, name: member.name, number: member.wfcId,
+    hasPhoto: Boolean(member.profilePhoto)
+  });
+});
+
+app.get("/api/member-card/qr", requireAuth, async (req, res, next) => {
+  try {
+    const { verificationUrl } = prepareMemberCard(req);
+    const qr = await cardQr(verificationUrl);
+    res.set("Cache-Control", "private, no-store").type("png").send(qr);
+  } catch (error) { next(error); }
+});
+
+app.get("/api/member-card/pdf", requireAuth, async (req, res, next) => {
+  try {
+    const { db, member, verificationUrl } = prepareMemberCard(req);
+    if (!member.profilePhoto) return res.status(409).json({ error: "Weka picha kwenye wasifu kabla ya kupakua kitambulisho." });
+    const pdf = await buildMemberCard(member, readGroup(db), verificationUrl, req.query.lang === "en");
+    res.set("Cache-Control", "private, no-store").attachment(`Member-ID-${member.wfcId.replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`).send(pdf);
+  } catch (error) { next(error); }
+});
+
+app.get("/verify/member/:token", (req, res) => {
+  const token = req.params.token;
+  const member = /^[a-f0-9]{48}$/.test(token) && loadDB().users.find(user => user.cardToken === token);
+  const active = member && member.status === "ACTIVE" && member.wfcId;
+  res.set("Cache-Control", "no-store").status(active ? 200 : 404).type("html").send(`<!doctype html>
+<html lang="sw"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uhakiki wa uanachama</title><style>body{font:1rem system-ui;background:#fff5e9;color:#25180d;padding:2rem}main{max-width:32rem;margin:auto;padding:1.4rem;background:white;border-radius:1rem;border-top:5px solid #f47b1f}</style>
+<main><h1>Uhakiki wa uanachama</h1><p>${active ? "Uanachama hai • Active membership" : "Kitambulisho hakijathibitishwa • Membership could not be verified"}</p>${active ? `<p><code>${String(member.wfcId).replace(/[^a-zA-Z0-9_-]/g, "")}</code></p>` : ""}</main></html>`);
+});
+
 // Dashboard
 app.get("/api/dashboard", requireAuth, (req, res) => {
   const db = loadDB();
   const user = db.users.find(u => u.id === req.session.user.id);
   const myPayments = db.payments.filter(p => p.userId === user.id && p.status === "APPROVED");
   const totalPaid = myPayments.reduce((s, p) => s + (p.amount || 0), 0);
-  const { password, passwordHash, ...publicUser } = user;
+  const { password, passwordHash, profilePhoto, cardToken, ...publicUser } = user;
   res.json({
     user: publicUser,
     stats: {
@@ -349,14 +430,7 @@ app.post("/api/approve-member", requireAuth, (req, res) => {
   if (user.status !== "PENDING") return res.status(409).json({ error: "Ombi hili halisubiri idhini." });
   user.status = "ACTIVE";
   user.membershipApprovedAt = new Date().toISOString();
-  if (!user.wfcId) {
-    let number = db.nextMemberNumber || 1;
-    const prefix = readGroup(db).shortName;
-    do {
-      user.wfcId = prefix + "-" + String(number++).padStart(4, "0");
-    } while (db.users.some(other => other !== user && other.wfcId === user.wfcId));
-    db.nextMemberNumber = number;
-  }
+  ensureMemberNumber(db, user);
   recordApproval(db, req.session.user, "Uanachama", user.wfcId, user.membershipApprovedAt);
   saveDB(db);
   res.json({ success: true, wfcId: user.wfcId });
@@ -438,6 +512,42 @@ app.get("/api/payments/:id/receipt", requireAuth, async (req, res) => {
     console.error("Receipt generation failed:", error.message);
     res.status(500).json({ error: "Risiti haikuweza kutengenezwa." });
   }
+});
+
+function readPostText(value, maxLength) {
+  return typeof value === "string" && value.trim().length <= maxLength ? value.trim() : "";
+}
+
+app.get("/api/portal-posts", requireAuth, (req, res) => {
+  res.set("Cache-Control", "private, no-store").json(loadDB().portalPosts || []);
+});
+
+app.post("/api/portal-posts", requireAuth, (req, res) => {
+  const actor = req.session.user;
+  if (!isLeader(actor.role)) return res.status(403).json({ error: "Viongozi pekee wanaweza kuchapisha." });
+  const title = readPostText(req.body?.title, 100);
+  const text = readPostText(req.body?.text, 4000);
+  const type = req.body?.type;
+  if (!title || !text || !["announcement", "discussion"].includes(type)) {
+    return res.status(400).json({ error: "Weka aina, kichwa na ujumbe wa chapisho." });
+  }
+  const db = loadDB();
+  const post = { id: randomBytes(12).toString("hex"), title, text, type, author: actor.name, createdAt: new Date().toISOString(), comments: [] };
+  (db.portalPosts ||= []).unshift(post);
+  saveDB(db);
+  res.status(201).json({ success: true, post });
+});
+
+app.post("/api/portal-posts/:id/comments", requireAuth, (req, res) => {
+  const text = readPostText(req.body?.text, 1500);
+  if (!text) return res.status(400).json({ error: "Andika maoni yasiyozidi herufi 1500." });
+  const db = loadDB();
+  const post = (db.portalPosts || []).find(entry => entry.id === req.params.id);
+  if (!post) return res.status(404).json({ error: "Chapisho halikupatikana." });
+  const comment = { id: randomBytes(12).toString("hex"), text, author: req.session.user.name, createdAt: new Date().toISOString() };
+  post.comments.push(comment);
+  saveDB(db);
+  res.status(201).json({ success: true, comment });
 });
 
 // Events

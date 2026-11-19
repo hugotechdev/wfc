@@ -1940,3 +1940,53 @@ tbody tr:hover { background: var(--bg); }
   .signin-page.auth-page .container { padding: 19px; }
   .signin-page.auth-page .container h1 { font-size: clamp(1.3rem, 6vw, 1.65rem); }
 }
+
+
+:root[data-theme="dark"] .layout .sidebar .nav-item.active {
+  background: #41302b;
+  color: #ffe8d8;
+  box-shadow: inset 3px 0 #f5ad83;
+}
+:root[data-theme="dark"] .layout .sidebar .nav-item.active svg,
+:root[data-theme="dark"] .language-switch button[aria-pressed="true"],
+:root[data-theme="dark"] .tabbar button.active { color: #ffc5a2; }
+:root[data-theme="dark"] #memberSearch::placeholder { color: #aab9cc; }
+
+.profile-photo-panel { max-width: 720px; }
+.profile-photo-area { display: grid; grid-template-columns: 108px minmax(0,1fr); align-items: start; gap: 16px; margin-block: 1rem; }
+.profile-portrait { width: 108px; aspect-ratio: 1; object-fit: cover; border-radius: 18px; }
+.profile-portrait[hidden] { display: none; }
+.initials { display: grid; place-items: center; background: #f7bf95; color: #552b16; font-size: 1.9rem; font-weight: 800; }
+.profile-photo-area .btn { margin: .35rem .3rem .25rem 0; width: auto; }
+.member-id-panel { max-width: 620px; margin: 1rem auto; }
+.member-id-preview { border-top: 6px solid #f47b1f; border-radius: 22px; background: linear-gradient(140deg,#171819,#292623); padding: clamp(12px,3vw,23px); color: #fff; box-shadow: var(--studio-depth); }
+.member-id-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.member-id-logo { width: 45px; height: 45px; border-radius: 9px; }
+.member-id-details { display: grid; grid-template-columns: minmax(56px,1fr) minmax(0,1.75fr) minmax(46px,.68fr); align-items: center; gap: clamp(7px,2vw,14px); background: #fff5e9; color: #21170f; padding: clamp(7px,2.5vw,15px); border-radius: 14px; }
+.member-id-photo { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+.member-id-photo.initials { display: grid; }
+.member-id-label { font-size: clamp(.57rem,2.3vw,.74rem); text-transform: uppercase; font-weight: 800; letter-spacing: .018em; color: #9a3f15; }
+.member-id-copy h2 { margin: 4px 0; font-size: clamp(.95rem,4vw,1.6rem); line-height: 1.14; overflow-wrap: anywhere; }
+.member-id-number { font-weight: 800; margin: 0 0 4px; overflow-wrap: anywhere; }
+.member-id-copy .badge { font-size: .64rem; background: #d9eee2; color: #165536; }
+.member-id-code { margin: 0; font-size: .66rem; text-align: center; }
+.member-id-code img { display: block; width: 100%; aspect-ratio: 1; border-radius: 4px; }
+.member-id-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.member-id-actions .btn { width: auto; }
+@media (max-width: 450px) {
+  .profile-photo-area { grid-template-columns: 1fr; }
+  .profile-portrait { width: 85px; }
+}
+
+.portal-feed { max-width: 790px; margin-inline: auto; }
+.portal-feed h3 { margin: .45rem 0; overflow-wrap: anywhere; }
+.portal-post { overflow-wrap: anywhere; }
+.post-byline { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .7rem; color: var(--muted); font-size: .8rem; }
+.post-text, .post-comment p { white-space: pre-wrap; margin: .7rem 0; }
+.portal-post details { border-top: 1px solid var(--border); padding-top: .75rem; }
+.portal-post summary { cursor: pointer; font-weight: 700; }
+.post-comment { border-inline-start: 3px solid var(--brand-orange-light); background: var(--bg); padding: .65rem .8rem; border-radius: 8px; margin-top: .6rem; }
+.post-comment p { margin-bottom: 0; }
+.portal-comment-form { margin-top: 12px; }
+.portal-comment-form label { display: block; margin-bottom: 4px; font-weight: 650; }
+.portal-comment-form textarea { margin-bottom: 7px; }
