@@ -2269,3 +2269,6 @@ tbody tr:hover { background: var(--bg); }
   .landing-body .hero-copy .lead { margin-top: 6px; }
   .dashboard-carousel { margin-top: 0; }
 }
+.ticket-delivery { padding-top: 5px; }
+.ticket-delivery p { margin: 3px 0; font-size: .76rem; }
+.ticket-delivery .event-actions { align-items: center; margin-top: 4px; }

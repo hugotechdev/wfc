@@ -7,6 +7,8 @@ const QRCode = require("qrcode");
 const { normalizePortrait, cardQr, buildMemberCard } = require("./member-card");
 const { readAttachments, visiblePost } = require("./social-post");
 const { socialLink } = require("./social-link");
+const { ticketNumber, validTicket, ticketLink, buildTicketPdf } = require("./event-ticket");
+const { ticketMailer } = require("./ticket-mail");
 const { APPROVERS, paymentText, paymentEvidence, ticketFields, ticketAnswers } = require("./manual-payment");
 const { DEFAULT_GROUP, readGroup, updateGroup } = require("./group");
 const { randomBytes, scryptSync, timingSafeEqual } = require("node:crypto");
@@ -71,6 +73,61 @@ function savePaymentSubmission(db, photo) {
   fs.writeFileSync(filePath, photo.bytes, { flag: "wx", mode: 0o600 });
   try { saveDB(db); }
   catch (error) { fs.rmSync(filePath, { force: true }); throw error; }
+}
+
+function configuredTicketOrigin() {
+  try {
+    const url = new URL(process.env.PUBLIC_ORIGIN);
+    if (url.protocol === "https:" && !url.username && !url.password && url.pathname === "/" && !url.search && !url.hash) return url.origin;
+  } catch {}
+  return "";
+}
+
+const emailOrigin = configuredTicketOrigin();
+const sendTicketEmail = emailOrigin ? ticketMailer() : null;
+const emailsInProgress = new Set();
+
+function ticketOrigin(req) {
+  return emailOrigin || `${req.protocol}://${req.get("host")}`;
+}
+
+function publicTicketByToken(db, token) {
+  return /^[a-f0-9]{48}$/.test(token) && (db.tickets || []).find(ticket => ticket.token === token);
+}
+
+function ticketDelivery(ticket, req) {
+  if (!ticket?.token || ticket.status !== "APPROVED") return null;
+  return {
+    id: ticket.id, link: ticketLink(ticketOrigin(req), ticket), eventName: ticket.eventName, phone: ticket.phone,
+    email: ticket.email || "", method: ticket.deliveryMethod || "whatsapp",
+    emailStatus: ticket.emailStatus || (sendTicketEmail ? "QUEUED" : "NOT_CONFIGURED")
+  };
+}
+
+async function deliverTicketEmail(id) {
+  if (!sendTicketEmail || emailsInProgress.has(id)) return;
+  const order = (loadDB().tickets || []).find(ticket => ticket.id === id);
+  if (!order?.token || order.status !== "APPROVED" || !order.email || order.deliveryMethod !== "email" || order.emailStatus === "SENT") return;
+  emailsInProgress.add(id);
+  let result = "FAILED";
+  try {
+    if (await sendTicketEmail(order, ticketLink(emailOrigin, order))) result = "SENT";
+  } catch (error) {
+    console.error("Ticket email delivery failed", error.code || "MAIL_ERROR");
+  }
+  try {
+    const db = loadDB();
+    const current = (db.tickets || []).find(ticket => ticket.id === id);
+    if (current) {
+      current.emailStatus = result;
+      if (result === "SENT") current.emailSentAt = new Date().toISOString();
+      saveDB(db);
+    }
+  } finally { emailsInProgress.delete(id); }
+}
+
+function queueTicketEmail(id) {
+  deliverTicketEmail(id).catch(() => console.error("Could not update ticket delivery status."));
 }
 
 function publicEvent(event) {
@@ -157,7 +214,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/landing.html"));
 });
 app.get("/app", (req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
-app.get("/ticket/:id", (req, res) => res.sendFile(path.join(__dirname, "../public/ticket.html")));
+app.get("/ticket/:id", (req, res) => res.set("Referrer-Policy", "no-referrer").sendFile(path.join(__dirname, "../public/ticket.html")));
 
 app.get("/api/public/group", (req, res) => {
   res.set("Cache-Control", "no-store").json(readGroup(loadDB()));
@@ -489,7 +546,10 @@ app.get("/api/payments", requireAuth, (req, res) => {
   const db = loadDB();
   res.set("Cache-Control", "private, no-store").json(db.payments
     .filter(payment => reviewer || isLeader(user.role) || payment.userId === user.id)
-    .map(payment => visiblePayment(payment, reviewer || payment.userId === user.id)));
+    .map(payment => {
+      const delivery = reviewer && payment.ticketId ? ticketDelivery((db.tickets || []).find(ticket => ticket.id === payment.ticketId), req) : null;
+      return { ...visiblePayment(payment, reviewer || payment.userId === user.id), ...(delivery ? { delivery } : {}) };
+    }));
 });
 
 app.get("/api/payments/:id/proof", requireAuth, (req, res) => {
@@ -528,12 +588,15 @@ app.post("/api/approve-payment", requireAuth, (req, res) => {
   p.status = "APPROVED";
   p.approvedAt = new Date().toISOString();
   p.receiptNo = "RCP-" + randomBytes(8).toString("hex").toUpperCase();
-  if (p.ticketId) {
-    const ticket = (db.tickets || []).find(order => order.id === p.ticketId);
-    if (ticket) { ticket.status = "APPROVED"; ticket.approvedAt = p.approvedAt; ticket.receiptNo = p.receiptNo; }
+  const ticket = p.ticketId && (db.tickets || []).find(order => order.id === p.ticketId);
+  if (ticket) {
+    ticket.status = "APPROVED";
+    ticket.approvedAt = p.approvedAt;
+    ticket.receiptNo = p.receiptNo;
   }
   recordApproval(db, req.session.user, "Malipo", p.receiptNo, p.approvedAt);
   saveDB(db);
+  if (ticket?.deliveryMethod === "email") queueTicketEmail(ticket.id);
   res.json({ success: true, receiptNo: p.receiptNo });
 });
 
@@ -700,7 +763,10 @@ app.post("/api/events", requireAuth, (req, res) => {
 app.get("/api/events/:id/orders", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role) && !APPROVERS.includes(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
   const rows = (loadDB().tickets || []).filter(ticket => ticket.eventId === req.params.id)
-    .map(({ id, name, phone, qty, amount, status, answers = [] }) => ({ id, name, phone, qty, amount, status, answers }));
+    .map(ticket => {
+      const { id, name, phone, qty, amount, status, answers = [] } = ticket;
+      return { id, name, phone, qty, amount, status, answers, delivery: ticketDelivery(ticket, req) };
+    });
   res.set("Cache-Control", "private, no-store").json(rows);
 });
 
@@ -796,6 +862,12 @@ app.post("/api/tickets", (req, res) => {
   if (!name || !/^[+0-9() -]{7,30}$/.test(phone) || !Number.isSafeInteger(qty) || qty < 1 || qty > 50) {
     return res.status(400).json({ error: "Hakiki jina, simu na idadi ya tiketi." });
   }
+  const deliveryMethod = input.deliveryMethod || "whatsapp";
+  const email = paymentText(input.email, 254);
+  if (!["email", "whatsapp"].includes(deliveryMethod) ||
+      (deliveryMethod === "email" && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email))) {
+    return res.status(400).json({ error: "Chagua njia ya kupokea tiketi na weka barua pepe halali ikihitajika." });
+  }
   const amount = Number(event.ticketPrice || 0) * qty;
   if (!Number.isSafeInteger(amount) || amount < 0) return res.status(409).json({ error: "Bei ya tiketi si halali." });
   let answers, evidence;
@@ -804,7 +876,8 @@ app.post("/api/tickets", (req, res) => {
     if (amount > 0) evidence = paymentEvidence(input, db);
   } catch (error) { return res.status(400).json({ error: error.message }); }
   const ticket = { id: randomBytes(12).toString("hex"), token: randomBytes(24).toString("hex"),
-    eventId: event.id, eventName: event.title, name, phone, qty, amount, answers,
+    eventId: event.id, eventName: event.title, name, phone, qty, amount, answers, deliveryMethod,
+    ...(deliveryMethod === "email" ? { email } : {}),
     status: evidence ? "PENDING" : "APPROVED", createdAt: new Date().toISOString() };
   if (!evidence) ticket.approvedAt = ticket.createdAt;
   (db.tickets ||= []).push(ticket);
@@ -814,15 +887,56 @@ app.post("/api/tickets", (req, res) => {
     ticketId: ticket.id, eventName: ticket.eventName, ticketQty: qty, ...evidence.data
   });
   savePaymentSubmission(db, evidence?.photo);
+  if (ticket.status === "APPROVED" && ticket.deliveryMethod === "email") queueTicketEmail(ticket.id);
   res.status(201).json({ success: true, token: ticket.token, status: ticket.status });
 });
 
 app.get("/api/tickets/status/:token", (req, res) => {
-  const token = req.params.token;
-  const ticket = /^[a-f0-9]{48}$/.test(token) && (loadDB().tickets || []).find(order => order.token === token);
+  const ticket = publicTicketByToken(loadDB(), req.params.token);
   if (!ticket) return res.status(404).json({ error: "Ombi la tiketi halikupatikana." });
   const { id, eventName, name, qty, amount, status, receiptNo } = ticket;
-  res.set("Cache-Control", "private, no-store").json({ reference: id, eventName, name, qty, amount, status, receiptNo });
+  res.set("Cache-Control", "private, no-store").json({
+    reference: id, eventName, name, qty, amount, status, receiptNo,
+    ...(status === "APPROVED" ? { ticketNumbers: Array.from({ length: qty }, (_, i) => ticketNumber(ticket, i + 1)) } : {})
+  });
+});
+
+app.get("/api/tickets/status/:token/pdf", async (req, res, next) => {
+  const db = loadDB();
+  const order = publicTicketByToken(db, req.params.token);
+  if (!order || order.status !== "APPROVED") return res.sendStatus(404);
+  try {
+    const event = (db.events || []).find(item => item.id === order.eventId);
+    const pdf = await buildTicketPdf(order, event, readGroup(db), ticketOrigin(req), req.query.lang === "en");
+    res.set("Cache-Control", "private, no-store").attachment(`Tiketi-${order.id}.pdf`).send(pdf);
+  } catch (error) { next(error); }
+});
+
+app.get("/verify/ticket/:id/:seat/:code", (req, res) => {
+  const db = loadDB();
+  const order = (db.tickets || []).find(item => item.id === req.params.id);
+  const seat = /^\d{1,2}$/.test(req.params.seat) ? Number(req.params.seat) : NaN;
+  const verified = validTicket(order, seat, req.params.code);
+  const safe = value => String(value).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  const heading = verified ? "Tiketi halali • Ticket verified" : "Tiketi haijathibitishwa • Ticket not verified";
+  res.set({ "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" })
+    .status(verified ? 200 : 404).type("html").send(`<!doctype html>
+<html lang="sw"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${heading}</title><style>body{font:1rem system-ui;background:#fff5e9;color:#25180d;padding:2rem}main{max-width:30rem;margin:auto;padding:1.5rem;background:#fff;border-radius:1rem;border-top:5px solid ${verified ? "#316748" : "#9c3329"}}code{overflow-wrap:anywhere}</style>
+<main><h1>${heading}</h1>${verified ? `<p>${safe(readGroup(db).name)}</p><h2>${safe(order.eventName)}</h2><p><code>${safe(ticketNumber(order, seat))}</code></p>` : ""}</main></html>`);
+});
+
+app.post("/api/events/orders/:id/send-email", requireAuth, async (req, res, next) => {
+  if (!APPROVERS.includes(req.session.user.role)) return res.sendStatus(403);
+  if (!sendTicketEmail) return res.status(409).json({ error: "Huduma ya email haijaunganishwa." });
+  const order = (loadDB().tickets || []).find(ticket => ticket.id === req.params.id);
+  if (order?.status !== "APPROVED" || order.deliveryMethod !== "email" || !order.email) return res.sendStatus(404);
+  try {
+    const sending = emailsInProgress.has(order.id);
+    if (!sending) await deliverTicketEmail(order.id);
+    const current = (loadDB().tickets || []).find(ticket => ticket.id === order.id);
+    res.json({ success: true, emailStatus: sending ? "QUEUED" : current?.emailStatus });
+  } catch (error) { next(error); }
 });
 
 // ===== NEW MODULES =====

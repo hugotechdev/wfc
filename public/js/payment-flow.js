@@ -69,3 +69,40 @@ function contactLinks(phone) {
     <div class="event-contact-options"><a href="https://wa.me/${digits}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
     <a href="sms:+${digits}">SMS</a><a href="tel:+${digits}">Piga simu</a></div></details></div>`;
 }
+
+const TICKET_EMAIL_STATES = {
+  SENT: "Barua pepe imetumwa",
+  FAILED: "Barua pepe haikutumwa",
+  QUEUED: "Barua pepe inasubiri kutumwa",
+  NOT_CONFIGURED: "Huduma ya email haijaunganishwa."
+};
+
+function renderTicketDelivery(delivery, allowRetry) {
+  const link = safePublicLink(delivery?.link);
+  if (!link || !/^https?:\/\//.test(link)) return "";
+  const digits = String(delivery.phone || "").replace(/\D/g, "").replace(/^0(?=\d{9}$)/, "255");
+  const message = encodeURIComponent(tr("Tiketi imethibitishwa") + " — " + delivery.eventName + "\n" + link);
+  return `<div class="ticket-delivery">
+    ${delivery.method === "email" ? `<p class="muted" data-ticket-email-status role="status">${TICKET_EMAIL_STATES[delivery.emailStatus] || ""}</p>` : ""}
+    <div class="event-actions">
+      <a class="btn btn-sm ghost" href="${publicEscape(link)}" target="_blank" rel="noopener noreferrer">Fungua tiketi</a>
+      ${/^\d{7,15}$/.test(digits) ? `<a class="btn btn-sm ghost" href="https://wa.me/${digits}?text=${message}" target="_blank" rel="noopener noreferrer">Tuma WhatsApp</a>` : ""}
+      ${delivery.email ? `<a class="btn btn-sm ghost" href="mailto:${encodeURIComponent(delivery.email)}?subject=${encodeURIComponent(tr("Tiketi imethibitishwa"))}&amp;body=${message}">Fungua email</a>` : ""}
+      ${allowRetry && delivery.method === "email" && ["FAILED", "QUEUED"].includes(delivery.emailStatus)
+        ? `<button class="btn btn-sm ghost" type="button" data-send-ticket-email="${publicEscape(delivery.id)}">Jaribu tena email</button>` : ""}
+    </div>
+  </div>`;
+}
+
+function bindTicketDelivery(container) {
+  for (const button of container.querySelectorAll("[data-send-ticket-email]")) button.onclick = async () => {
+    button.disabled = true;
+    const status = button.closest(".ticket-delivery").querySelector("[data-ticket-email-status]");
+    try {
+      const result = await api("/api/events/orders/" + encodeURIComponent(button.dataset.sendTicketEmail) + "/send-email", { method: "POST", body: {} });
+      status.textContent = TICKET_EMAIL_STATES[result.emailStatus] || result.error || "Barua pepe haikutumwa";
+      if (result.emailStatus === "SENT") button.remove();
+    } catch { status.textContent = "Barua pepe haikutumwa"; }
+    finally { button.disabled = false; }
+  };
+}

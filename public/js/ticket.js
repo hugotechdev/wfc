@@ -18,6 +18,7 @@ async function showTicketStatus(token) {
   const response = await fetch("/api/tickets/status/" + encodeURIComponent(token), { cache: "no-store" });
   const order = await response.json();
   if (!response.ok) throw new Error(order.error);
+  const downloadUrl = "/api/tickets/status/" + encodeURIComponent(token) + "/pdf";
   ticketInfo.innerHTML = `<article class="ticket-event-box ticket-confirmation">
     <span class="badge ${order.status === "APPROVED" ? "badge-active" : "badge-pending"}">${order.status === "APPROVED" ? "Tiketi imethibitishwa" : "Inasubiri uhakiki wa malipo"}</span>
     <h2 translate="no">${publicEscape(order.eventName)}</h2>
@@ -27,11 +28,12 @@ async function showTicketStatus(token) {
     ${order.receiptNo ? `<p><span>Risiti</span> <strong translate="no">${publicEscape(order.receiptNo)}</strong></p>` : ""}
     <div class="ticket-status-actions">
       <p>Hifadhi kiungo hiki ili kufuatilia tiketi yako.</p>
-      ${order.status === "APPROVED" ? '<button class="btn" id="printTicket" type="button">Chapisha tiketi</button>'
+      ${order.status === "APPROVED" ? `<p>PDF ina QR tofauti kwa kila tiketi.</p><a class="btn" id="downloadApprovedTicket" href="${downloadUrl}?lang=${portalLocale}">Pakua tiketi (PDF)</a>`
         : '<button class="btn" id="refreshTicket" type="button">Angalia hali ya tiketi</button>'}
     </div>
   </article>`;
-  document.getElementById("printTicket")?.addEventListener("click", () => window.print());
+  const download = document.getElementById("downloadApprovedTicket");
+  if (download) download.addEventListener("click", () => { download.href = downloadUrl + "?lang=" + portalLocale; });
   document.getElementById("refreshTicket")?.addEventListener("click", () => location.reload());
 }
 
@@ -61,6 +63,17 @@ async function openTicket() {
     await groupReady;
     applyGroupProfile(groupProfile);
   }
+  const method = ticketForm.elements.deliveryMethod;
+  const emailField = document.getElementById("ticketEmailField");
+  const email = ticketForm.elements.email;
+  const updateDelivery = () => {
+    const selected = method.value === "email";
+    emailField.hidden = !selected;
+    email.disabled = !selected;
+    email.required = selected;
+  };
+  method.onchange = updateDelivery;
+  updateDelivery();
   ticketForm.classList.remove("hidden");
   ticketForm.onsubmit = async event => {
     event.preventDefault();

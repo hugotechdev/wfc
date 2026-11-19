@@ -496,6 +496,18 @@ Picha ya tangazo (hiari)|Announcement image (optional)
 Ambatisha picha ya tangazo.|Attach an announcement image.
 Karibu, matangazo na matukio|Welcome, announcements and events
 Tazama tukio|View event
+Pokea tiketi kupitia|Receive ticket by
+Pakua tiketi (PDF)|Download ticket (PDF)
+PDF ina QR tofauti kwa kila tiketi.|The PDF includes a unique QR code for each ticket.
+Fungua tiketi|Open ticket
+Tuma WhatsApp|Send on WhatsApp
+Fungua email|Open email
+Jaribu tena email|Retry email
+Barua pepe imetumwa|Email sent
+Barua pepe haikutumwa|Email could not be sent
+Barua pepe inasubiri kutumwa|Email pending
+Huduma ya email haijaunganishwa.|Email delivery is not configured.
+Chagua njia ya kupokea tiketi na weka barua pepe halali ikihitajika.|Choose a delivery method and enter a valid email address if required.
 `.trim().split("\n").map(line => line.split("|")));
 
 let portalLocale;

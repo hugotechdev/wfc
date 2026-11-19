@@ -914,12 +914,13 @@ async function load(p) {
                 ${x.transactionMessage ? `<details><summary>Ujumbe wa muamala</summary><p class="proof-message" translate="no">${escapeHtml(x.transactionMessage)}</p></details>` : ""}
               </td>
               <td><span class="badge ${x.status === "APPROVED" ? "badge-approved" : "badge-pending"}">${x.status === "APPROVED" ? (x.receiptNo || "Imethibitishwa") : "Inasubiri"}</span></td>
-              <td>${x.status === "APPROVED" ? `<button class="btn btn-sm ghost" data-receipt="${escapeHtml(x.id)}">Pakua risiti</button>` : canApprove ? `<button class="btn btn-sm" data-approve-payment="${escapeHtml(x.id)}">Idhinisha</button>` : "—"}</td>
+              <td>${x.status === "APPROVED" ? `<button class="btn btn-sm ghost" data-receipt="${escapeHtml(x.id)}">Pakua risiti</button>` : canApprove ? `<button class="btn btn-sm" data-approve-payment="${escapeHtml(x.id)}">Idhinisha</button>` : "—"}${renderTicketDelivery(x.delivery, canApprove)}</td>
             </tr>`).join("") || `<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">Hakuna historia ya malipo</td></tr>`}
           </tbody>
         </table>
       </div>
     </div>`;
+    bindTicketDelivery(c);
     c.querySelectorAll("[data-receipt]").forEach(button => button.onclick = () => downloadReceipt(button.dataset.receipt));
     c.querySelectorAll("[data-approve-payment]").forEach(button => button.onclick = () => approvePay(button.dataset.approvePayment));
     document.getElementById("pf").onsubmit = async e => {
@@ -981,8 +982,9 @@ async function load(p) {
         if (!Array.isArray(rows)) throw new Error(rows.error);
         orders.innerHTML = `<section class="card"><h3>Orodha ya tiketi</h3>
           ${rows.map(row => `<div class="list-row"><div><strong translate="no">${escapeHtml(row.name)}</strong> · ${escapeHtml(row.phone)}<p>${Number(row.qty)} <span>tiketi</span> · ${formatTsh(row.amount)} · <span>${row.status === "APPROVED" ? "Imethibitishwa" : "Inasubiri"}</span></p>
-          ${row.answers.map(answer => `<div class="muted" translate="no">${escapeHtml(answer.label)}: ${escapeHtml(answer.value)}</div>`).join("")}</div></div>`).join("") || "<p>Hakuna tiketi zilizoombwa bado.</p>"}
+          ${row.answers.map(answer => `<div class="muted" translate="no">${escapeHtml(answer.label)}: ${escapeHtml(answer.value)}</div>`).join("")}${renderTicketDelivery(row.delivery, canReviewPayments(window.__me.role))}</div></div>`).join("") || "<p>Hakuna tiketi zilizoombwa bado.</p>"}
         </section>`;
+        bindTicketDelivery(orders);
         orders.scrollIntoView({ block: "nearest" });
       } catch (error) { orders.textContent = error.message || "Orodha ya tiketi haikupatikana."; }
       finally { button.disabled = false; }

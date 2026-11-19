@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=9840123250ac">
+  <link rel="stylesheet" href="/css/style.css?v=3e07dfc1c070">
 </head>
 <body class="ticket-page" data-page-title="Kata Tiketi">
   <div class="auth-page"><div class="auth-language"><div id="portal_language" class="language-switch" role="group" translate="no" aria-label="Badili lugha"><button type="button" data-language="sw" aria-pressed="true" aria-label="Kiswahili">SW</button><button type="button" data-language="en" aria-pressed="false" aria-label="English">EN</button></div></div>
@@ -28,6 +28,12 @@
           <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
           <div class="form-group"><label>Idadi ya Tiketi</label><input name="qty" type="number" value="1" min="1" required></div>
         </div>
+        <div class="form-row-2">
+          <div class="form-group"><label for="ticketDeliveryMethod">Pokea tiketi kupitia</label><select id="ticketDeliveryMethod" name="deliveryMethod">
+            <option value="whatsapp">WhatsApp</option><option value="email">Barua pepe</option>
+          </select></div>
+          <div class="form-group" id="ticketEmailField" hidden><label for="ticketEmail">Barua pepe</label><input id="ticketEmail" name="email" type="email" maxlength="254" autocomplete="email" disabled></div>
+        </div>
         <div id="customTicketFields"></div>
         <div id="ticketPayment" hidden>
           <p class="payment-hint"><strong>Lipa kupitia</strong> <span data-group-text="payments"></span></p>
@@ -43,8 +49,8 @@
   </div>
 
   <script src="/js/group.js?v=376ca96c0409"></script>
-  <script src="/js/payment-flow.js?v=fdbd93581986"></script>
-  <script src="/js/translate.js?v=565fd51f5171"></script>
-  <script src="/js/ticket.js?v=291b64d4cce6"></script>
+  <script src="/js/payment-flow.js?v=f89f8b86eb96"></script>
+  <script src="/js/translate.js?v=dc0d8261feca"></script>
+  <script src="/js/ticket.js?v=366e89d2947d"></script>
 </body>
 </html>
