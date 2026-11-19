@@ -24,8 +24,6 @@ function groupLogo(className = "logo") {
   return `<span class="${className} group-logo" data-group-logo>${escapeHtml(groupProfile.shortName)}</span>`;
 }
 
-const languageWidget = document.getElementById("google_translate_element");
-
 function placeLanguageSwitcher() {
   const slot = document.getElementById("portalLanguage") || document.getElementById("authLanguage");
   slot.append(languageWidget);
@@ -166,7 +164,7 @@ function showRegister() {
         </div>
         <div class="form-group"><label>Nenosiri</label><input name="password" type="password" placeholder="Unda nenosiri imara" minlength="12" maxlength="128" required></div>
         ${groupProfile.registrationFee > 0 ? `<div class="form-group"><label for="groupPaymentProof">Namba ya muamala</label><input id="groupPaymentProof" name="paymentProof" required></div>` : ""}
-        ${groupProfile.rules ? `<div class="payment-hint"><strong>Kanuni za kikundi</strong><div class="group-rules">${escapeHtml(groupProfile.rules)}</div>
+        ${groupProfile.rules ? `<div class="payment-hint"><strong>Kanuni za kikundi</strong><div class="group-rules" translate="no">${escapeHtml(groupProfile.rules)}</div>
           <label class="group-check"><input type="checkbox" name="acceptRules" required> Nimesoma na ninakubali kanuni.</label></div>` : ""}
         <button class="btn" type="submit">Wasilisha Usajili</button>
         <div id="m"></div>
@@ -251,7 +249,7 @@ async function showDash() {
         <div class="sidebar-brand">
           ${groupLogo("sidebar-group-logo")}
           <div class="sidebar-brand-text">
-            <strong>${escapeHtml(groupProfile.name)}</strong>
+            <strong translate="no">${escapeHtml(groupProfile.name)}</strong>
             <span data-group-text="shortName"></span>
           </div>
         </div>
@@ -275,17 +273,17 @@ async function showDash() {
     <div class="main">
       <header class="topbar">
         <div class="topbar-left">
-          <button class="menu-btn" id="menuBtn" type="button" aria-controls="side" aria-expanded="false">Menyu</button>
+          <button class="menu-btn" id="menuBtn" type="button" aria-controls="side" aria-expanded="false" aria-label="Menyu"><span aria-hidden="true" class="mobile-menu-bars"></span></button>
           <div class="topbar-title-group">
             <strong id="pt">Dashibodi</strong>
-            <span class="topbar-sub">${escapeHtml(groupProfile.name)} · Ofisi ya kidijitali</span>
+            <span class="topbar-sub">${escapeHtml(groupProfile.name)} · <span>Ofisi ya kidijitali</span></span>
           </div>
         </div>
         <div class="topbar-actions">
           <button class="theme-toggle" onclick="toggleTheme()" type="button">◐ Mwanga</button>
           <div id="portalLanguage"></div>
           <details class="profile-menu" id="profileMenu">
-            <summary class="user-chip">
+            <summary class="user-chip" aria-label="Wasifu wangu">
               <span class="user-chip-avatar" aria-hidden="true">${escapeHtml(initials)}</span>
               <span class="user-chip-name" translate="no">${escapeHtml(me.user.name)}</span>
             </summary>
@@ -294,6 +292,7 @@ async function showDash() {
               <button type="button" data-p="profile">Wasifu wangu</button>
               <button type="button" data-p="preferences">Mipangilio ya akaunti</button>
               <button type="button" data-p="password">Badili nenosiri</button>
+              <button type="button" class="mobile-theme-option" onclick="toggleTheme()">Badili mandhari</button>
               <button type="button" id="profileLogout">Toka nje</button>
             </div>
           </details>
@@ -397,6 +396,10 @@ function apexBaseOptions() {
   };
 }
 
+document.addEventListener("portal-language-change", () => {
+  if (document.getElementById("c")?.dataset.page === "home" && window.ApexCharts) load("home");
+});
+
 async function load(p) {
   const c = document.getElementById("c");
   c.dataset.page = p;
@@ -478,8 +481,8 @@ async function load(p) {
         </div>
         <div>
           <span class="pill">${d.user.status === "ACTIVE" ? "Mwanachama hai" : escapeHtml(d.user.status)}</span>
-          <h2>Karibu, ${escapeHtml(d.user.name)}</h2>
-          <p>Namba ya uanachama: <strong>${escapeHtml(d.user.wfcId || "—")}</strong> · Kanda ya ${escapeHtml(d.user.region || "Tanzania")} · Jukumu: ${d.user.role}</p>
+          <h2><span>Karibu</span>, <span translate="no">${escapeHtml(d.user.name)}</span></h2>
+          <p><span>Namba ya uanachama:</span> <strong>${escapeHtml(d.user.wfcId || "—")}</strong><span class="desktop-member-meta"> · <span>Kanda</span> <span translate="no">${escapeHtml(d.user.region || "Tanzania")}</span> · <span>Jukumu</span>: ${escapeHtml(d.user.role)}</span></p>
         </div>
         <div class="hero-contribution">
           <div class="kicker">Jumla Uliyochanga</div>
@@ -567,7 +570,7 @@ async function load(p) {
         <div class="stat">
           <div class="stat-top">
             <div class="stat-icon amber">${IC.bell}</div>
-            <span class="stat-trend warn">${fin.debtors} wanadaiwa</span>
+            <span class="stat-trend warn">${fin.debtors} <span>wanadaiwa</span></span>
           </div>
           <div class="stat-label">Madeni ya Ada</div>
           <div class="val">${money(fin.totalDebt)}</div>
@@ -579,14 +582,14 @@ async function load(p) {
         <div class="card">
           <div class="card-head">
             <h3>${fin ? "Mlinganisho wa Mapato na Matumizi" : "Mgawanyo wa Wanachama kwa Kanda"}</h3>
-            ${fin ? `<strong class="studio-balance">Salio halisi · ${money(fin.balance)}</strong>` : ""}
+            ${fin ? `<strong class="studio-balance"><span>Salio halisi</span> · ${money(fin.balance)}</strong>` : ""}
           </div>
           <div id="financeApexChart" style="min-height:260px"></div>
         </div>
         <div class="card">
           <div class="card-head">
             <h3>Kanda za Wanachama</h3>
-            <span class="muted">${(d.regions || []).length} kanda</span>
+            <span class="muted">${(d.regions || []).length} <span>kanda</span></span>
           </div>
           ${(d.regions || []).map(r => `
             <div class="bar-row">
@@ -596,7 +599,7 @@ async function load(p) {
         </div>
       </div>
 
-      <div class="card">
+      <div class="card dashboard-recent">
         <div class="card-head">
           <h3>Malipo ya Hivi Karibuni</h3>
           <button class="btn btn-sm ghost" type="button" onclick="load('payments')">Tazama yote →</button>
@@ -607,7 +610,7 @@ async function load(p) {
             <tbody>
               ${(d.recent || []).map(x => `
                 <tr>
-                  <td><strong>${x.userName || "Mwanachama"}</strong></td>
+                  <td><strong translate="no">${escapeHtml(x.userName || "Mwanachama")}</strong></td>
                   <td>${escapeHtml(x.type)}</td>
                   <td style="font-variant-numeric:tabular-nums;font-weight:600">${money(x.amount)}</td>
                   <td><span class="badge ${x.status === "APPROVED" ? "badge-approved" : "badge-pending"}">${x.status === "APPROVED" ? "Imeidhinishwa" : "Inasubiri"}</span></td>
@@ -623,8 +626,8 @@ async function load(p) {
         new ApexCharts(document.querySelector("#financeApexChart"), {
           ...base,
           chart: { ...base.chart, type: "bar", height: 245, animations: { enabled: !matchMedia("(prefers-reduced-motion: reduce)").matches } },
-          series: [{ name: "Kiasi", data: [fin.mapato || 0, fin.matumizi || 0] }],
-          xaxis: { ...base.xaxis, categories: ["Mapato", "Matumizi"] },
+          series: [{ name: tr("Kiasi"), data: [fin.mapato || 0, fin.matumizi || 0] }],
+          xaxis: { ...base.xaxis, categories: [tr("Mapato"), tr("Matumizi")] },
           colors: ["#f3a675", "#949da8"],
           plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 8, barHeight: "45%" } },
           legend: { show: false },
@@ -635,7 +638,7 @@ async function load(p) {
         new ApexCharts(document.querySelector("#financeApexChart"), {
           ...base,
           chart: { ...base.chart, type: "bar", height: 270 },
-          series: [{ name: "Wanachama Hai", data: regList.map(r => r.value) }],
+          series: [{ name: tr("Wanachama Hai"), data: regList.map(r => r.value) }],
           colors: ["#F97316"],
           plotOptions: { bar: { borderRadius: 8, columnWidth: "44%" } },
           xaxis: { ...base.xaxis, categories: regList.map(r => r.name) }
@@ -655,7 +658,7 @@ async function load(p) {
     window.__members = m;
     c.innerHTML = `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       <input id="memberSearch" placeholder="Tafuta jina, simu, kanda au Namba ya uanachama..." style="flex:1;min-width:220px">
-      <span class="badge badge-active">${m.length} wanachama</span>
+      <span class="badge badge-active">${m.length} <span>wanachama</span></span>
     </div>
     <div id="memberGrid" class="member-grid"></div>`;
     const render = (list) => {
@@ -698,7 +701,7 @@ async function load(p) {
     const awaitingReview = canApprove ? list.filter(payment => payment.status === "PENDING").length : 0;
     if (canApprove) list.sort((a, b) => Number(b.status === "PENDING") - Number(a.status === "PENDING"));
     c.innerHTML = `${account ? `<section class="hero-band overview-hero"><div><h2>Akaunti yangu</h2>
-      <p>${escapeHtml(account.user.name)} · ${escapeHtml(account.user.wfcId || "—")} · Mwanachama hai</p></div>
+      <p><span translate="no">${escapeHtml(account.user.name)}</span> · ${escapeHtml(account.user.wfcId || "—")} · <span>Mwanachama hai</span></p></div>
       <div class="hero-contribution"><span class="kicker">Salio la ada</span><strong>${formatTsh(account.debt)}</strong></div></section>
       <div class="stats">${[["Ada ya mwezi", account.monthly], ["Jumla ya ada inayotarajiwa", account.expected], ["Ada iliyothibitishwa", account.paid]].map(([label, value]) => `<div class="stat"><div class="stat-label">${label}</div><div class="val">${formatTsh(value)}</div></div>`).join("")}</div>` : ""}
       ${canApprove ? `<section class="card"><h3>Malipo yanayosubiri uhakiki</h3><p>${awaitingReview} miamala. Linganisha namba ya muamala na malipo yaliyopokelewa kabla ya kuidhinisha.</p></section>` : ""}
@@ -715,14 +718,14 @@ async function load(p) {
       </form>
     </div>
     <div class="card">
-      <div class="card-head"><h3>Historia ya Michango</h3><span class="muted">${list.length} miamala</span></div>
+      <div class="card-head"><h3>Historia ya Michango</h3><span class="muted">${list.length} <span>miamala</span></span></div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Mwanachama</th><th>Aina</th><th>Kiasi</th><th>Muamala</th><th>Hali</th><th>Hatua</th></tr></thead>
           <tbody>
             ${list.map(x => `<tr>
               <td><strong>${escapeHtml(x.userName || "—")}</strong></td>
-              <td>${x.type}</td>
+              <td>${escapeHtml(x.type)}</td>
               <td style="font-variant-numeric:tabular-nums;font-weight:600">TSh ${Number(x.amount || 0).toLocaleString()}</td>
               <td><code>${escapeHtml(x.transactionId)}</code></td>
               <td><span class="badge ${x.status === "APPROVED" ? "badge-approved" : "badge-pending"}">${x.status === "APPROVED" ? (x.receiptNo || "Imethibitishwa") : "Inasubiri"}</span></td>
@@ -945,7 +948,7 @@ async function load(p) {
       </form>
     </div>
     <div class="card">
-      <div class="card-head"><h3>Kumbukumbu za Hisa</h3><span class="muted">${(d.shares || []).length} miamala</span></div>
+      <div class="card-head"><h3>Kumbukumbu za Hisa</h3><span class="muted">${(d.shares || []).length} <span>miamala</span></span></div>
       ${(d.shares || []).map(s => `<div class="list-row"><strong>Ununuzi wa Hisa</strong><span style="font-weight:700;color:var(--success-ink)">TSh ${Number(s.amount || 0).toLocaleString()}</span></div>`).join("") || `<div class="empty-state">Hakuna hisa zilizorekodiwa bado</div>`}
     </div>`;
     document.getElementById("sf").onsubmit = async e => { e.preventDefault(); await api("/api/saccos/shares", { method: "POST", body: Object.fromEntries(new FormData(e.target)) }); load("saccos"); };
@@ -1042,7 +1045,7 @@ async function load(p) {
     const m = await api("/api/members");
     const pen = m.filter(x => x.status === "PENDING");
     c.innerHTML = `<div class="card">
-      <div class="card-head"><h3>Maombi Yanayosubiri Idhini</h3><span class="badge badge-pending">${pen.length} wanasubiri</span></div>
+      <div class="card-head"><h3>Maombi Yanayosubiri Idhini</h3><span class="badge badge-pending">${pen.length} <span>wanasubiri</span></span></div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Jina</th><th>Simu</th><th>Kanda</th><th>Muamala wa usajili</th><th>Hatua</th></tr></thead>
@@ -1372,7 +1375,7 @@ async function load(p) {
       <div class="stat"><div class="stat-top"><div class="stat-icon green">${IC.coin}</div><span class="stat-trend">Mapato</span></div><div class="stat-label">Mapato Yote</div><div class="val">${money(sum.mapato)}</div></div>
       <div class="stat"><div class="stat-top"><div class="stat-icon red">${IC.file}</div><span class="stat-trend danger">Matumizi</span></div><div class="stat-label">Matumizi Yote</div><div class="val">${money(sum.matumizi)}</div></div>
       <div class="stat"><div class="stat-top"><div class="stat-icon">${IC.bank}</div><span class="stat-trend">Salio</span></div><div class="stat-label">Balance</div><div class="val">${money(sum.balance)}</div></div>
-      <div class="stat"><div class="stat-top"><div class="stat-icon amber">${IC.bell}</div><span class="stat-trend warn">${sum.debtors} wanadaiwa</span></div><div class="stat-label">Madeni</div><div class="val">${money(sum.totalDebt)}</div></div>
+      <div class="stat"><div class="stat-top"><div class="stat-icon amber">${IC.bell}</div><span class="stat-trend warn">${sum.debtors} <span>wanadaiwa</span></span></div><div class="stat-label">Madeni</div><div class="val">${money(sum.totalDebt)}</div></div>
     </div>
     ${canEdit ? `<div class="split" style="grid-template-columns:1fr 1fr">
       <div class="card">

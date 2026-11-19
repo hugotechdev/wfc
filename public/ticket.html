@@ -7,10 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=a8df7bcf3858">
+  <link rel="stylesheet" href="/css/style.css?v=5fbb78df40c0">
 </head>
 <body data-page-title="Kata Tiketi">
-  <div class="auth-page"><div class="auth-language"><div id="google_translate_element" class="notranslate" translate="no" aria-label="Badili lugha"></div></div>
+  <div class="auth-page"><div class="auth-language"><div id="portal_language" class="language-switch" role="group" translate="no" aria-label="Badili lugha"><button type="button" data-language="sw" aria-pressed="true" aria-label="Kiswahili">SW</button><button type="button" data-language="en" aria-pressed="false" aria-label="English">EN</button></div></div>
     <div class="container auth-card">
       <div class="auth-header">
         <span class="logo group-logo" data-group-logo>WFC</span>
@@ -41,8 +41,7 @@
   </div>
 
   <script src="/js/group.js?v=abdc459cf0ae"></script>
-  <script src="/js/translate.js?v=4f89e9bb3083"></script>
-  <script async src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script src="/js/translate.js?v=1969c9be860f"></script>
   <script>
     const id = location.pathname.split("/").pop();
     fetch("/api/public/events").then(r=>r.json()).then(list=>{
