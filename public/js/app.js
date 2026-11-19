@@ -1,5 +1,16 @@
 const app = document.getElementById("app");
 
+document.addEventListener("error", event => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement) || !image.matches("[data-wfc-logo]")) return;
+  const fallback = document.createElement("span");
+  fallback.className = [image.className, "wfc-wordmark"].filter(Boolean).join(" ");
+  fallback.setAttribute("role", "img");
+  fallback.setAttribute("aria-label", "Wachagga Family Community");
+  fallback.textContent = "WFC";
+  image.replaceWith(fallback);
+}, true);
+
 const languageWidget = document.getElementById("google_translate_element");
 
 function placeLanguageSwitcher() {
@@ -67,7 +78,7 @@ const IC = {
 function showOtp(phone, devCode) {
   app.innerHTML = `<div class="auth-page"><div class="auth-language" id="authLanguage"></div>
     <div class="container">
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC">
+      <img src="/wfc-logo.jpg" class="logo" alt="WFC" data-wfc-logo>
       <h1>Thibitisha OTP</h1>
       <p class="subtitle">Ingiza msimbo wa tarakimu 6 uliotumwa kwako. Unaisha baada ya dakika 5.</p>
       ${devCode ? `<div class="payment-hint">SMS haijaunganishwa. Msimbo wa majaribio: <strong>${devCode}</strong></div>` : ""}
@@ -88,13 +99,22 @@ function showOtp(phone, devCode) {
 }
 
 function showLogin() {
-  app.innerHTML = `<div class="auth-page"><div class="auth-language" id="authLanguage"></div>
+  app.innerHTML = `<div class="auth-page signin-page"><div class="auth-language" id="authLanguage"></div>
+    <section class="signin-brand" aria-label="Wachagga Family Community">
+      <div class="studio-orbit" aria-hidden="true">
+        <div class="studio-orbit-ring"></div><div class="studio-orbit-core">WFC</div>
+      </div>
+      <div class="signin-brand-copy">
+        <span>Wachagga Family Community</span>
+        <h2>Umoja wa Wachagga.<br>Nguvu ya familia.</h2>
+      </div>
+    </section>
     <div class="container">
       <div class="auth-topbar">
         <span class="kicker">WFC Portal</span>
         <button class="theme-toggle" onclick="toggleTheme()" type="button" aria-label="Badili mwanga">◐ Mandhari</button>
       </div>
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC Logo">
+      <img src="/wfc-logo.jpg" class="logo" alt="WFC Logo" data-wfc-logo>
       <h1>Karibu WFC Portal</h1>
       <p class="subtitle">Umoja wa Wachagga, Nguvu ya Familia</p>
       <form id="f">
@@ -126,7 +146,7 @@ function showLogin() {
 function showRegister() {
   app.innerHTML = `<div class="auth-page"><div class="auth-language" id="authLanguage"></div>
     <div class="container">
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC Logo">
+      <img src="/wfc-logo.jpg" class="logo" alt="WFC Logo" data-wfc-logo>
       <h1>Usajili wa Mwanachama</h1>
       <p class="subtitle">Ada ya Usajili: <strong>TSh 1,000</strong></p>
       <div class="payment-hint">
@@ -162,7 +182,7 @@ async function showDash() {
   if (me.user.status === "PENDING") {
     app.innerHTML = `<div class="auth-page"><div class="auth-language" id="authLanguage"></div>
       <div class="container">
-        <img src="/wfc-logo.jpg" class="logo" alt="WFC">
+        <img src="/wfc-logo.jpg" class="logo" alt="WFC" data-wfc-logo>
         <div style="text-align:center;margin-bottom:10px"><span class="badge badge-pending">Waiting Approval</span></div>
         <h1>Inasubiri Idhini</h1>
         <p class="subtitle">Habari <strong>${me.user.name}</strong></p>
@@ -220,7 +240,7 @@ async function showDash() {
     <aside class="sidebar" id="side" aria-label="Menyu kuu">
       <div class="sidebar-header">
         <div class="sidebar-brand">
-          <img src="/wfc-logo.jpg" alt="WFC">
+          <img src="/wfc-logo.jpg" alt="WFC" data-wfc-logo>
           <div class="sidebar-brand-text">
             <strong>WFC Portal</strong>
             <span>Wachagga Family</span>
@@ -369,6 +389,7 @@ function apexBaseOptions() {
 
 async function load(p) {
   const c = document.getElementById("c");
+  c.dataset.page = p;
   const titles = {
     profile: "Wasifu wangu", preferences: "Mipangilio ya akaunti", password: "Badili nenosiri",
     home: "Dashibodi", members: "Wanachama", payments: "Michango", events: "Matukio",
@@ -435,20 +456,26 @@ async function load(p) {
     const d = await api("/api/dashboard");
     const max = Math.max(...(d.regions || []).map(r => r.value), 1);
     const money = n => "TSh " + Number(n || 0).toLocaleString();
+    if (c.dataset.page !== p) return;
     const fin = d.finance;
 
     c.innerHTML = `
+      <div class="dashboard-studio">
       <section class="hero-band overview-hero">
+        <div class="studio-orbit hero-orbit" aria-hidden="true">
+          <div class="studio-orbit-ring"></div><div class="studio-orbit-core">WFC</div>
+        </div>
         <div>
-          <span class="pill">${d.user.status}</span>
+          <span class="pill">${d.user.status === "ACTIVE" ? "Mwanachama hai" : escapeHtml(d.user.status)}</span>
           <h2>Karibu, ${escapeHtml(d.user.name)}</h2>
-          <p>WFC ID: <strong>${d.user.wfcId || "—"}</strong> · Kanda ya ${d.user.region || "Tanzania"} · Jukumu: ${d.user.role}</p>
+          <p>WFC ID: <strong>${escapeHtml(d.user.wfcId || "—")}</strong> · Kanda ya ${escapeHtml(d.user.region || "Tanzania")} · Jukumu: ${d.user.role}</p>
         </div>
         <div class="hero-contribution">
           <div class="kicker">Jumla Uliyochanga</div>
           <strong>${money(d.myTotalPaid)}</strong>
         </div>
       </section>
+      <h3 class="studio-section-title">Hatua za haraka</h3>
       <nav class="overview-actions" aria-label="Hatua za haraka">
         <button type="button" data-overview-page="payments">${IC.coin}<span>Michango</span></button>
         <button type="button" data-overview-page="card">${IC.id}<span>Kitambulisho</span></button>
@@ -456,6 +483,7 @@ async function load(p) {
         <button type="button" data-overview-page="notifications">${IC.bell}<span>Arifa</span></button>
       </nav>
 
+      <h3 class="studio-section-title">Muhtasari wa jumuiya</h3>
       <div class="stats">
         <div class="stat">
           <div class="stat-top">
@@ -496,7 +524,8 @@ async function load(p) {
       </div>
 
       ${fin ? `
-      <div class="stats">
+      <h3 class="studio-section-title">Fedha za jumuiya</h3>
+      <div class="stats studio-finance">
         <div class="stat">
           <div class="stat-top">
             <div class="stat-icon green">${IC.coin}</div>
@@ -539,7 +568,7 @@ async function load(p) {
         <div class="card">
           <div class="card-head">
             <h3>${fin ? "Mlinganisho wa Mapato na Matumizi" : "Mgawanyo wa Wanachama kwa Kanda"}</h3>
-            <span class="badge badge-approved">Mubashara</span>
+            ${fin ? `<strong class="studio-balance">Salio halisi · ${money(fin.balance)}</strong>` : ""}
           </div>
           <div id="financeApexChart" style="min-height:260px"></div>
         </div>
@@ -575,20 +604,20 @@ async function load(p) {
             </tbody>
           </table>
         </div>
-      </div>`;
+      </div></div>`;
 
     if (window.ApexCharts) {
       const base = apexBaseOptions();
       if (fin) {
         new ApexCharts(document.querySelector("#financeApexChart"), {
           ...base,
-          chart: { ...base.chart, type: "donut", height: 270 },
-          series: [fin.mapato || 0, fin.matumizi || 0, Math.max(0, fin.balance || 0)],
-          labels: ["Mapato", "Matumizi", "Salio (Balance)"],
-          colors: ["#F97316", "#EF4444", "#22C55E"],
-          stroke: { width: 2, colors: ["var(--card)"] },
-          plotOptions: { pie: { donut: { size: "68%" } } },
-          yaxis: { labels: { formatter: v => "TSh " + Number(v).toLocaleString() } }
+          chart: { ...base.chart, type: "bar", height: 245, animations: { enabled: !matchMedia("(prefers-reduced-motion: reduce)").matches } },
+          series: [{ name: "Kiasi", data: [fin.mapato || 0, fin.matumizi || 0] }],
+          xaxis: { ...base.xaxis, categories: ["Mapato", "Matumizi"] },
+          colors: ["#f3a675", "#949da8"],
+          plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 8, barHeight: "45%" } },
+          legend: { show: false },
+          tooltip: { y: { formatter: money } }
         }).render();
       } else {
         const regList = d.regions || [];
@@ -757,7 +786,7 @@ async function load(p) {
   if (p === "card") {
     const d = await api("/api/dashboard");
     c.innerHTML = `<div class="card idcard" style="margin:0 auto;text-align:center">
-      <img src="/wfc-logo.jpg" class="logo" alt="WFC">
+      <img src="/wfc-logo.jpg" class="logo" alt="WFC" data-wfc-logo>
       <h2>WFC Official Membership</h2>
       <p style="font-size:1.35rem;margin:6px 0 2px;color:var(--ink)"><strong>${d.user.name}</strong></p>
       <p style="font-weight:700;color:var(--brand-orange);margin:0 0 6px">${d.user.wfcId || "WFC-PENDING"}</p>
