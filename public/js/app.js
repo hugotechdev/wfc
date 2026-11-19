@@ -438,10 +438,10 @@ async function load(p) {
     const fin = d.finance;
 
     c.innerHTML = `
-      <section class="hero-band">
+      <section class="hero-band overview-hero">
         <div>
           <span class="pill">${d.user.status}</span>
-          <h2>Karibu, ${d.user.name}</h2>
+          <h2>Karibu, ${escapeHtml(d.user.name)}</h2>
           <p>WFC ID: <strong>${d.user.wfcId || "—"}</strong> · Kanda ya ${d.user.region || "Tanzania"} · Jukumu: ${d.user.role}</p>
         </div>
         <div class="hero-contribution">
@@ -449,6 +449,12 @@ async function load(p) {
           <strong>${money(d.myTotalPaid)}</strong>
         </div>
       </section>
+      <nav class="overview-actions" aria-label="Hatua za haraka">
+        <button type="button" data-overview-page="payments">${IC.coin}<span>Michango</span></button>
+        <button type="button" data-overview-page="card">${IC.id}<span>Kitambulisho</span></button>
+        <button type="button" data-overview-page="events">${IC.cal}<span>Matukio</span></button>
+        <button type="button" data-overview-page="notifications">${IC.bell}<span>Arifa</span></button>
+      </nav>
 
       <div class="stats">
         <div class="stat">
@@ -596,6 +602,12 @@ async function load(p) {
         }).render();
       }
     }
+    c.querySelectorAll("[data-overview-page]").forEach(button => {
+      button.onclick = () => {
+        load(button.dataset.overviewPage);
+        c.focus();
+      };
+    });
   }
 
   if (p === "members") {
