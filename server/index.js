@@ -5,6 +5,7 @@ const fs = require("fs");
 const { jsPDF } = require("jspdf");
 const QRCode = require("qrcode");
 const { normalizePortrait, cardQr, buildMemberCard } = require("./member-card");
+const { memberPhoneKey, readMemberRegistration } = require("./member-registration");
 const { readAttachments, visiblePost } = require("./social-post");
 const { socialLink } = require("./social-link");
 const { ticketNumber, validTicket, ticketLink, buildTicketPdf } = require("./event-ticket");
@@ -179,6 +180,17 @@ function requireAuth(req, res, next) {
   next();
 }
 function isLeader(role) { return ["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL"].includes(role); }
+const ROLES = ["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL", "PAYMENT_APPROVER", "MEMBER"];
+function leadersOnly(req, res, next) {
+  if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka." });
+  next();
+}
+
+function adminsOnly(req, res, next) {
+  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Huna mamlaka." });
+  next();
+}
+
 
 const moduleRoutes = {
   tickets: ["/ticket", "/api/tickets"],
@@ -262,20 +274,26 @@ app.get("/api/contacts", requireAuth, (req, res) => {
 });
 
 app.post("/api/register", (req, res) => {
-  const { name, phone, region, password, acceptRules, displayedRules } = req.body;
-  if (!paymentText(name, 120) || !paymentText(phone, 30) || typeof password !== "string" || password.length < 12 || password.length > 128) return res.status(400).json({ error: "Jaza taarifa na tumia nenosiri lenye herufi 12 hadi 128." });
+  const input = req.body || {};
+  const { password, acceptRules, displayedRules } = input;
+  if (typeof password !== "string" || password.length < 12 || password.length > 128) return res.status(400).json({ error: "Jaza taarifa na tumia nenosiri lenye herufi 12 hadi 128." });
   const db = loadDB();
   const group = readGroup(db);
   if (group.rules && (acceptRules !== "on" || displayedRules !== group.rules)) {
     return res.status(400).json({ error: "Soma na ukubali kanuni za sasa kabla ya kusajili." });
   }
-  if (db.users.find(u => u.phone === phone.trim())) return res.status(400).json({ error: "Namba tayari imesajiliwa" });
+  let member;
+  try { member = readMemberRegistration(input); }
+  catch (error) { return res.status(400).json({ error: error.message }); }
+  if (db.users.some(u => memberPhoneKey(u.phone) === memberPhoneKey(member.phone))) {
+    return res.status(400).json({ error: "Namba tayari imesajiliwa" });
+  }
   const id = randomBytes(12).toString("hex");
   const createdAt = new Date().toISOString();
   const user = {
-    id, name: name.trim(), phone: phone.trim(), region: paymentText(region, 80) || "Haijatajwa", passwordHash: hashPassword(password),
+    ...member, id, passwordHash: hashPassword(password),
     role: "MEMBER", status: "PENDING", rulesAcceptedAt: group.rules ? createdAt : null, wfcId: null,
-    family: { head: name.trim(), spouse: "", children: [] }, profession: "", createdAt
+    family: { head: member.name, spouse: "", children: [] }, profession: "", createdAt
   };
   let photo;
   if (group.registrationFee > 0) {
@@ -296,7 +314,9 @@ app.post("/api/register", (req, res) => {
 app.post("/api/login", (req, res) => {
   const { phone, password } = req.body;
   const db = loadDB();
-  const user = db.users.find(u => u.phone === phone);
+  const enteredPhone = typeof phone === "string" ? phone.trim() : "";
+  const user = enteredPhone && (db.users.find(u => u.phone === enteredPhone) ||
+    db.users.find(u => memberPhoneKey(u.phone) === memberPhoneKey(enteredPhone)));
   if (!user || !matchPassword(user, password)) return res.status(401).json({ error: "Taarifa si sahihi" });
   if (!user.passwordHash) {
     user.passwordHash = hashPassword(password);
@@ -309,7 +329,7 @@ app.post("/api/login", (req, res) => {
     db.otps.push({ phone: user.phone, code, exp: Date.now() + 5 * 60 * 1000 });
     saveDB(db);
     const smsOn = !!(db.settings.smsKey && db.settings.smsUsername);
-    return res.json({ needOtp: true, devCode: smsOn ? null : code });
+    return res.json({ needOtp: true, phone: user.phone, devCode: smsOn ? null : code });
   }
   req.session.user = { id: user.id, name: user.name, phone: user.phone, role: user.role, status: user.status, wfcId: user.wfcId };
   res.json({ success: true, user: req.session.user });
@@ -423,19 +443,19 @@ app.get("/verify/member/:token", (req, res) => {
 app.get("/api/dashboard", requireAuth, (req, res) => {
   const db = loadDB();
   const user = db.users.find(u => u.id === req.session.user.id);
-  const myPayments = db.payments.filter(p => p.userId === user.id && p.status === "APPROVED");
-  const totalPaid = myPayments.reduce((s, p) => s + (p.amount || 0), 0);
-  const { password, passwordHash, profilePhoto, cardToken, readNotificationIds, ...publicUser } = user;
+  const leader = isLeader(user.role);
+  const myPayments = db.payments.filter(p => p.userId === user.id);
+  const totalPaid = myPayments.filter(p => p.status === "APPROVED").reduce((s, p) => s + (p.amount || 0), 0);
+  const { id, name, status, wfcId, region, role } = user;
   res.json({
-    user: publicUser,
+    user: { id, name, status, wfcId, region, role },
     stats: {
       members: db.users.filter(u => u.status === "ACTIVE").length,
-      pending: db.users.filter(u => u.status === "PENDING").length,
-      payments: db.payments.length,
+      payments: leader ? db.payments.length : myPayments.length,
       events: (db.events || []).length
     },
     myTotalPaid: totalPaid,
-    recent: db.payments.filter(p => isLeader(req.session.user.role) || p.userId === user.id).slice(-6).reverse().map(({ userName, type, amount, status }) => ({ userName, type, amount, status })),
+    recent: (leader ? db.payments : myPayments).slice(-6).reverse().map(({ userName, type, amount, status }) => ({ userName, type, amount, status })),
     upcoming: (db.events || []).filter(event => event.status === "ACTIVE").slice(-4).reverse(),
     notices: (db.announcements || []).slice(0, 3),
     regions: Object.entries(db.users.filter(u => u.status === "ACTIVE").reduce((m, u) => { m[u.region || "Nyingine"] = (m[u.region || "Nyingine"] || 0) + 1; return m; }, {})).map(([name, value]) => ({ name, value })),
@@ -444,7 +464,19 @@ app.get("/api/dashboard", requireAuth, (req, res) => {
       monthlyFee: readGroup(db).monthlyFee,
       paymentNumbers: readGroup(db).paymentNumbers
     },
-    finance: isLeader(req.session.user.role) ? computeFinance(db) : null
+    finance: leader ? computeFinance(db) : null
+  });
+});
+
+app.get("/api/office", requireAuth, (req, res) => {
+  const { role } = req.session.user;
+  const leader = isLeader(role);
+  const reviewer = APPROVERS.includes(role);
+  if (!leader && !reviewer) return res.status(403).json({ error: "Huna mamlaka." });
+  const db = loadDB();
+  res.set("Cache-Control", "private, no-store").json({
+    membershipApplications: leader ? db.users.filter(user => user.status === "PENDING").length : null,
+    paymentReviews: reviewer ? db.payments.filter(payment => payment.status === "PENDING").length : null
   });
 });
 
@@ -513,10 +545,26 @@ app.post("/api/manual-income", requireAuth, (req, res) => {
 // Members
 app.get("/api/members", requireAuth, (req, res) => {
   const db = loadDB();
-  res.json(db.users.map(u => ({
+  const leader = isLeader(req.session.user.role);
+  res.json(db.users.filter(u => leader || u.status === "ACTIVE").map(u => ({
     id: u.id, name: u.name, phone: u.phone, region: u.region, status: u.status, role: u.role, wfcId: u.wfcId, profession: u.profession,
-    paymentProof: isLeader(req.session.user.role) ? u.paymentProof : undefined
+    paymentProof: leader ? u.paymentProof : undefined
   })));
+});
+
+app.get("/api/members/:id/registration", requireAuth, (req, res) => {
+  const actor = req.session.user;
+  const isSelf = actor.id === req.params.id;
+  if (!isSelf && !isLeader(actor.role)) return res.status(403).json({ error: "Huna mamlaka." });
+  const member = loadDB().users.find(user => user.id === req.params.id);
+  if (!member) return res.status(404).json({ error: "Hajapatikana" });
+  const { nationalId, ...profile } = member.registrationProfile || {};
+  const { name, phone, region, wfcId, status, createdAt } = member;
+  res.set("Cache-Control", "private, no-store").json({
+    ...profile, name, phone, region, wfcId, status, createdAt,
+    ...(isSelf || actor.role === "ADMIN" ? { nationalId } : {}),
+    ...(!isSelf && member.profilePhoto ? { portrait: member.profilePhoto } : {})
+  });
 });
 
 app.post("/api/approve-member", requireAuth, (req, res) => {
@@ -976,7 +1024,11 @@ app.get("/api/group-reports", requireAuth, (req, res) => {
 });
 
 // Attendance
-app.get("/api/attendance", requireAuth, (req, res) => res.json(loadDB().attendance || []));
+app.get("/api/attendance", requireAuth, (req, res) => {
+  const { id, role } = req.session.user;
+  const list = loadDB().attendance || [];
+  res.json(isLeader(role) ? list : list.filter(entry => entry.userId === id));
+});
 app.post("/api/attendance", requireAuth, (req, res) => {
   const db = loadDB();
   if (!db.attendance) db.attendance = [];
@@ -986,7 +1038,9 @@ app.post("/api/attendance", requireAuth, (req, res) => {
 });
 
 // Election
-app.get("/api/elections", requireAuth, (req, res) => res.json(loadDB().elections || []));
+app.get("/api/elections", requireAuth, (req, res) => {
+  res.json((loadDB().elections || []).map(({ votes = [], ...election }) => ({ ...election, voteCount: votes.length })));
+});
 app.post("/api/elections", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
   const db = loadDB();
@@ -1014,8 +1068,8 @@ app.post("/api/elections/vote", requireAuth, (req, res) => {
 });
 
 // Discipline
-app.get("/api/cases", requireAuth, (req, res) => res.json(loadDB().cases || []));
-app.post("/api/cases", requireAuth, (req, res) => {
+app.get("/api/cases", requireAuth, leadersOnly, (req, res) => res.json(loadDB().cases || []));
+app.post("/api/cases", requireAuth, leadersOnly, (req, res) => {
   const db = loadDB();
   if (!db.cases) db.cases = [];
   db.cases.push({ id: Date.now().toString(), ...req.body, status: "OPEN", createdAt: new Date().toISOString() });
@@ -1024,7 +1078,12 @@ app.post("/api/cases", requireAuth, (req, res) => {
 });
 
 // SACCOS
-app.get("/api/saccos", requireAuth, (req, res) => res.json(loadDB().saccos || { shares: [], savings: [], loans: [] }));
+app.get("/api/saccos", requireAuth, (req, res) => {
+  const { id, role } = req.session.user;
+  const { shares = [], savings = [], loans = [] } = loadDB().saccos || {};
+  const visible = entries => isLeader(role) ? entries : entries.filter(entry => entry.userId === id);
+  res.json({ shares: visible(shares), savings: visible(savings), loans: visible(loans) });
+});
 app.post("/api/saccos/shares", requireAuth, (req, res) => {
   const db = loadDB();
   if (!db.saccos) db.saccos = { shares: [], savings: [], loans: [] };
@@ -1046,7 +1105,7 @@ app.post("/api/assets", requireAuth, (req, res) => {
 
 // Projects
 app.get("/api/projects", requireAuth, (req, res) => res.json(loadDB().projects || []));
-app.post("/api/projects", requireAuth, (req, res) => {
+app.post("/api/projects", requireAuth, leadersOnly, (req, res) => {
   const db = loadDB();
   if (!db.projects) db.projects = [];
   db.projects.push({ id: Date.now().toString(), ...req.body, progress: 0, tasks: [], createdAt: new Date().toISOString() });
@@ -1055,7 +1114,7 @@ app.post("/api/projects", requireAuth, (req, res) => {
 });
 
 // Penalties
-app.get("/api/penalties", requireAuth, (req, res) => res.json(loadDB().penalties || []));
+app.get("/api/penalties", requireAuth, leadersOnly, (req, res) => res.json(loadDB().penalties || []));
 app.post("/api/penalties", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
   const db = loadDB();
@@ -1121,17 +1180,19 @@ app.get("/manifest.json", (req, res) => {
 });
 
 // Roles list
-app.get("/api/roles", requireAuth, (req, res) => {
-  res.json(["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL", "PAYMENT_APPROVER", "MEMBER"]);
-});
+app.get("/api/roles", requireAuth, adminsOnly, (req, res) => res.json(ROLES));
 
-app.post("/api/set-role", requireAuth, (req, res) => {
-  if (req.session.user.role !== "ADMIN") return res.status(403).json({ error: "Admin only" });
+app.post("/api/set-role", requireAuth, adminsOnly, (req, res) => {
   const db = loadDB();
   const u = db.users.find(x => x.id === req.body.userId);
   if (!u) return res.status(404).json({ error: "Haijapatikana" });
-  if (!["ADMIN", "CHAIRPERSON", "SECRETARY", "TREASURER", "REGIONAL", "PAYMENT_APPROVER", "MEMBER"].includes(req.body.role)) {
+  if (!ROLES.includes(req.body.role)) {
     return res.status(400).json({ error: "Chagua jukumu halali." });
+  }
+  if (u.status !== "ACTIVE") return res.status(409).json({ error: "Idhinisha akaunti kabla ya kumpa mwanachama jukumu." });
+  if (u.role === "ADMIN" && req.body.role !== "ADMIN" &&
+      !db.users.some(other => other.id !== u.id && other.role === "ADMIN" && other.status === "ACTIVE")) {
+    return res.status(409).json({ error: "Kikundi kinahitaji angalau msimamizi mmoja mwenye akaunti hai." });
   }
   u.role = req.body.role;
   saveDB(db);
@@ -1139,7 +1200,7 @@ app.post("/api/set-role", requireAuth, (req, res) => {
 });
 
 // Attendance report
-app.get("/api/attendance-report", requireAuth, (req, res) => {
+app.get("/api/attendance-report", requireAuth, leadersOnly, (req, res) => {
   const db = loadDB();
   const list = db.attendance || [];
   const byUser = {};
@@ -1179,7 +1240,7 @@ app.post("/api/notifications", requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
-app.post("/api/dispatch", requireAuth, async (req, res) => {
+app.post("/api/dispatch", requireAuth, leadersOnly, async (req, res) => {
   const db = loadDB();
   const { channel, to, title, body } = req.body;
   const message = `${title || readGroup(db).name}\n${body || ""}`;
@@ -1219,9 +1280,9 @@ app.post("/api/dispatch", requireAuth, async (req, res) => {
   res.json({ success: true, status, detail });
 });
 
-app.get("/api/outbox", requireAuth, (req, res) => res.json(loadDB().outbox || []));
+app.get("/api/outbox", requireAuth, leadersOnly, (req, res) => res.json(loadDB().outbox || []));
 
-app.post("/api/stk", requireAuth, async (req, res) => {
+app.post("/api/stk", requireAuth, adminsOnly, async (req, res) => {
   const db = loadDB();
   const { phone, amount } = req.body;
   if (!db.settings.momoConsumerKey || !db.settings.momoConsumerSecret) {
@@ -1251,7 +1312,7 @@ app.post("/api/toggle-2fa", requireAuth, (req, res) => {
   res.json({ twoFactor: !!u.twoFactor });
 });
 
-app.get("/api/analytics", requireAuth, (req, res) => {
+app.get("/api/analytics", requireAuth, leadersOnly, (req, res) => {
   const db = loadDB();
   const regions = {};
   db.users.filter(u => u.status === "ACTIVE").forEach(u => { regions[u.region || "Nyingine"] = (regions[u.region || "Nyingine"] || 0) + 1; });
