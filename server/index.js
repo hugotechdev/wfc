@@ -161,6 +161,9 @@ if (!sessionSecret || sessionSecret.length < 32) throw new Error("Set SESSION_SE
 app.post("/api/portal-posts", express.json({ limit: "12mb" }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.get("/assets/html2canvas-1.4.1.min.js", (req, res) => {
+  res.sendFile(require.resolve("html2canvas/dist/html2canvas.min.js"), { maxAge: "1y", immutable: true });
+});
 app.use(express.static(path.join(__dirname, "../public"), { index: false }));
 if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
 app.use(session({

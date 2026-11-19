@@ -106,9 +106,17 @@ async function buildMemberCard(member, group, verificationUrl, english) {
   doc.setDrawColor("#ded8d2");
   doc.setLineWidth(0.2);
   doc.line(64, 26.7, 64, 47.7);
-  doc.addImage(await cardQr(verificationUrl), "PNG", 66.8, 26.7, 15.5, 15.5);
-  doc.setTextColor("#51545b");
-  doc.text(english ? "Verify" : "Hakiki", 74.55, 46.4, { align: "center" });
+  doc.addImage(await cardQr(verificationUrl), "PNG", 66.8, 29.4, 15.5, 15.5);
+
+  doc.setFillColor("#f4e8df");
+  doc.lines([[85.6, 0], [0, -4.5], [-20.6, 0], [-7.7, 2.9], [-42.8, 0], [-4.5, -1.6], [-10, 0]],
+    0, 54, [1, 1], "F", true);
+  doc.setDrawColor("#c77d50");
+  doc.setLineWidth(0.19);
+  doc.lines([[10, 0], [4.5, 1.6], [42.8, 0], [7.7, -2.9], [20.6, 0]], 0, 50.8);
+  doc.setDrawColor("#dbb59c");
+  doc.setLineWidth(0.12);
+  doc.lines([[8.3, 0], [4.5, 1.6], [44.7, 0], [7.7, -2.9], [20.4, 0]], 0, 52.2);
   return Buffer.from(doc.output("arraybuffer"));
 }
 
