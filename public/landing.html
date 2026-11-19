@@ -1,278 +1,231 @@
 <!DOCTYPE html>
 <html lang="sw">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wachagga Family Community (WFC) — Umoja, Undugu na Maendeleo</title>
-<meta name="description" content="Jumuiya ya Familia ya Wachagga (WFC). Undugu, misaada, matukio, SACCOS na uwekezaji wa pamoja.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wachagga Family Community — Ofisi ya Kidijitali</title>
+  <meta name="description" content="Umoja wa Wachagga, Nguvu ya Familia. Tovuti na ofisi ya kidijitali ya WFC.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="landing">
-
-<header class="nav-pub">
-  <div class="container nav-inner">
-    <a href="/" class="brand-pub">
-      <img src="/wfc-logo.jpg" alt="WFC">
-      <div><strong>Wachagga Family Community</strong><small>Stand up · It's not over</small></div>
+<body class="landing-body">
+  <header class="site-nav">
+    <a class="brand" href="#nyumbani">
+      <div class="brand-badge-img"><img src="/wfc-logo.jpg" alt="WFC"></div>
+      <div class="brand-wordmark">
+        <strong>WACHAGGA FAMILY</strong>
+        <span>Community Portal</span>
+      </div>
     </a>
-    <nav class="nav-links" id="navLinks">
-      <a href="#kuhusu" data-i18n="nav_about">Kuhusu</a>
-      <a href="#miradi" data-i18n="nav_programs">Programu</a>
-      <a href="#matukio" data-i18n="nav_events">Matukio</a>
-      <a href="#habari" data-i18n="nav_news">Habari</a>
-      <a href="#mawasiliano" data-i18n="nav_contact">Mawasiliano</a>
-    </nav>
-    <div class="nav-cta">
-      <div class="lang-switch-pill" role="group" aria-label="Language Switcher">
-        <button type="button" class="lang-btn active" data-lang="sw" onclick="setSiteLang('sw')">SW</button>
-        <button type="button" class="lang-btn" data-lang="en" onclick="setSiteLang('en')">EN</button>
-      </div>
-      <a href="/app" class="btn-outline" data-i18n="nav_login">Ingia</a>
-      <a href="/app#register" class="btn-primary" data-i18n="nav_join">Jiunge Sasa</a>
-      <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Menu">☰</button>
-    </div>
-  </div>
-</header>
-
-<section class="hero">
-  <div class="container hero-grid">
-    <div>
-      <span class="eyebrow">WFC Portal V6 · Tanzania na Diaspora</span>
-      <h1 data-i18n="hero_title">Umoja wa Familia. Nguvu ya Maendeleo.</h1>
-      <p class="lead" data-i18n="hero_sub">Wachagga Family Community (WFC) inaunganisha wanafamilia kusaidiana katika shida na raha, kuwekeza pamoja kupitia SACCOS, na kujenga urithi wa vizazi vijavyo.</p>
-      <div class="hero-actions">
-        <a href="/app#register" class="btn-primary btn-lg" data-i18n="hero_cta_join">Jiunge na Jumuiya</a>
-        <a href="#matukio" class="btn-outline btn-lg" data-i18n="hero_cta_events">Matukio na Tiketi</a>
-      </div>
-      <div class="hero-stats">
-        <div><strong id="stMembers">—</strong><span data-i18n="stat_active">Wanachama hai</span></div>
-        <div><strong id="stEvents">—</strong><span data-i18n="stat_events">Matukio</span></div>
-        <div><strong>100%</strong><span data-i18n="stat_trans">Uwazi wa fedha</span></div>
-      </div>
-    </div>
-    <div class="hero-card">
-      <img src="/wfc-logo.jpg" alt="Wachagga Family Community" class="hero-logo">
-      <h3>Stand up · It's not over</h3>
-      <p data-i18n="hero_card_desc">Kila mwanachama ana sauti, kitambulisho cha kidijitali, na haki kamili ya kura na taarifa za fedha.</p>
-      <a href="/app" class="btn-primary" style="width:100%" data-i18n="hero_card_btn">Fungua Ofisi ya Kidijitali →</a>
-    </div>
-  </div>
-</section>
-
-<section id="kuhusu" class="section">
-  <div class="container">
-    <div class="sec-head">
-      <span class="eyebrow" data-i18n="about_eyebrow">Kuhusu WFC</span>
-      <h2 data-i18n="about_title">Maono, Dhamira na Maadili Yetu</h2>
-      <p data-i18n="about_sub">Jumuiya iliyoanzishwa kwa misingi ya mshikamano wa familia, heshima ya utamaduni wetu wa Kichagga, na uwazi wa kiutawala.</p>
-    </div>
-    <div class="grid-3">
-      <div class="pub-card">
-        <div class="num">01</div>
-        <h3 data-i18n="v1_title">Maono</h3>
-        <p data-i18n="v1_desc">Kuwa familia yenye mshikamano imara, ustawi wa kiuchumi na kijamii ndani na nje ya Tanzania.</p>
-      </div>
-      <div class="pub-card">
-        <div class="num">02</div>
-        <h3 data-i18n="v2_title">Dhamira</h3>
-        <p data-i18n="v2_desc">Kutoa msaada wa haraka wakati wa misiba, harusi na dharura, pamoja na kukuza uwekezaji wa pamoja.</p>
-      </div>
-      <div class="pub-card">
-        <div class="num">03</div>
-        <h3 data-i18n="v3_title">Maadili</h3>
-        <p data-i18n="v3_desc">Uwazi wa fedha, uwajibikaji wa viongozi, demokrasia ya kura, na kuheshimu kila mwanachama.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="miradi" class="section section-alt">
-  <div class="container">
-    <div class="sec-head">
-      <span class="eyebrow" data-i18n="prog_eyebrow">Tunachofanya</span>
-      <h2 data-i18n="prog_title">Programu Kuu za Jumuiya</h2>
-    </div>
-    <div class="grid-4">
-      <div class="pub-card"><h3>Mfuko wa Misaada</h3><p>Msaada wa haraka wa kifedha na kijamii katika misiba, maradhi na dharura za kifamilia.</p></div>
-      <div class="pub-card"><h3>WFC SACCOS</h3><p>Hisa, akiba na mikopo yenye masharti nafuu kwa ajili ya biashara na maendeleo ya wanachama.</p></div>
-      <div class="pub-card"><h3>Matukio &amp; Festival</h3><p>Mikutano mikuu, harusi na sherehe zinazoimarisha undugu na utamaduni wetu.</p></div>
-      <div class="pub-card"><h3>Directory ya Taaluma</h3><p>Kuunganisha wataalamu na wafanyabiashara wa familia kusaidiana kiuchumi.</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="matukio" class="section">
-  <div class="container">
-    <div class="sec-head">
-      <span class="eyebrow" data-i18n="ev_eyebrow">Kalenda ya Jumuiya</span>
-      <h2 data-i18n="ev_title">Matukio Yajayo &amp; Tiketi</h2>
-      <p data-i18n="ev_sub">Unaweza kununua tiketi ya tukio lolote moja kwa moja bila kuhitaji akaunti.</p>
-    </div>
-    <div id="pubEvents" class="grid-3"><div class="pub-card"><p class="muted">Inapakia matukio...</p></div></div>
-  </div>
-</section>
-
-<section id="habari" class="section section-alt">
-  <div class="container">
-    <div class="sec-head">
-      <span class="eyebrow" data-i18n="news_eyebrow">Taarifa Rasmi</span>
-      <h2 data-i18n="news_title">Habari na Matangazo</h2>
-    </div>
-    <div id="pubNews" class="grid-3"><div class="pub-card"><p class="muted">Inapakia matangazo...</p></div></div>
-  </div>
-</section>
-
-<section id="mawasiliano" class="section">
-  <div class="container contact-grid">
-    <div>
-      <span class="eyebrow" data-i18n="contact_eyebrow">Wasiliana Nasi</span>
-      <h2 data-i18n="contact_title">Una swali au unahitaji maelezo zaidi?</h2>
-      <p class="lead" data-i18n="contact_sub">Ofisi ya WFC iko tayari kukuhudumia. Tuma ujumbe au piga simu moja kwa moja.</p>
-      <div class="contact-list">
-        <div><strong>Simu / WhatsApp</strong><span>+255 755 000 888</span></div>
-        <div><strong>Barua pepe</strong><span>ofisi@wachaggafamily.org</span></div>
-        <div><strong>Makao Makuu</strong><span>Moshi, Kilimanjaro &amp; Dar es Salaam</span></div>
-      </div>
-    </div>
-    <form id="contactForm" class="pub-card">
-      <h3 data-i18n="form_send_msg">Tuma Ujumbe</h3>
-      <label class="lbl" data-i18n="lbl_fullname">Jina kamili</label><input id="cName" required>
-      <label class="lbl" data-i18n="lbl_phone">Namba ya simu</label><input id="cPhone" required>
-      <label class="lbl" data-i18n="lbl_email">Barua pepe (hiari)</label><input id="cEmail" type="email">
-      <label class="lbl" data-i18n="lbl_msg">Ujumbe wako</label><textarea id="cMsg" rows="4" required></textarea>
-      <button class="btn-primary" style="width:100%" data-i18n="btn_send">Tuma Ujumbe</button>
-      <p id="cResult" class="muted" style="margin-top:10px"></p>
-    </form>
-  </div>
-</section>
-
-<footer class="footer-pub">
-  <div class="container footer-inner">
-    <div class="brand-pub">
-      <img src="/wfc-logo.jpg" alt="WFC">
-      <div><strong>Wachagga Family Community</strong><small>Stand up · It's not over</small></div>
-    </div>
-    <div class="footer-links">
-      <a href="/app">Portal ya Wanachama</a>
-      <a href="/app#register">Usajili</a>
+    <button class="nav-toggle" id="navToggle" type="button" aria-label="Fungua menyu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <nav id="siteNav">
+      <a href="#kuhusu">Kuhusu</a>
+      <a href="#matangazo">Matangazo</a>
       <a href="#matukio">Matukio</a>
-    </div>
-    <small class="muted">© 2026 Wachagga Family Community · WFC Portal V6</small>
-  </div>
-</footer>
+      <a href="#mawasiliano">Mawasiliano</a>
+      <a class="btn btn-sm" href="/app">Ingia Portal</a>
+    </nav>
+  </header>
 
-<script>
-const pubDict = {
-  sw: {
-    nav_about: "Kuhusu", nav_programs: "Programu", nav_events: "Matukio", nav_news: "Habari", nav_contact: "Mawasiliano",
-    nav_login: "Ingia", nav_join: "Jiunge Sasa",
-    hero_title: "Umoja wa Familia. Nguvu ya Maendeleo.",
-    hero_sub: "Wachagga Family Community (WFC) inaunganisha wanafamilia kusaidiana katika shida na raha, kuwekeza pamoja kupitia SACCOS, na kujenga urithi wa vizazi vijavyo.",
-    hero_cta_join: "Jiunge na Jumuiya", hero_cta_events: "Matukio na Tiketi",
-    stat_active: "Wanachama hai", stat_events: "Matukio", stat_trans: "Uwazi wa fedha",
-    hero_card_desc: "Kila mwanachama ana sauti, kitambulisho cha kidijitali, na haki kamili ya kura na taarifa za fedha.",
-    hero_card_btn: "Fungua Ofisi ya Kidijitali →",
-    about_eyebrow: "Kuhusu WFC", about_title: "Maono, Dhamira na Maadili Yetu",
-    about_sub: "Jumuiya iliyoanzishwa kwa misingi ya mshikamano wa familia, heshima ya utamaduni wetu wa Kichagga, na uwazi wa kiutawala.",
-    v1_title: "Maono", v1_desc: "Kuwa familia yenye mshikamano imara, ustawi wa kiuchumi na kijamii ndani na nje ya Tanzania.",
-    v2_title: "Dhamira", v2_desc: "Kutoa msaada wa haraka wakati wa misiba, harusi na dharura, pamoja na kukuza uwekezaji wa pamoja.",
-    v3_title: "Maadili", v3_desc: "Uwazi wa fedha, uwajibikaji wa viongozi, demokrasia ya kura, na kuheshimu kila mwanachama.",
-    prog_eyebrow: "Tunachofanya", prog_title: "Programu Kuu za Jumuiya",
-    ev_eyebrow: "Kalenda ya Jumuiya", ev_title: "Matukio Yajayo & Tiketi",
-    ev_sub: "Unaweza kununua tiketi ya tukio lolote moja kwa moja bila kuhitaji akaunti.",
-    news_eyebrow: "Taarifa Rasmi", news_title: "Habari na Matangazo",
-    contact_eyebrow: "Wasiliana Nasi", contact_title: "Una swali au unahitaji maelezo zaidi?",
-    contact_sub: "Ofisi ya WFC iko tayari kukuhudumia. Tuma ujumbe au piga simu moja kwa moja.",
-    form_send_msg: "Tuma Ujumbe", lbl_fullname: "Jina kamili", lbl_phone: "Namba ya simu",
-    lbl_email: "Barua pepe (hiari)", lbl_msg: "Ujumbe wako", btn_send: "Tuma Ujumbe"
-  },
-  en: {
-    nav_about: "About", nav_programs: "Programs", nav_events: "Events", nav_news: "News", nav_contact: "Contact",
-    nav_login: "Sign In", nav_join: "Join Now",
-    hero_title: "Family Unity. Power of Progress.",
-    hero_sub: "Wachagga Family Community (WFC) unites family members to support one another in joy and hardship, invest together via SACCOS, and build a lasting legacy.",
-    hero_cta_join: "Join the Community", hero_cta_events: "Events & Tickets",
-    stat_active: "Active Members", stat_events: "Events", stat_trans: "Financial Transparency",
-    hero_card_desc: "Every member has a voice, a digital ID card, voting rights, and full visibility into financial reports.",
-    hero_card_btn: "Open Digital Office →",
-    about_eyebrow: "About WFC", about_title: "Our Vision, Mission & Values",
-    about_sub: "A community founded on family solidarity, respect for Chagga heritage, and transparent governance.",
-    v1_title: "Vision", v1_desc: "To be a tightly united family achieving strong economic and social prosperity in Tanzania and abroad.",
-    v2_title: "Mission", v2_desc: "Provide rapid support during bereavement, weddings, and emergencies while advancing collective investments.",
-    v3_title: "Core Values", v3_desc: "Financial transparency, leadership accountability, democratic elections, and respect for every member.",
-    prog_eyebrow: "What We Do", prog_title: "Core Community Programs",
-    ev_eyebrow: "Community Calendar", ev_title: "Upcoming Events & Tickets",
-    ev_sub: "Purchase event tickets directly online without needing a portal account.",
-    news_eyebrow: "Official Updates", news_title: "News & Announcements",
-    contact_eyebrow: "Contact Us", contact_title: "Have a question or need more information?",
-    contact_sub: "The WFC Office is ready to serve you. Send a message or reach us directly.",
-    form_send_msg: "Send Message", lbl_fullname: "Full Name", lbl_phone: "Phone Number",
-    lbl_email: "Email (optional)", lbl_msg: "Your Message", btn_send: "Send Message"
-  }
-};
-
-function setSiteLang(lang) {
-  localStorage.setItem("wfc_lang", lang);
-  document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
-  const d = pubDict[lang] || pubDict.sw;
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    const k = el.getAttribute("data-i18n");
-    if (d[k]) el.textContent = d[k];
-  });
-}
-setSiteLang(localStorage.getItem("wfc_lang") || "sw");
-
-function escHtml(v){
-  return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-Promise.all([
-  fetch('/api/public/stats').then(r=>r.json()),
-  fetch('/api/public/events').then(r=>r.json()),
-  fetch('/api/public/announcements').then(r=>r.json())
-]).then(([st, evs, news]) => {
-  document.getElementById('stMembers').textContent = st.members || 0;
-  document.getElementById('stEvents').textContent = st.events || 0;
-  const evBox = document.getElementById('pubEvents');
-  evBox.innerHTML = evs.length ? evs.map(e => `
-    <div class="pub-card ev-card">
-      ${e.poster && e.poster.startsWith('data:image/') ? `<img src="${e.poster}" class="ev-poster" alt="">` : `<div class="ev-poster ev-ph">${escHtml(e.type)}</div>`}
-      <span class="badge badge-info">${escHtml(e.type)}</span>
-      <h3>${escHtml(e.title)}</h3>
-      <p class="muted">${escHtml(e.location || 'Ukumbi utatangazwa')} · ${escHtml(e.eventDate || '')}</p>
-      <div class="ev-foot">
-        <strong>${Number(e.ticketPrice) > 0 ? 'TSh ' + Number(e.ticketPrice).toLocaleString() : 'Bure'}</strong>
-        <a href="/ticket/${encodeURIComponent(e.id)}" class="btn-primary">Nunua Tiketi</a>
+  <section class="hero" id="nyumbani">
+    <div class="hero-copy">
+      <div class="kicker-pill"><span class="dot-live"></span> The Pride of Chagga · Digital Office</div>
+      <h1>Umoja wa Wachagga, <span>nguvu ya familia.</span></h1>
+      <p class="lead">Ofisi ya Wachagga Family Community mtandaoni. Wanachama, michango yenye risiti za QR, matukio na taarifa za jumuiya katika jukwaa moja la kisasa.</p>
+      <div class="cta">
+        <a class="btn" href="/app">Fungua akaunti</a>
+        <a class="btn ghost" href="#matukio">Tazama matukio</a>
       </div>
-    </div>`).join('') : '<div class="pub-card"><p class="muted">Hakuna tukio lililotangazwa kwa sasa.</p></div>';
+      <div class="metrics">
+        <div class="metric-chip"><strong id="mMembers">—</strong><span>Wanachama hai</span></div>
+        <div class="metric-chip"><strong id="mEvents">—</strong><span>Matukio hai</span></div>
+        <div class="metric-chip"><strong id="mOpen">24/7</strong><span>Ofisi ya mtandaoni</span></div>
+      </div>
+    </div>
 
-  const nBox = document.getElementById('pubNews');
-  nBox.innerHTML = news.length ? news.slice(0, 6).map(n => `
-    <div class="pub-card">
-      <small class="muted">${new Date(n.createdAt).toLocaleDateString('sw-TZ')}</small>
-      <h3>${escHtml(n.title)}</h3>
-      <p>${escHtml(n.body)}</p>
-      ${n.link ? `<a href="${escHtml(n.link)}" class="link">Soma zaidi →</a>` : ''}
-    </div>`).join('') : '<div class="pub-card"><p class="muted">Hakuna tangazo jipya.</p></div>';
-});
+    <div class="hero-visual">
+      <div class="hero-showcase-card">
+        <div class="showcase-top">
+          <img src="/wfc-logo.jpg" alt="Wachagga Family Community">
+          <div>
+            <span class="badge badge-active">Imethibitishwa</span>
+            <h3>WFC Digital Suite</h3>
+            <p class="muted">Stand up · It's not over</p>
+          </div>
+        </div>
+        <div class="showcase-stats">
+          <div class="mini-stat">
+            <span>Malipo ya Haraka</span>
+            <strong>M-Pesa · Tigo · Airtel · CRDB</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Risiti & Kitambulisho</span>
+            <strong>QR Code Otomatiki</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-document.getElementById('contactForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const res = await fetch('/api/contact', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      name: document.getElementById('cName').value,
-      phone: document.getElementById('cPhone').value,
-      email: document.getElementById('cEmail').value,
-      message: document.getElementById('cMsg').value
-    })
-  });
-  const d = await res.json();
-  const out = document.getElementById('cResult');
-  if (d.success) { out.textContent = 'Ujumbe wako umepokelewa. Ofisi itawasiliana nawe hivi karibuni.'; e.target.reset(); }
-  else out.textContent = d.error || 'Imeshindikana';
-};
-</script>
+  <section class="section" id="kuhusu">
+    <div class="about-grid">
+      <div class="reveal">
+        <div class="kicker">Kuhusu sisi</div>
+        <h2>Jumuiya inayokumbuka, inayosaidia, na inayokua pamoja.</h2>
+        <p class="section-lead">WFC ni muungano wa familia za Wachagga. Tunashikilia ada, misaada ya dharura, sherehe, SACCOS na kumbukumbu za uongozi kwa uwazi na usalama wa kudumu.</p>
+      </div>
+      <div class="values">
+        <article class="value reveal">
+          <div class="val-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <h3>Umoja wa Kanda</h3>
+            <p>Kanda, halmashauri na tawi vinawasiliana kwenye mfumo mmoja wenye utambulisho wa WFC ID.</p>
+          </div>
+        </article>
+        <article class="value reveal">
+          <div class="val-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <div>
+            <h3>Mshikamano wa Familia</h3>
+            <p>Msiba, ugonjwa na harusi vinafuatiliwa kwa utaratibu maalum na haraka.</p>
+          </div>
+        </article>
+        <article class="value reveal">
+          <div class="val-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div>
+            <h3>Uwazi wa Kifedha</h3>
+            <p>Michango ina risiti za PDF zenye QR, idhini ya mhazini, na historia inayosomeka muda wowote.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="matangazo">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Matangazo</div>
+        <h2>Habari zinazosonga.</h2>
+      </div>
+      <div class="slider-ui" id="dots"></div>
+    </div>
+    <div class="slider" id="slider"></div>
+  </section>
+
+  <section class="section" id="matukio">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Matukio</div>
+        <h2>Yajayo na yanayoendelea.</h2>
+      </div>
+    </div>
+    <div class="event-grid" id="events">
+      <div class="card"><div class="skeleton" style="height:180px"></div></div>
+      <div class="card"><div class="skeleton" style="height:180px"></div></div>
+      <div class="card"><div class="skeleton" style="height:180px"></div></div>
+    </div>
+  </section>
+
+  <section class="section" id="mawasiliano">
+    <div class="kicker">Mawasiliano</div>
+    <h2>Tuandikie moja kwa moja.</h2>
+    <div class="contact-grid">
+      <form id="contact" class="card reveal">
+        <div class="form-row-2">
+          <div class="form-group"><label>Jina Kamili</label><input name="name" placeholder="Mf. Amina Swai" required></div>
+          <div class="form-group"><label>Namba ya Simu</label><input name="phone" placeholder="07XX XXX XXX" required></div>
+        </div>
+        <div class="form-group"><label>Barua pepe (hiari)</label><input name="email" type="email" placeholder="jina@mfano.co.tz"></div>
+        <div class="form-group"><label>Ujumbe wako</label><textarea name="message" rows="4" placeholder="Andika ujumbe au swali lako hapa..." required></textarea></div>
+        <button class="btn" type="submit">Tuma ujumbe</button>
+        <div id="contactMsg"></div>
+      </form>
+      <aside class="contact-card card reveal">
+        <span class="kicker">Makao Makuu</span>
+        <h3>Ofisi ya WFC</h3>
+        <div class="office-list">
+          <div class="office-item"><strong>Eneo:</strong> Dar es Salaam, Tanzania</div>
+          <div class="office-item"><strong>Simu ya Ofisi:</strong> 0755 000 888</div>
+          <div class="office-item"><strong>Njia za Malipo:</strong> M-Pesa (0755 000 888), Tigo Pesa (0715 000 888), Airtel Money (0785 000 888) na CRDB (0150889944200).</div>
+        </div>
+        <div style="margin-top:24px">
+          <a class="btn" href="/app">Ingia kwenye Portal</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>© Wachagga Family Community (WFC)</span>
+    <span>Umoja wa Wachagga, Nguvu ya Familia</span>
+  </footer>
+
+  <script>
+    document.getElementById("navToggle").onclick = () => document.getElementById("siteNav").classList.toggle("open");
+    fetch("/api/public/stats").then(r=>r.json()).then(s=>{
+      document.getElementById("mMembers").textContent = s.members ?? "—";
+      document.getElementById("mEvents").textContent = s.events ?? "—";
+    }).catch(()=>{});
+
+    let slides = [], i = 0, timer;
+    function paint(){
+      const root = document.getElementById("slider");
+      const dots = document.getElementById("dots");
+      if(!slides.length){
+        root.innerHTML = '<div class="slide on"><div class="kicker">Taarifa</div><h3>Hakuna matangazo mapya kwa sasa</h3><p class="muted">Viongozi watayachapisha matangazo muhimu hapa.</p></div>';
+        return;
+      }
+      root.innerHTML = slides.map((a,n)=>`
+        <article class="slide ${n===i?"on":""}">
+          <div class="slide-meta"><span class="badge badge-pending">${a.author||"Ofisi ya WFC"}</span></div>
+          <h3>${a.title}</h3>
+          <p>${a.body||""}</p>
+          ${a.link?`<div style="margin-top:20px"><a class="btn btn-sm" href="${a.link}">Fungua taarifa</a></div>`:""}
+        </article>`).join("");
+      dots.innerHTML = slides.map((_,n)=>`<button class="dot ${n===i?"on":""}" data-i="${n}" aria-label="Slaidi ${n+1}"></button>`).join("");
+      dots.querySelectorAll(".dot").forEach(b=>b.onclick=()=>{ i=+b.dataset.i; paint(); });
+    }
+    function boot(list){
+      slides = list;
+      paint();
+      clearInterval(timer);
+      timer = setInterval(()=>{ if(slides.length<2) return; i=(i+1)%slides.length; paint(); }, 6000);
+    }
+    fetch("/api/public/announcements").then(r=>r.json()).then(boot).catch(()=>boot([]));
+
+    fetch("/api/public/events").then(r=>r.json()).then(list=>{
+      document.getElementById("events").innerHTML = list.length ? list.map(e=>`
+        <article class="ev">
+          <div class="poster">${e.poster?`<img src="${e.poster}" alt="${e.title}">`:`<div class="poster-placeholder"><span>WFC EVENT</span></div>`}</div>
+          <div class="b">
+            <div class="ev-top">
+              <span class="badge badge-pending">${e.type||"Tukio"}</span>
+              <span class="ev-price">TSh ${Number(e.ticketPrice||0).toLocaleString()}</span>
+            </div>
+            <h3>${e.title}</h3>
+            <p class="muted">${e.location||"Eneo litatangazwa"}</p>
+            <a class="btn btn-sm" href="/ticket/${e.id}">Kata tiketi</a>
+          </div>
+        </article>`).join("") : `<div class="empty-state"><p>Hakuna matukio yaliyotangazwa kwa sasa.</p></div>`;
+    });
+
+    document.getElementById("contact").onsubmit = async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target));
+      const r = await fetch("/api/contact", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+      const d = await r.json();
+      document.getElementById("contactMsg").innerHTML = d.success ? '<div class="success">Ujumbe umepokelewa. Tutawasiliana nawe.</div>' : '<div class="error">Imeshindwa kutuma. Jaribu tena.</div>';
+      if(d.success) e.target.reset();
+    };
+  </script>
 </body>
 </html>
