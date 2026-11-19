@@ -233,41 +233,46 @@ async function showDash() {
   window.__me = me.user;
   const initials = (me.user.name || "W").split(" ").map(s => s[0]).slice(0, 2).join("").toUpperCase();
 
+  const quickLinks = [
+    ["home", "Dashibodi", IC.home],
+    ["posts", "Social Post", IC.meg],
+    ["payments", "Michango", IC.coin],
+    ["account", "Akaunti yangu", IC.id]
+  ];
   const groups = [
-    ["Kila siku", [
-      ["home", "Dashibodi", IC.home],
+    ["community", "Jumuiya", IC.users, [
       ["members", "Wanachama", IC.users],
-      ["payments", "Michango", IC.coin],
       ["events", "Matukio", IC.cal],
       ["announcements", "Matangazo", IC.meg],
-      ["posts", "Social Post", IC.meg]
+      ["directory", "Directory", IC.book]
     ]],
-    ["Mwanachama", [
-      ["account", "Akaunti yangu", IC.id],
+    ["membership", "Uanachama", IC.id, [
       ["card", "Kitambulisho", IC.id],
       ["family", "Familia", IC.home2],
-      ["directory", "Directory", IC.book],
-      ["help", "Msaada", IC.life],
-      ["notifications", "Taarifa", IC.bell]
+      ["help", "Msaada", IC.life]
     ]],
-    ["Ofisi", [
+    ["finance", "Fedha na miradi", IC.bank, [
+      ["accounting", "Uhasibu", IC.coin],
+      ...(groupProfile.modules?.saccos !== false ? [["saccos", "SACCOS", IC.bank]] : []),
+      ["momo", "Malipo ya simu", IC.phone],
+      ["assets", "Mali", IC.box],
+      ["projects", "Miradi", IC.flag],
+      ["penalties", "Faini", IC.file],
+      ["charts", "Grafu", IC.chart]
+    ]],
+    ["office", "Uongozi na ofisi", IC.gear, [
       ...(canViewReports(me.user.role) ? [["pending", "Maombi ya uanachama", IC.clock], ["reports", "Ripoti na historia", IC.file]] : []),
       ...(groupProfile.modules?.attendance !== false ? [["attendance", "Mahudhurio", IC.cal]] : []),
       ...(groupProfile.modules?.elections !== false ? [["elections", "Uchaguzi", IC.vote]] : []),
       ["cases", "Kesi", IC.case],
-      ...(groupProfile.modules?.saccos !== false ? [["saccos", "SACCOS", IC.bank]] : []),
-      ["assets", "Mali", IC.box],
-      ["projects", "Miradi", IC.flag],
-      ["penalties", "Faini", IC.file],
       ["documents", "Nyaraka", IC.file],
       ["roles", "Majukumu", IC.key],
-      ["charts", "Grafu", IC.chart],
       ["messages", "Ujumbe", IC.mail],
-      ["momo", "Malipo ya simu", IC.phone],
-      ["accounting", "Uhasibu", IC.coin],
       ...(me.user.role === "ADMIN" ? [["settings", "Mipangilio ya kikundi", IC.gear]] : [])
     ]]
   ];
+  const navItem = ([id, label, icon]) =>
+    `<button class="nav-item" type="button" data-p="${id}" title="${label}" aria-label="${label}">${icon}<span class="nav-text">${label}</span></button>`;
 
   const collapsed = localStorage.getItem("wfc-sidebar-collapsed") === "1" ? "is-collapsed" : "";
 
@@ -287,12 +292,17 @@ async function showDash() {
         </button>
       </div>
 
-      <div class="sidebar-scroll">
-        ${groups.map(([label, items]) => `
-          <div class="nav-label">${label}</div>
-          ${items.map(([id, name, icon]) => `<button class="nav-item" type="button" data-p="${id}" title="${name}" aria-label="${name}">${icon}<span class="nav-text">${name}</span></button>`).join("")}
-        `).join("")}
-      </div>
+      <nav class="sidebar-scroll" aria-label="Menyu kuu">
+        <div class="sidebar-quick">${quickLinks.map(navItem).join("")}</div>
+        <div class="sidebar-groups">
+          ${groups.map(([id, label, icon, items]) => `
+            <details class="sidebar-section" name="sidebar-sections" data-section="${id}">
+              <summary title="${label}" aria-label="${label}">${icon}<span class="nav-text">${label}</span><span class="sidebar-chevron" aria-hidden="true"></span></summary>
+              <div class="sidebar-section-items">${items.map(navItem).join("")}</div>
+            </details>
+          `).join("")}
+        </div>
+      </nav>
 
       <div class="sidebar-footer">
         <button class="nav-item logout-item" type="button" id="out" aria-label="Toka nje" title="Toka nje">${IC.logout}<span class="nav-text">Toka nje</span></button>
@@ -311,6 +321,9 @@ async function showDash() {
         <div class="topbar-actions">
           <button class="theme-toggle" onclick="toggleTheme()" type="button">◐ Mwanga</button>
           <div id="portalLanguage"></div>
+          <button class="header-bell" id="notificationsBell" type="button" data-p="notifications" aria-label="Arifa" title="Arifa">
+            ${IC.bell}<span class="header-bell-badge" id="notificationsCount" aria-hidden="true" hidden></span>
+          </button>
           <details class="profile-menu" id="profileMenu">
             <summary class="user-chip" aria-label="Wasifu wangu">
               <span class="user-chip-avatar" aria-hidden="true">${escapeHtml(initials)}</span>
@@ -341,12 +354,24 @@ async function showDash() {
 
   placeLanguageSwitcher();
   const layoutRoot = document.getElementById("layoutRoot");
-  document.getElementById("collapseBtn").onclick = () => {
-    layoutRoot.classList.toggle("is-collapsed");
-    localStorage.setItem("wfc-sidebar-collapsed", layoutRoot.classList.contains("is-collapsed") ? "1" : "0");
-    document.getElementById("collapseBtn").setAttribute("aria-expanded", String(!layoutRoot.classList.contains("is-collapsed")));
+  const collapseButton = document.getElementById("collapseBtn");
+  const setSidebarCollapsed = value => {
+    layoutRoot.classList.toggle("is-collapsed", value);
+    localStorage.setItem("wfc-sidebar-collapsed", value ? "1" : "0");
+    collapseButton.setAttribute("aria-expanded", String(!value));
     window.dispatchEvent(new Event("resize"));
   };
+  collapseButton.onclick = () => setSidebarCollapsed(!layoutRoot.classList.contains("is-collapsed"));
+  for (const summary of layoutRoot.querySelectorAll(".sidebar-section > summary")) {
+    summary.onclick = () => {
+      const section = summary.parentElement;
+      if (layoutRoot.classList.contains("is-collapsed") && !matchMedia("(max-width: 860px)").matches) {
+        setSidebarCollapsed(false);
+        section.open = true;
+        return false;
+      }
+    };
+  }
 
   const close = () => {
     document.getElementById("side").classList.remove("open");
@@ -386,7 +411,20 @@ async function showDash() {
     document.getElementById("c").focus();
   });
 
+  const bell = document.getElementById("notificationsBell");
+  api("/api/notifications").then(list => {
+    if (bell.isConnected && document.getElementById("c")?.dataset.page !== "notifications" && Array.isArray(list)) {
+      setNotificationCount(list.filter(note => !note.read).length);
+    }
+  }).catch(() => {});
   load("home");
+}
+
+function setNotificationCount(count) {
+  const badge = document.getElementById("notificationsCount");
+  if (!badge) return;
+  badge.hidden = count === 0;
+  badge.textContent = count || "";
 }
 
 function apexBaseOptions() {
@@ -449,6 +487,10 @@ async function load(p) {
     if (active) el.setAttribute("aria-current", "page");
     else el.removeAttribute("aria-current");
   });
+  for (const section of document.querySelectorAll(".sidebar-section")) {
+    section.classList.toggle("has-active", Boolean(section.querySelector(".nav-item.active")));
+    if (section.classList.contains("has-active")) section.open = true;
+  }
 
   if (p === "profile") {
     const user = window.__me;
@@ -1466,19 +1508,35 @@ async function load(p) {
 
   if (p === "notifications") {
     const list = await api("/api/notifications");
-    c.innerHTML = `<div class="card">
+    if (c.dataset.page !== p) return;
+    if (!Array.isArray(list)) {
+      c.textContent = list.error || "Arifa hazikupatikana.";
+      return;
+    }
+    c.innerHTML = `${canViewReports(window.__me.role) ? `<div class="card">
       <div class="card-head"><h3>Tuma Taarifa kwa Wanachama</h3></div>
       <form id="nf">
-        <div class="form-group"><label>Kichwa cha Taarifa</label><input name="title" required></div>
-        <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" required></textarea></div>
+        <div class="form-group"><label for="notificationTitle">Kichwa cha Taarifa</label><input id="notificationTitle" name="title" required></div>
+        <div class="form-group"><label for="notificationBody">Ujumbe</label><textarea id="notificationBody" name="body" rows="3" required></textarea></div>
         <button class="btn btn-sm" type="submit">Tuma kwa Wote</button>
       </form>
-    </div>
+    </div>` : ""}
     <div class="card">
       <div class="card-head"><h3>Taarifa Zilizopo</h3></div>
-      ${(list || []).map(n => `<div class="list-row" style="align-items:flex-start"><div><strong>${n.title}</strong><p style="margin:4px 0 0;color:var(--text)">${n.body}</p></div><span class="badge badge-active">Mpya</span></div>`).join("") || `<div class="empty-state">Hakuna taarifa</div>`}
+      ${list.map(n => `<div class="list-row" style="align-items:flex-start"><div><strong translate="no">${escapeHtml(n.title)}</strong><p style="margin:4px 0 0;color:var(--text)" translate="no">${escapeHtml(n.body)}</p></div>${n.read ? "" : '<span class="badge badge-active">Mpya</span>'}</div>`).join("") || `<div class="empty-state">Hakuna taarifa</div>`}
     </div>`;
-    document.getElementById("nf").onsubmit = async e => { e.preventDefault(); const d = await api("/api/notifications", { method: "POST", body: { ...Object.fromEntries(new FormData(e.target)), userId: "all" } }); if (d.error) alert(d.error); else load("notifications"); };
+    const form = document.getElementById("nf");
+    if (form) form.onsubmit = async event => {
+      event.preventDefault();
+      const result = await api("/api/notifications", { method: "POST", body: { ...Object.fromEntries(new FormData(form)), userId: "all" } });
+      if (result.error) alert(result.error);
+      else load("notifications");
+    };
+    const unread = list.filter(note => !note.read).map(note => note.id);
+    if (!unread.length) setNotificationCount(0);
+    else api("/api/notifications/read", { method: "PUT", body: { ids: unread } })
+      .then(result => { if (result.success) setNotificationCount(result.unreadCount); })
+      .catch(() => {});
   }
 
   if (p === "accounting") {

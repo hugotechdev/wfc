@@ -330,7 +330,7 @@ app.get("/api/dashboard", requireAuth, (req, res) => {
   const user = db.users.find(u => u.id === req.session.user.id);
   const myPayments = db.payments.filter(p => p.userId === user.id && p.status === "APPROVED");
   const totalPaid = myPayments.reduce((s, p) => s + (p.amount || 0), 0);
-  const { password, passwordHash, profilePhoto, cardToken, ...publicUser } = user;
+  const { password, passwordHash, profilePhoto, cardToken, readNotificationIds, ...publicUser } = user;
   res.json({
     user: publicUser,
     stats: {
@@ -818,10 +818,31 @@ app.post("/api/documents", requireAuth, (req, res) => {
 });
 
 // Notifications
+function memberNotifications(db, memberId) {
+  return (db.notifications || []).filter(note => note.userId === memberId || note.userId === "all").slice(0, 30);
+}
+
 app.get("/api/notifications", requireAuth, (req, res) => {
   const db = loadDB();
-  const list = (db.notifications || []).filter(n => n.userId === req.session.user.id || n.userId === "all");
-  res.json(list.slice(0, 30));
+  const memberId = req.session.user.id;
+  const member = db.users.find(user => user.id === memberId);
+  const read = new Set(member.readNotificationIds || []);
+  res.set("Cache-Control", "private, no-store").json(memberNotifications(db, memberId)
+    .map(note => ({ ...note, read: read.has(note.id) })));
+});
+
+app.put("/api/notifications/read", requireAuth, (req, res) => {
+  if (!Array.isArray(req.body?.ids) || req.body.ids.length > 30) {
+    return res.status(400).json({ error: "Arifa hazikupatikana." });
+  }
+  const db = loadDB();
+  const member = db.users.find(user => user.id === req.session.user.id);
+  const notes = memberNotifications(db, member.id);
+  const selected = new Set(req.body.ids);
+  const previous = new Set(member.readNotificationIds || []);
+  member.readNotificationIds = notes.filter(note => selected.has(note.id) || previous.has(note.id)).map(note => note.id);
+  saveDB(db);
+  res.json({ success: true, unreadCount: notes.length - member.readNotificationIds.length });
 });
 
 // Backup
@@ -891,7 +912,7 @@ app.post("/api/notifications", requireAuth, (req, res) => {
   if (!isLeader(req.session.user.role)) return res.status(403).json({ error: "Huna mamlaka" });
   const db = loadDB();
   if (!db.notifications) db.notifications = [];
-  db.notifications.unshift({ id: Date.now().toString(), userId: req.body.userId || "all", title: req.body.title, body: req.body.body, createdAt: new Date().toISOString() });
+  db.notifications.unshift({ id: randomBytes(12).toString("hex"), userId: req.body.userId || "all", title: req.body.title, body: req.body.body, createdAt: new Date().toISOString() });
   saveDB(db);
   res.json({ success: true });
 });

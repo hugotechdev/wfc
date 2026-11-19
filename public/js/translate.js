@@ -433,6 +433,10 @@ Inachapisha…|Publishing…
 Chapisho limetumwa.|Post published.
 Machapisho hayakupatikana.|Posts could not be loaded.
 Pakua|Download
+Jumuiya|Community
+Fedha na miradi|Finance and projects
+Uongozi na ofisi|Leadership and office
+Arifa hazikupatikana.|Notifications could not be loaded.
 `.trim().split("\n").map(line => line.split("|")));
 
 let portalLocale;
