@@ -1515,8 +1515,10 @@ tbody tr:hover { background: var(--bg); }
   border-color: var(--sidebar-border);
 }
 .layout .sidebar .nav-item {
+  background: transparent;
   border-radius: 8px;
   color: var(--sidebar-text);
+  font-weight: 500;
   transition: background-color .16s ease, color .16s ease;
 }
 .layout .sidebar .nav-item .ico { color: var(--sidebar-muted); }
@@ -2058,13 +2060,17 @@ tbody tr:hover { background: var(--bg); }
   margin: 0;
   padding-inline-start: clamp(5px, 1.8vw, 14px);
   border-inline-start: 1px solid #ded8d2;
-  color: #51545b;
-  text-align: center;
-  font-size: clamp(.55rem, 1.85vw, .7rem);
 }
-.member-id-code img { display: block; width: 100%; aspect-ratio: 1; margin-bottom: 4px; background: #fff; }
+.member-id-code img { display: block; width: 100%; aspect-ratio: 1; background: #fff; }
+.member-id-trim {
+  display: block;
+  width: 100%;
+  height: clamp(14px, 3vw, 23px);
+}
 .member-id-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 .member-id-actions .btn { width: auto; }
+.member-id-download-status { margin-top: 6px; }
+.member-id-download-status:empty { margin: 0; }
 @media (max-width: 450px) {
   .profile-photo-area { grid-template-columns: 1fr; }
   .profile-portrait { width: 85px; }

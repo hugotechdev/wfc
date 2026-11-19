@@ -1122,18 +1122,61 @@ async function load(p) {
             <p class="member-id-number" translate="no">${escapeHtml(member.number)}</p>
             <div class="member-id-status">Uanachama hai</div>
           </div>
-          <figure class="member-id-code"><img src="/api/member-card/qr" alt="QR ya uhakiki"><figcaption>Hakiki</figcaption></figure>
+          <figure class="member-id-code"><img src="/api/member-card/qr" alt="QR code"></figure>
         </div>
+        <svg class="member-id-trim" viewBox="0 0 856 45" preserveAspectRatio="none" aria-hidden="true">
+          <path fill="#f4e8df" d="M0 45h856V0H650l-77 29H145L100 13H0Z"/>
+          <path fill="none" stroke="#c77d50" stroke-width="1.4" vector-effect="non-scaling-stroke"
+            d="M0 13h100l45 16h428L650 0h206"/>
+          <path fill="none" stroke="#dbb59c" stroke-width="1" vector-effect="non-scaling-stroke"
+            d="M0 27h83l45 16h447l77-29h204"/>
+        </svg>
       </div>
       <div class="member-id-actions">
-        ${member.hasPhoto ? '<button id="downloadMemberId" class="btn" type="button">Pakua kitambulisho (PDF)</button>' : '<p class="muted">Weka picha kwenye wasifu kabla ya kupakua kitambulisho.</p>'}
+        ${member.hasPhoto ? `
+          <button id="downloadMemberId" class="btn" type="button">Pakua kitambulisho (PDF)</button>
+          <button id="downloadMemberIdPng" class="btn ghost" type="button">Pakua picha (PNG)</button>
+        ` : '<p class="muted">Weka picha kwenye wasifu kabla ya kupakua kitambulisho.</p>'}
         <button id="editMemberPortrait" class="btn ghost" type="button">${member.hasPhoto ? "Badili picha ya wasifu" : "Weka picha ya wasifu"}</button>
       </div>
+      <p id="memberIdDownloadStatus" class="muted member-id-download-status" role="status"></p>
     </section>`;
     applyGroupProfile(groupProfile);
     document.getElementById("editMemberPortrait").onclick = () => load("profile");
     const download = document.getElementById("downloadMemberId");
     if (download) download.onclick = () => location.assign("/api/member-card/pdf?lang=" + portalLocale);
+    const downloadPng = document.getElementById("downloadMemberIdPng");
+    if (downloadPng) downloadPng.onclick = async () => {
+      const card = c.querySelector(".member-id-preview");
+      const status = document.getElementById("memberIdDownloadStatus");
+      downloadPng.disabled = true;
+      status.textContent = "";
+      try {
+        await Promise.all([
+          document.fonts.ready,
+          ...Array.from(card.querySelectorAll("img"), img => img.decode())
+        ]);
+        if (!card.isConnected) return;
+        const image = await window.html2canvas(card, {
+          backgroundColor: null, scale: 1600 / card.offsetWidth, logging: false
+        });
+        const png = await new Promise(resolve => image.toBlob(resolve, "image/png"));
+        if (!png) throw new Error("PNG export failed");
+        if (!card.isConnected) return;
+        const url = URL.createObjectURL(png);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "Member-ID-" + member.number.replace(/[^a-zA-Z0-9_-]/g, "_") + ".png";
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch {
+        status.textContent = "Picha haikupakuliwa. Jaribu tena.";
+      } finally {
+        downloadPng.disabled = false;
+      }
+    };
   }
 
   if (p === "family") {

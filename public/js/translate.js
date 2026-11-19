@@ -394,6 +394,8 @@ Picha iwe angalau pikseli 96 kwa 96.|Use a photo at least 96 by 96 pixels.
 Chagua picha ya JPG, PNG au WebP isiyozidi MB 8.|Choose a JPG, PNG or WebP photo up to 8 MB.
 Kitambulisho cha mwanachama|Member ID
 Pakua kitambulisho (PDF)|Download member ID (PDF)
+Pakua picha (PNG)|Download image (PNG)
+Picha haikupakuliwa. Jaribu tena.|The image could not be downloaded. Try again.
 Tazama kitambulisho|View member ID
 Weka picha ya wasifu|Add profile photo
 Badili picha ya wasifu|Change profile photo
