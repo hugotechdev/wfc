@@ -1107,14 +1107,20 @@ async function load(p) {
     if (!member.number) { c.textContent = member.error || "Kitambulisho hakikupatikana."; return; }
     c.innerHTML = `<section class="member-id-panel" aria-label="Kitambulisho cha mwanachama">
       <div class="member-id-preview">
-        <header class="member-id-brand">${groupLogo("member-id-logo")}<strong translate="no">${escapeHtml(groupProfile.name)}</strong></header>
+        <header class="member-id-brand">
+          ${groupLogo("member-id-logo")}
+          <div class="member-id-brand-copy" translate="no">
+            <strong>${escapeHtml(groupProfile.name)}</strong>
+            ${groupProfile.slogan ? `<span>${escapeHtml(groupProfile.slogan)}</span>` : ""}
+          </div>
+        </header>
         <div class="member-id-details">
           ${member.hasPhoto ? '<img class="member-id-photo" src="/api/me/photo?v=' + Date.now() + '" alt="Picha ya wasifu">' : `<div class="member-id-photo initials" aria-hidden="true">${escapeHtml((member.name || "W").slice(0, 1))}</div>`}
           <div class="member-id-copy">
             <div class="member-id-label">Kitambulisho cha mwanachama</div>
             <h2>${displayMemberName(member)}</h2>
             <p class="member-id-number" translate="no">${escapeHtml(member.number)}</p>
-            <span class="badge badge-active">Uanachama hai</span>
+            <div class="member-id-status">Uanachama hai</div>
           </div>
           <figure class="member-id-code"><img src="/api/member-card/qr" alt="QR ya uhakiki"><figcaption>Hakiki</figcaption></figure>
         </div>
