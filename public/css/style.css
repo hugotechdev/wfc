@@ -2206,3 +2206,66 @@ tbody tr:hover { background: var(--bg); }
   .ticket-page .auth-page { min-height: 0; display: block; padding: 0; }
   .ticket-page .container { max-width: 100%; border: 0; box-shadow: none; }
 }
+
+.hero-slide-controls .slider-toggle { width: auto; padding: 2px 8px; font-size: .73rem; font-weight: 750; }
+.social-slide-card { margin-block: 10px 4px; padding: 9px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.social-slide-source { display: flex; align-items: center; gap: 8px; }
+.social-slide-source > span { display: grid; place-items: center; width: 27px; height: 27px; flex: none; border-radius: 9px; background: #ffddc4; color: #723618; font-weight: 800; }
+.social-slide-source time { display: block; font-size: .72rem; color: var(--muted); }
+.social-slide-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.social-slide-actions .btn { width: auto; }
+.social-slide-embed:empty { display: none; }
+.social-slide-embed iframe { width: 100%; height: min(65vh, 500px); border: 0; border-radius: 8px; display: block; margin-top: 8px; background: var(--bg); }
+.social-slide-embed iframe.social-video-wide { height: auto; aspect-ratio: 16 / 9; }
+
+/* The welcome card establishes the dimensions for every dashboard slide. */
+.dashboard-carousel { min-width: 0; }
+.dashboard-slide-stage { position: relative; }
+.dashboard-slide-stage #dashboardWelcome { margin-bottom: 0; }
+.welcome-placeholder { visibility: hidden; }
+.dashboard-news-slide {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 22px);
+  padding: clamp(12px, 2vw, 24px);
+  border-radius: 24px;
+  border: 1px solid #f3c8ae;
+  background: linear-gradient(118deg, var(--card), var(--brand-tint-50));
+  color: var(--ink);
+  overflow: hidden;
+}
+.dashboard-news-slide[hidden], .dashboard-slide-navigation[hidden] { display: none; }
+.dashboard-news-image {
+  width: min(42%, 420px);
+  height: 100%;
+  min-width: 0;
+  object-fit: contain;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card), transparent 20%);
+}
+.dashboard-news-content { flex: 1; min-width: 0; max-height: 100%; overflow: auto; }
+.dashboard-news-content h2 { margin: 5px 0; font-size: clamp(1rem, 2.7vw, 1.7rem); overflow-wrap: anywhere; }
+.dashboard-news-content p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 3px 0; }
+.dashboard-slide-navigation { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 5px; }
+.dashboard-slide-navigation .hero-slide-controls button { min-height: 30px; height: 30px; }
+.portal-announcement-poster { display: block; max-width: 100%; max-height: 330px; object-fit: contain; margin-block: 7px; border-radius: 10px; }
+@media (max-width: 600px) {
+  .dashboard-studio > .dashboard-carousel { order: -1; }
+  .dashboard-news-content p { font-size: .79rem; }
+  .dashboard-news-content .btn { font-size: .69rem; }
+}
+
+@media (max-width: 600px) {
+  .landing-body .hero { padding-top: 12px; }
+  .landing-body .hero-slider { order: -1; }
+  .landing-body .hero-copy .kicker-pill { display: none; }
+  .landing-body .hero-copy h1 {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .landing-body .hero-copy .lead { margin-top: 6px; }
+  .dashboard-carousel { margin-top: 0; }
+}

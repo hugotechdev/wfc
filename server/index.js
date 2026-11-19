@@ -6,6 +6,7 @@ const { jsPDF } = require("jspdf");
 const QRCode = require("qrcode");
 const { normalizePortrait, cardQr, buildMemberCard } = require("./member-card");
 const { readAttachments, visiblePost } = require("./social-post");
+const { socialLink } = require("./social-link");
 const { APPROVERS, paymentText, paymentEvidence, ticketFields, ticketAnswers } = require("./manual-payment");
 const { DEFAULT_GROUP, readGroup, updateGroup } = require("./group");
 const { randomBytes, scryptSync, timingSafeEqual } = require("node:crypto");
@@ -74,7 +75,7 @@ function savePaymentSubmission(db, photo) {
 
 function publicEvent(event) {
   return {
-    id: event.id, title: event.title, type: event.type, location: event.location, poster: event.poster,
+    id: event.id, title: event.title, type: event.type, location: event.location, poster: event.poster, createdAt: event.createdAt,
     description: event.description, eventDate: event.eventDate, contactPhone: event.contactPhone,
     ticketPrice: event.ticketPrice || 0, ticketEnabled: event.ticketEnabled !== false && event.status === "ACTIVE",
     ticketFields: event.ticketFields || []
@@ -375,7 +376,7 @@ app.get("/api/dashboard", requireAuth, (req, res) => {
     },
     myTotalPaid: totalPaid,
     recent: db.payments.filter(p => isLeader(req.session.user.role) || p.userId === user.id).slice(-6).reverse().map(({ userName, type, amount, status }) => ({ userName, type, amount, status })),
-    upcoming: (db.events || []).slice(0, 4),
+    upcoming: (db.events || []).filter(event => event.status === "ACTIVE").slice(-4).reverse(),
     notices: (db.announcements || []).slice(0, 3),
     regions: Object.entries(db.users.filter(u => u.status === "ACTIVE").reduce((m, u) => { m[u.region || "Nyingine"] = (m[u.region || "Nyingine"] || 0) + 1; return m; }, {})).map(([name, value]) => ({ name, value })),
     settings: req.session.user.role === "ADMIN" ? db.settings : {
@@ -711,15 +712,32 @@ app.post("/api/announcements", requireAuth, (req, res) => {
   const body = paymentText(req.body.body, 2000);
   const link = paymentText(req.body.link, 800);
   const eventId = paymentText(req.body.eventId, 80);
+  const hasSocial = Boolean(req.body.socialUrl);
+  const social = hasSocial ? socialLink(req.body.socialUrl) : null;
+  const sourceDate = req.body.socialDate || "";
+  if (hasSocial && !social) return res.status(400).json({ error: "Weka kiungo halali cha chapisho la mitandao." });
+  if (sourceDate && (!social || typeof sourceDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(sourceDate) ||
+      !Number.isFinite(Date.parse(sourceDate)) || new Date(sourceDate).toISOString().slice(0, 10) !== sourceDate)) {
+    return res.status(400).json({ error: "Weka tarehe halali ya chapisho." });
+  }
   const safeLink = /^(https?:)/i.test(link) || (link.startsWith("/") && !link.startsWith("//") && !link.includes(String.fromCharCode(92)));
-  if (!title || !body || (link && !safeLink)) {
+  if (!title || (!body && !social && !req.body.poster) || (link && !safeLink)) {
     return res.status(400).json({ error: "Hakiki kichwa, ujumbe na kiungo cha tangazo." });
+  }
+  let poster = "";
+  if (req.body.poster) {
+    try {
+      const image = readAttachments([{ name: "tangazo.jpg", data: req.body.poster }])[0];
+      if (image.type !== "image/jpeg") throw new Error("Ambatisha picha ya tangazo.");
+      poster = "data:image/jpeg;base64," + image.bytes.toString("base64");
+    } catch (error) { return res.status(400).json({ error: error.message }); }
   }
   const db = loadDB();
   if (eventId && !(db.events || []).some(event => event.id === eventId && (req.body.visibility === "members" || event.public !== false))) {
     return res.status(400).json({ error: "Chagua tukio la umma kwa tangazo la umma." });
   }
-  (db.announcements ||= []).unshift({ id: randomBytes(12).toString("hex"), title, body, link, eventId,
+  (db.announcements ||= []).unshift({ id: randomBytes(12).toString("hex"), title, body, link, eventId, poster,
+    ...(social ? { social: { ...social, publishedDate: sourceDate } } : {}),
     public: req.body.visibility !== "members", author: req.session.user.name, createdAt: new Date().toISOString() });
   saveDB(db);
   res.json({ success: true });

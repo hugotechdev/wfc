@@ -474,7 +474,11 @@ document.addEventListener("portal-language-change", () => {
   if (document.getElementById("c")?.dataset.page === "home" && window.ApexCharts) load("home");
 });
 
+let disposeHomeSlides;
+
 async function load(p) {
+  disposeHomeSlides?.();
+  disposeHomeSlides = null;
   const c = document.getElementById("c");
   c.dataset.page = p;
   const titles = {
@@ -613,7 +617,9 @@ async function load(p) {
 
     c.innerHTML = `
       <div class="dashboard-studio">
-      <section class="hero-band overview-hero">
+      <section class="dashboard-carousel" aria-label="Karibu, matangazo na matukio">
+      <div class="dashboard-slide-stage" data-carousel-stage>
+      <div class="hero-band overview-hero" id="dashboardWelcome">
         <div class="studio-orbit hero-orbit" aria-hidden="true">
           <div class="studio-orbit-ring"></div><div class="studio-orbit-core">${groupLogo("studio-orbit-logo")}</div>
         </div>
@@ -626,6 +632,17 @@ async function load(p) {
           <div class="kicker">Jumla Uliyochanga</div>
           <strong>${money(d.myTotalPaid)}</strong>
         </div>
+      </div>
+      <article id="dashboardNews" class="dashboard-news-slide" hidden></article>
+      </div>
+      <div class="dashboard-slide-navigation" data-carousel-controls hidden>
+        <div class="slider-ui" data-carousel-dots></div>
+        <div class="hero-slide-controls">
+          <button class="slider-toggle" type="button" data-carousel-toggle>Sitisha</button>
+          <button type="button" data-carousel-previous aria-label="Slaidi iliyopita">‹</button>
+          <button type="button" data-carousel-next aria-label="Slaidi inayofuata">›</button>
+        </div>
+      </div>
       </section>
       <h3 class="studio-section-title">Hatua za haraka</h3>
       <nav class="overview-actions" aria-label="Hatua za haraka">
@@ -759,6 +776,31 @@ async function load(p) {
       </div></div>`;
 
     applyGroupLogos(c);
+    const carousel = c.querySelector(".dashboard-carousel");
+    const welcome = c.querySelector("#dashboardWelcome");
+    const news = c.querySelector("#dashboardNews");
+    const updates = announcementSlides(d.notices || [], d.upcoming || []);
+    disposeHomeSlides = mountAnnouncementCarousel(carousel, [null, ...updates], item => {
+      welcome.classList.toggle("welcome-placeholder", Boolean(item));
+      welcome.setAttribute("aria-hidden", String(Boolean(item)));
+      news.hidden = !item;
+      if (!item) { news.replaceChildren(); return; }
+      const event = item.event;
+      const graphic = announcementPoster(item.poster || event?.poster, item.title, "dashboard-news-image");
+      const link = safePublicLink(item.social?.url || item.link);
+      news.innerHTML = `${graphic}<div class="dashboard-news-content">
+        <span class="badge badge-pending">${event ? "Tukio" : "Tangazo"}</span>
+        <h2 translate="no">${escapeHtml(item.title)}</h2>
+        ${item.body ? `<p translate="no">${escapeHtml(item.body)}</p>` : ""}
+        ${event ? `<p class="muted" translate="no">${escapeHtml([event.location, event.eventDate].filter(Boolean).join(" · "))}</p>` : ""}
+        <div class="event-actions">
+          <button type="button" class="btn btn-sm ghost" id="readDashboardNews">${event ? "Tazama tukio" : "Fungua taarifa"}</button>
+          ${link ? `<a class="btn btn-sm ghost" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Fungua chapisho</a>` : ""}
+          ${event?.public !== false && event?.ticketEnabled !== false && event?.id && groupProfile.modules?.tickets !== false
+            ? `<a class="btn btn-sm" href="/ticket/${encodeURIComponent(event.id)}">Nunua tiketi</a>` : ""}
+        </div></div>`;
+      news.querySelector("#readDashboardNews").onclick = () => load(event ? "events" : "announcements");
+    });
     if (window.ApexCharts) {
       const base = apexBaseOptions();
       if (fin) {
@@ -1006,6 +1048,7 @@ async function load(p) {
   if (p === "announcements") {
     const leader = canViewReports(window.__me.role);
     const [list, events] = await Promise.all([api("/api/announcements"), leader ? api("/api/events") : []]);
+    if (c.dataset.page !== p) return;
     c.innerHTML = `${leader ? `<div class="card">
       <div class="card-head"><h3>Tangazo Jipya</h3></div>
       <form id="af">
@@ -1015,8 +1058,14 @@ async function load(p) {
         </div>
         <div class="form-row-2"><label>Hadhi ya uchapishaji<select name="visibility"><option value="public">Umma</option><option value="members">Wanachama pekee</option></select></label>
         <label>Tukio linalohusiana<select name="eventId"><option value="">Hakuna</option>${events.map(event => `<option value="${escapeHtml(event.id)}">${escapeHtml(event.title)}</option>`).join("")}</select></label></div>
-        <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" maxlength="2000" required></textarea></div>
-        <button class="btn btn-sm" type="submit">Chapisha Tangazo</button>
+        <div class="form-row-2">
+          <label>Link ya chapisho la mitandao (hiari)<input name="socialUrl" type="url" maxlength="1200" placeholder="https://…"></label>
+          <label>Tarehe ya chapisho (hiari)<input name="socialDate" type="date"></label>
+        </div>
+        <label>Picha ya tangazo (hiari)<input id="announcementPosterFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+        <p class="muted">Weka link ya chapisho la Facebook, Instagram, TikTok, YouTube au LinkedIn.</p>
+        <div class="form-group"><label>Ujumbe</label><textarea name="body" rows="3" maxlength="2000"></textarea></div>
+        <button class="btn btn-sm" type="submit">Chapisha Tangazo</button><p id="announcementStatus" role="status"></p>
       </form>
     </div>` : ""}
     <div class="card">
@@ -1025,15 +1074,28 @@ async function load(p) {
         <div>
           <strong translate="no">${escapeHtml(a.title)}</strong>
           <p style="margin:4px 0 6px;color:var(--text)">${escapeHtml(a.body)}</p>
+          ${announcementPoster(a.poster, a.title, "portal-announcement-poster")}
+          ${socialSlideCard(a.social)}
           ${safePublicLink(a.link) ? `<a href="${escapeHtml(safePublicLink(a.link))}">Fungua taarifa</a>` : ""}
         </div>
         <span class="badge badge-active">${a.public === false ? "Wanachama pekee" : "Umma"}</span>
       </div>`).join("") || `<div class="empty-state">Hakuna matangazo</div>`}
     </div>`;
-    if (leader) document.getElementById("af").onsubmit = async e => {
-      e.preventDefault();
-      const d = await api("/api/announcements", { method: "POST", body: Object.fromEntries(new FormData(e.target)) });
-      if (d.error) alert(d.error); else load("announcements");
+    if (leader) document.getElementById("af").onsubmit = async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const send = form.querySelector('button[type="submit"]');
+      const status = document.getElementById("announcementStatus");
+      send.disabled = true;
+      try {
+        const body = Object.fromEntries(new FormData(form));
+        const file = form.querySelector("#announcementPosterFile").files[0];
+        if (file) body.poster = await readPaymentPhoto(file);
+        const result = await api("/api/announcements", { method: "POST", body });
+        if (result.error) status.textContent = result.error;
+        else load("announcements");
+      } catch { status.textContent = "Imeshindwa kutuma. Jaribu tena."; }
+      finally { send.disabled = false; }
     };
   }
 

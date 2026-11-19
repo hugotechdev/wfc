@@ -483,6 +483,19 @@ Mwidhinishaji wa malipo|Payment approver
 Chagua tukio la umma kwa tangazo la umma.|Choose a public event for a public announcement.
 Hakiki jina, simu na idadi ya tiketi.|Check the name, phone number and number of tickets.
 Jaza sehemu za fomu ya tiketi kwa usahihi.|Complete the ticket form correctly.
+Link ya chapisho la mitandao (hiari)|Social post link (optional)
+Tarehe ya chapisho (hiari)|Post date (optional)
+Weka link ya chapisho la Facebook, Instagram, TikTok, YouTube au LinkedIn.|Paste a post link from Facebook, Instagram, TikTok, YouTube or LinkedIn.
+Weka kiungo halali cha chapisho la mitandao.|Enter a valid social post link.
+Weka tarehe halali ya chapisho.|Enter a valid post date.
+Tazama hapa|View here
+Fungua chapisho|Open original post
+Sitisha|Pause
+Endesha slaidi|Play slides
+Picha ya tangazo (hiari)|Announcement image (optional)
+Ambatisha picha ya tangazo.|Attach an announcement image.
+Karibu, matangazo na matukio|Welcome, announcements and events
+Tazama tukio|View event
 `.trim().split("\n").map(line => line.split("|")));
 
 let portalLocale;

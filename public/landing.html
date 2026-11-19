@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=d9c570039aac">
+  <link rel="stylesheet" href="/css/style.css?v=9840123250ac">
 </head>
 <body class="landing-body">
   <header class="site-nav">
@@ -50,13 +50,14 @@
 
     <section class="hero-slider" id="matangazo" aria-label="Matangazo ya umma">
       <div class="hero-slide-head"><h2>Matangazo</h2>
-        <div class="hero-slide-controls" hidden>
-          <button id="previousSlide" type="button" aria-label="Slaidi iliyopita">‹</button>
-          <button id="nextSlide" type="button" aria-label="Slaidi inayofuata">›</button>
+        <div class="hero-slide-controls" data-carousel-controls hidden>
+          <button id="toggleSlides" data-carousel-toggle class="slider-toggle" type="button">Sitisha</button>
+          <button id="previousSlide" data-carousel-previous type="button" aria-label="Slaidi iliyopita">‹</button>
+          <button id="nextSlide" data-carousel-next type="button" aria-label="Slaidi inayofuata">›</button>
         </div>
       </div>
-      <div id="slider" aria-live="polite"></div>
-      <div id="dots" class="slider-ui"></div>
+      <div id="slider" data-carousel-stage aria-live="polite"></div>
+      <div id="dots" data-carousel-dots class="slider-ui"></div>
     </section>
   </section>
 
@@ -149,7 +150,8 @@
 
   <script src="/js/group.js?v=376ca96c0409"></script>
   <script src="/js/payment-flow.js?v=fdbd93581986"></script>
-  <script src="/js/translate.js?v=07a30c8697a4"></script>
+  <script src="/js/social-slide.js?v=4f345eeeb4da"></script>
+  <script src="/js/translate.js?v=565fd51f5171"></script>
   <script>
     document.getElementById("navToggle").onclick = () => document.getElementById("siteNav").classList.toggle("open");
     fetch("/api/public/stats").then(r=>r.json()).then(s=>{
@@ -162,8 +164,6 @@
       if (!response.ok) throw new Error("Could not load public content");
       return response.json();
     };
-    const poster = (value, title) => typeof value === "string" && /^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=]+$/i.test(value)
-      ? `<img src="${publicEscape(value)}" alt="${publicEscape(title)}">` : "";
     const eventActions = event => `<div class="event-actions">
       ${contactLinks(event.contactPhone || groupProfile.phone) || '<a class="btn btn-sm ghost" href="#mawasiliano">Mawasiliano</a>'}
       ${groupProfile.modules?.tickets !== false && event.ticketEnabled !== false
@@ -174,46 +174,24 @@
       const [announcements, events] = await Promise.all([
         getList("/api/public/announcements"), getList("/api/public/events"), groupReady
       ]);
-      const eventIndex = new Map(events.map(event => [event.id, event]));
-      const linked = new Set(announcements.map(item => item.eventId));
-      const slides = [
-        ...announcements.map(item => ({ ...item, event: eventIndex.get(item.eventId) })),
-        ...events.filter(event => !linked.has(event.id)).map(event => ({
-          title: event.title, body: event.description, event
-        }))
-      ];
+      const slides = announcementSlides(announcements, events);
       const root = document.getElementById("slider");
-      const dots = document.getElementById("dots");
-      const controls = document.querySelector(".hero-slide-controls");
-      let i = 0;
-      const paint = target => {
-        i = (target + slides.length) % slides.length;
-        const item = slides[i];
+      if (slides.length) mountAnnouncementCarousel(document.getElementById("matangazo"), slides, item => {
         const event = item.event;
         const link = safePublicLink(item.link);
         root.innerHTML = `<article class="hero-slide-card">
-          ${event ? poster(event.poster, event.title) : ""}
+          ${announcementPoster(item.poster || event?.poster, item.title)}
           <span class="badge badge-pending">${event ? "Tukio" : "Tangazo"}</span>
           <h3 translate="no">${publicEscape(item.title)}</h3>
           ${item.body ? `<p class="slide-copy" translate="no">${publicEscape(item.body)}</p>` : ""}
-          ${event ? `<p class="muted" translate="no">${publicEscape([event.location, event.eventDate?.replace("T", " ")].filter(Boolean).join(" · "))}</p>${eventActions(event)}` : ""}
+          ${event ? `<p class="muted" translate="no">${publicEscape([event.location, typeof event.eventDate === "string" ? event.eventDate.replace("T", " ") : ""].filter(Boolean).join(" · "))}</p>${eventActions(event)}` : ""}
+          ${socialSlideCard(item.social)}
           ${link ? `<a class="slide-info" href="${publicEscape(link)}">Fungua taarifa</a>` : ""}
         </article>`;
-        dots.querySelectorAll("button").forEach((button, index) => {
-          button.classList.toggle("on", index === i);
-          button.setAttribute("aria-pressed", String(index === i));
-        });
-      };
-      if (slides.length) {
-        controls.hidden = slides.length < 2;
-        dots.innerHTML = slides.length > 1 ? slides.map((_, n) => `<button class="dot" type="button" aria-label="Slaidi ${n + 1}"></button>`).join("") : "";
-        dots.querySelectorAll("button").forEach((button, index) => button.onclick = () => paint(index));
-        document.getElementById("previousSlide").onclick = () => paint(i - 1);
-        document.getElementById("nextSlide").onclick = () => paint(i + 1);
-        paint(0);
-      } else root.innerHTML = '<div class="hero-slide-card"><p>Hakuna matangazo mapya kwa sasa</p></div>';
+      });
+      else root.innerHTML = '<div class="hero-slide-card"><p>Hakuna matangazo mapya kwa sasa</p></div>';
       document.getElementById("events").innerHTML = events.length ? events.map(event => `<article class="ev">
-        ${poster(event.poster, event.title) ? `<div class="poster">${poster(event.poster, event.title)}</div>` : ""}
+        ${announcementPoster(event.poster, event.title) ? `<div class="poster">${announcementPoster(event.poster, event.title)}</div>` : ""}
         <div class="b"><span class="badge badge-pending">Tukio</span><h3 translate="no">${publicEscape(event.title)}</h3>
         <p class="muted" translate="no">${publicEscape(event.location || "")}</p>${eventActions(event)}</div>
       </article>`).join("") : '<div class="empty-state"><p>Hakuna matukio yaliyotangazwa kwa sasa.</p></div>';
