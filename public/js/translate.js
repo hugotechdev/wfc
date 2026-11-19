@@ -19,6 +19,43 @@ Jisajili sasa|Register now
 Tovuti kuu|Main website
 Usajili wa Mwanachama|Member registration
 Ada ya usajili:|Registration fee:
+Chagua|Select
+Funga|Close
+Taarifa binafsi|Personal information
+Taarifa za asili ya Kichagga|Chagga heritage
+Taarifa za uanachama|Membership information
+Jinsia|Gender
+Tarehe ya kuzaliwa|Date of birth
+Namba ya kitambulisho cha taifa (hiari)|National ID number (optional)
+Hali ya ndoa (hiari)|Marital status (optional)
+Kazi au taaluma (hiari)|Occupation (optional)
+Mkoa wa asili|Region of origin
+Wilaya|District
+Mtaa|Street
+Ukoo|Clan
+Eneo la asili|Ancestral area
+Aina ya uanachama|Membership category
+Hali ya uanachama|Membership status
+Tarehe ya usajili|Registration date
+Mwanamke|Female
+Mwanaume|Male
+Sipendi kutaja|Prefer not to say
+Sina mwenzi|Single
+Nimeoa au nimeolewa|Married
+Talaka|Divorced
+Mjane|Widowed
+Mwanachama wa kawaida|Regular member
+Mwanachama msaidizi|Supporting member
+Tumia JPG, PNG au WebP hadi MB 8. Picha hii itaonekana kwenye kitambulisho chako baada ya idhini.|Use JPG, PNG or WebP up to 8 MB. This photo will appear on your membership card after approval.
+Mfumo utaweka tarehe ya usajili na hali ya ombi, kisha kutoa namba ya uanachama baada ya idhini.|The system records the registration date and application status, then assigns a membership number after approval.
+Tazama taarifa za usajili|View registration details
+Taarifa za usajili|Registration details
+Taarifa za usajili hazikupatikana.|Registration details could not be loaded.
+Weka jina, namba ya simu na barua pepe halali.|Enter a name, a valid phone number and a valid email address.
+Weka tarehe halali ya kuzaliwa.|Enter a valid date of birth.
+Hakiki jinsia, chaguo la uanachama na taarifa za hiari.|Check the gender, membership category and optional details.
+Jaza taarifa zote za asili.|Fill in all heritage details.
+Ambatisha picha yako ya wasifu.|Attach your profile photo.
 Jina Kamili|Full name
 Kanda|Region
 Namba ya muamala|Transaction reference
@@ -392,6 +429,12 @@ Picha haikuhifadhiwa.|Photo could not be saved.
 Picha haikubaliki au ni kubwa sana.|The photo is invalid or too large.
 Picha iwe angalau pikseli 96 kwa 96.|Use a photo at least 96 by 96 pixels.
 Chagua picha ya JPG, PNG au WebP isiyozidi MB 8.|Choose a JPG, PNG or WebP photo up to 8 MB.
+Ofisi ya msimamizi|Admin office
+Ofisi ya uongozi|Leadership office
+Kazi za ofisi|Office tasks
+Malipo yangu|My payments
+Mahudhurio yangu|My attendance
+Majukumu ya uongozi|Leadership roles
 Kitambulisho cha mwanachama|Member ID
 Pakua kitambulisho (PDF)|Download member ID (PDF)
 Pakua picha (PNG)|Download image (PNG)
